@@ -16,12 +16,38 @@
  * limitations under the License.
  */
 
-package org.seaborne.http;
+package org.seaborne.connection;
 
-/**
- * Client for the
- * <a href="https://www.w3.org/TR/sparql11-protocol/">SPARQL 1.1 Protocol</a>.
+import org.apache.jena.sparql.core.Transactional;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateRequest;
+
+/** SPARQL Update Operations on a connection.
+ *
+ * @see ConnRDF
+ * @see ConnRDFFactory
  */
-public class HttpResultSet {
+public interface ConnSparqlUpdate extends Transactional, AutoCloseable
+{
+    /** Execute a SPARQL Update.
+     *
+     * @param update
+     */
+    public void update(Update update);
 
+    /** Execute a SPARQL Update.
+     *
+     * @param update
+     */
+    public void update(UpdateRequest update);
+
+    /** Execute a SPARQL Update.
+     *
+     * @param updateString
+     */
+    public void update(String updateString);
+
+    /** Close this connection. */
+    @Override public void close();
 }
+

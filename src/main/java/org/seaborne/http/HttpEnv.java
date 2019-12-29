@@ -18,29 +18,31 @@
 
 package org.seaborne.http;
 
-import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Redirect;
-import java.net.http.HttpResponse.BodyHandler;
-import java.net.http.HttpResponse.BodySubscribers;
 import java.time.Duration;
 
 /**
- * JVM wide setting used when the application does not provide an{@link HttpClient} and other useful things.
+ * JVM wide settings.
  */
 public class HttpEnv {
 
-    private static HttpClient httpClient = buildDftHttpClient();
-    private static BodyHandler<InputStream> bodyHandlerInputStream = buildDftBodyHandlerInputStream();
+    /**
+     * Maximum length of URL for GET requests for SPARQL queries
+     * (<a href="https://www.w3.org/TR/sparql11-protocol/">SPARQL 1.1 Protocol</a>).
+     * Above this limit, the code switches to using the HTTP POST form.
+     */
+    public static /* final */ int urlLimit = 2 * 1024;
 
     public static HttpClient getDftHttpClient() { return httpClient; }
+    public static void setDftHttpClient(HttpClient dftHttpClient) { httpClient = dftHttpClient; }
 
-    public static BodyHandler<InputStream> getBodyInputStream() { return bodyHandlerInputStream; }
+    private static HttpClient httpClient = buildDftHttpClient();
 
     private static HttpClient buildDftHttpClient() {
         return HttpClient.newBuilder()
             // By default, the client has polling and connection-caching.
-            // Version HTTP/2 is the default, negoitiating up from HTTP 1.1.
+            // Version HTTP/2 is the default, negotiating up from HTTP 1.1.
             .connectTimeout(Duration.ofSeconds(10))
             .followRedirects(Redirect.NORMAL)
             //.sslContext
@@ -49,50 +51,5 @@ public class HttpEnv {
             //.authenticator
             .build();
     }
-
-    private static BodyHandler<InputStream> buildDftBodyHandlerInputStream() {
-        return responseInfo -> {
-            // For simplicity, deal with at the start of body processing.
-            // handleHttpStatusCode(responseInfo);
-            // XXX Add compression decode. here or later?
-            return BodySubscribers.ofInputStream();
-        };
-    }
-
-    // StatusCode to exception, ResponseInfo handling.
-
-//    static void handleHttpStatusCode(ResponseInfo responseInfo) {
-//        int httpStatusCode = responseInfo.statusCode();
-//        // No status message in HTTP/2.
-//        //HttpHeaders headers = responseInfo.headers();
-//        //headers.map().forEach((x,y) -> System.out.printf("%-20s %s\n", x, y));
-//        if ( ! inRange(httpStatusCode, 100, 599) )
-//            throw new HttpException("Status code out of range: "+httpStatusCode);
-//        else if ( inRange(httpStatusCode, 100, 199) ) {
-//            // Informational
-//        }
-//        else if ( inRange(httpStatusCode, 200, 299) ) {
-//            // Success. Continue processing.
-//        }
-//        else if ( inRange(httpStatusCode, 300, 399) ) {
-//            // We had follow redirects on (default client) so it's http->https,
-//            // or the application passed on a HttpClient with redirects off.
-//            // Either way, we should not continue processing.
-//            try {
-//                BodySubscribers.discarding().getBody().toCompletableFuture().get();
-//            } catch (InterruptedException | ExecutionException e) {
-//                throw new HttpException("Error discarding body of "+httpStatusCode , e);
-//            }
-//            throw new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), null);
-//        }
-//        else if ( inRange(httpStatusCode, 400, 499) ) {
-//            String response = bodyString(responseInfo);
-//            throw new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), response);
-//        }
-//        else if ( inRange(httpStatusCode, 500, 599) ) {
-//            String response = bodyString(responseInfo);
-//            throw new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), response);
-//        }
-//    }
 
 }

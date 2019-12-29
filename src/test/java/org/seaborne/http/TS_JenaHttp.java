@@ -18,20 +18,17 @@
 
 package org.seaborne.http;
 
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionRemote;
-import org.apache.jena.rdfconnection.RDFDatasetConnection;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
-/**
- * Client for the
- * <a href="https://www.w3.org/TR/sparql11-http-rdf-update/">SPARQL 1.1 Graph Store Protocol</a>.
- *
- * This is extended to include operations GET, POST and PUT on datasets,
- *
- * @see RDFConnection
- * @see RDFDatasetConnection
- * @see RDFConnectionRemote
- */
-public class HttpGSP {
-    // And DELETE as "CLEAR ALL" ?
+@RunWith(Suite.class)
+@Suite.SuiteClasses( {
+    TestHttpOp1.class
+    , TestHttpRDF.class
+    , TestHttpQuery.class
+    , TestHttpQueryAuth.class
+    , TestHttpUpdate.class
+})
+public class TS_JenaHttp {
+
 }

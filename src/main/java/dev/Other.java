@@ -16,22 +16,25 @@
  * limitations under the License.
  */
 
-package org.seaborne.http;
+package dev;
 
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionRemote;
-import org.apache.jena.rdfconnection.RDFDatasetConnection;
+import org.apache.jena.dboe.storage.prefixes.PrefixEntry;
 
-/**
- * Client for the
- * <a href="https://www.w3.org/TR/sparql11-http-rdf-update/">SPARQL 1.1 Graph Store Protocol</a>.
- *
- * This is extended to include operations GET, POST and PUT on datasets,
- *
- * @see RDFConnection
- * @see RDFDatasetConnection
- * @see RDFConnectionRemote
- */
-public class HttpGSP {
-    // And DELETE as "CLEAR ALL" ?
+public class Other {
+    public interface PrefixMapI extends Iterable<PrefixEntry> // replaces PrefixMap
+    {}
+
+    public interface StoragePrefixMap extends Iterable<PrefixEntry> {}
+
+
+    public interface PrefixMap {}
+
+    /*
+
+      PrefixMapBase
+    */
+
+    public interface PrefixMapping {}
+    // Remove XML-isms.
+
 }
