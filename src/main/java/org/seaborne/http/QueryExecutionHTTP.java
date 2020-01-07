@@ -18,9 +18,7 @@
 
 package org.seaborne.http;
 
-import static org.seaborne.http.HttpLib.bodyInputStreamToString;
-import static org.seaborne.http.HttpLib.dft;
-import static org.seaborne.http.HttpLib.execute;
+import static org.seaborne.http.HttpLib.*;
 
 import java.io.ByteArrayInputStream ;
 import java.io.IOException;
@@ -171,19 +169,8 @@ public class QueryExecutionHTTP implements QueryExecution {
 
         private int urlLimit = -1;
         private SendMode sendMode = SendMode.asGetWithLimit;
-
-        // XXX default and named graph URIs
-        // defaultGraphURIs.
-        // namedGraphURIs
-        // (initial bindings)
-        // ----
-        // Special: content-type.
-        // No - one setting.
-        // selectContentType(String)
-        // askContentType(String)
-        // modelContentType
-        // datasetContentType
-
+        private List<String> defaultGraphURIs = new ArrayList<>();
+        private List<String> namedGraphURIs = new ArrayList<>();
 
         /** Set the URL of the query endpoint. */
         public Builder service(String serviceURL) {
@@ -202,6 +189,20 @@ public class QueryExecutionHTTP implements QueryExecution {
         public Builder queryString(String queryString) {
             this.query = null;
             this.queryString = Objects.requireNonNull(queryString);
+            return this;
+        }
+
+        public Builder addDefaultGraphURI(String uri) {
+            if (this.defaultGraphURIs == null)
+                this.defaultGraphURIs = new ArrayList<>();
+            this.defaultGraphURIs.add(uri);
+            return this;
+        }
+
+        public Builder addNamedGraphURI(String uri) {
+            if (this.namedGraphURIs == null)
+                this.namedGraphURIs = new ArrayList<>();
+            this.namedGraphURIs.add(uri);
             return this;
         }
 
@@ -290,7 +291,7 @@ public class QueryExecutionHTTP implements QueryExecution {
 
         /**
          * Set a timeout to the overall overall operation.
-         * Time-to-connect can be set with a customer {@link HttpClient} - see {@link java.net.http.HttpClient.Builder#connectTimeout(java.time.Duration)}.
+         * Time-to-connect can be set with a custom {@link HttpClient} - see {@link java.net.http.HttpClient.Builder#connectTimeout(java.time.Duration)}.
          */
         public Builder timeout(long timeout, TimeUnit timeoutUnit) {
             if ( timeout < 0 ) {
@@ -303,14 +304,16 @@ public class QueryExecutionHTTP implements QueryExecution {
             return this;
         }
 
-
         public QueryExecutionHTTP build() {
             Objects.requireNonNull("No service URL", serviceURL);
-            // urlLimit
-            // this.asForm;
-            // this.asBody;
-            // XXX sendMode
-            return new QueryExecutionHTTP(serviceURL, query, queryString, httpClient, httpHeaders, params,
+            if ( queryString == null && query == null )
+                throw new QueryException("No query for QueryExecutionHTTP");
+            // XXX urlLimit
+            return new QueryExecutionHTTP(serviceURL, query, queryString, httpClient,
+                                          new HashMap<>(httpHeaders),
+                                          new Params(params),
+                                          copyArray(defaultGraphURIs),
+                                          copyArray(namedGraphURIs),
                                           sendMode, acceptHeader, allowCompression,
                                           timeout, timeoutUnit);
         }
@@ -318,13 +321,16 @@ public class QueryExecutionHTTP implements QueryExecution {
 
     private QueryExecutionHTTP(String serviceURL, Query query, String queryString,
                                HttpClient httpClient, Map<String, String> httpHeaders, Params params,
+                               List<String> defaultGraphURIs, List<String> namedGraphURIs,
                                SendMode sendMode, String acceptHeader, boolean allowCompression,
                                long timeout, TimeUnit timeoutUnit) {
         this.context = ARQ.getContext().copy();
         this.service = serviceURL;
         this.query = query;
         this.queryString = queryString;
-        this.httpHeaders = new HashMap<>(httpHeaders);
+        this.httpHeaders = httpHeaders;
+        this.defaultGraphURIs = defaultGraphURIs;
+        this.namedGraphURIs = namedGraphURIs;
         this.sendMode = sendMode;
         this.acceptHeader = acceptHeader;
         // Important - handled as special case because the defaults vary by query type.
@@ -338,7 +344,6 @@ public class QueryExecutionHTTP implements QueryExecution {
         this.readTimeout = timeout;
         this.readTimeoutUnit = timeoutUnit;
         this.httpClient = dft(httpClient, HttpEnv.getDftHttpClient());
-
     }
 
     /**
@@ -432,55 +437,6 @@ public class QueryExecutionHTTP implements QueryExecution {
     public void setInitialBinding(Binding binding) {
         throw new UnsupportedOperationException(
                 "Initial bindings not supported for remote queries, consider using a ParameterizedSparqlString to prepare a query for remote execution");
-    }
-
-    /**
-     * @param defaultGraphURIs
-     *            The defaultGraphURIs to set.
-     */
-    public void setDefaultGraphURIs(List<String> defaultGraphURIs) {
-        this.defaultGraphURIs = defaultGraphURIs;
-    }
-
-    /**
-     * @param namedGraphURIs
-     *            The namedGraphURIs to set.
-     */
-    public void setNamedGraphURIs(List<String> namedGraphURIs) {
-        this.namedGraphURIs = namedGraphURIs;
-    }
-
-//    /**
-//     * Sets whether the HTTP requests will permit compressed encoding
-//     */
-//    public void setAllowCompression(boolean allowed) {
-//        allowCompression = allowed;
-//    }
-
-    public void addParam(String field, String value) {
-        if (params == null)
-            params = new Params();
-        params.addParam(field, value);
-    }
-
-    /**
-     * @param defaultGraph
-     *            The defaultGraph to add.
-     */
-    public void addDefaultGraph(String defaultGraph) {
-        if (defaultGraphURIs == null)
-            defaultGraphURIs = new ArrayList<>();
-        defaultGraphURIs.add(defaultGraph);
-    }
-
-    /**
-     * @param name
-     *            The URI to add.
-     */
-    public void addNamedGraph(String name) {
-        if (namedGraphURIs == null)
-            namedGraphURIs = new ArrayList<>();
-        namedGraphURIs.add(name);
     }
 
     /** The Content-Type response header received (null before the remote operation is attempted). */
@@ -830,21 +786,14 @@ public class QueryExecutionHTTP implements QueryExecution {
     // XXX Use!
     // XXX Extract and share with SPARQL Update.
     // Common steps with query()
-    private HttpResponse<InputStream> queryPush(String acceptHeader) {
+    private HttpResponse<InputStream> queryPush(Params thisParams, String acceptHeader) {
         if (closed)
             throw new ARQException("HTTP execution already closed");
 
-        Params thisParams = new Params();
-        if ( params != null )
-            thisParams.merge(params);
-
-        thisParams.merge(getServiceParams(service, context));
-
-        // XXX Params to URL
-        for ( String dft : defaultGraphURIs )
-            thisParams.addParam( HttpParams.pDefaultGraph, dft );
-        for ( String name : namedGraphURIs )
-            thisParams.addParam( HttpParams.pNamedGraph, name );
+        // Use thisParams (for default-graph-uri etc)
+        String url = service;
+        if ( thisParams.count() > 0 )
+            url = url + "&"+thisParams.httpString();
 
         HttpRequest request = HttpLib.newBuilder(service, httpHeaders, acceptHeader, allowCompression, readTimeout, readTimeoutUnit)
             .POST(BodyPublishers.ofString(queryString))
@@ -865,23 +814,25 @@ public class QueryExecutionHTTP implements QueryExecution {
 
         Params thisParams = params;
 
-        for ( String dft : defaultGraphURIs )
-            thisParams.addParam( HttpParams.pDefaultGraph, dft );
-        for ( String name : namedGraphURIs )
-            thisParams.addParam( HttpParams.pNamedGraph, name );
+        if ( defaultGraphURIs != null ) {
+            for ( String dft : defaultGraphURIs )
+                thisParams.addParam( HttpParams.pDefaultGraph, dft );
+        }
+        if ( namedGraphURIs != null ) {
+            for ( String name : namedGraphURIs )
+                thisParams.addParam( HttpParams.pNamedGraph, name );
+        }
 
         if ( httpHeaders != null ) {
-            if ( acceptHeader != null )
-                httpHeaders.put(HttpNames.hAccept, acceptHeader);
             if ( allowCompression )
                 httpHeaders.put(HttpNames.hAcceptEncoding, "gzip,inflate");
         }
+        thisParams.merge(getServiceParams(service, context));
 
         // Query string or HTML form.
         if ( sendMode == SendMode.asPostBody )
-            return queryPush(acceptHeader);
+            return queryPush(thisParams, acceptHeader);
 
-        thisParams.merge(getServiceParams(service, context));
         thisParams.addParam(HttpParams.pQuery, queryString);
 
         int thisLengthLimit = urlLimit;
@@ -932,15 +883,15 @@ public class QueryExecutionHTTP implements QueryExecution {
         Objects.requireNonNull(params);
         Objects.requireNonNull(httpClient);
         boolean useGET;
-        String qs = params.httpString();
         String requestURL = url;
+        String qs = params.httpString();
         if ( params.count() > 0 ) {
             if ( url.length()+qs.length()+1 > lengthLimit ) {
                 useGET = false;
             } else {
                 useGET = true;
                 // Use GET with a query string.
-                requestURL = url.contains("?") ? url+"&"+qs: url+"?"+qs;
+                requestURL = requestURL(url, qs);
             }
         } else
             useGET = true;
@@ -961,8 +912,6 @@ public class QueryExecutionHTTP implements QueryExecution {
         HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
         return response;
     }
-
-
 
     // This is to allow setting additional/optional query parameters on a per
     // SERVICE level, see: JENA-195

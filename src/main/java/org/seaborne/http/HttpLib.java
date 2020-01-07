@@ -34,7 +34,9 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.net.http.HttpResponse.BodySubscribers;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -168,6 +170,18 @@ public class HttpLib {
 
     static <X> X dft(X value, X dftValue) {
         return (value != null) ? value : dftValue;
+    }
+
+    static <X> List<X> copyArray(List<X> array) {
+        if ( array == null )
+            return null;
+        return new ArrayList<>(array);
+    }
+
+    static String requestURL(String url, String queryString) {
+        String sep =  url.contains("?") ? "&" : "?";
+        String requestURL = url+sep+queryString;
+        return requestURL;
     }
 
     /*package*/ static Builder newBuilder(String url, Map<String, String> httpHeaders, String acceptHeader, boolean allowCompression, long readTimeout, TimeUnit readTimeoutUnit) {

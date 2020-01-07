@@ -18,16 +18,21 @@
 
 package org.seaborne.http;
 
+import static org.apache.jena.atlas.lib.StrUtils.strjoinNL;
 import static org.apache.jena.sparql.sse.SSE.parseQuad;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.atlas.json.JsonArray;
+import org.apache.jena.atlas.logging.LogCtl;
+import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.atlas.web.WebLib;
+import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
@@ -49,7 +54,10 @@ public class TestHttpQuery {
     private static Quad q1 = parseQuad("(:g1 :s :p 1)");
     private static Quad q2 = parseQuad("(:g2 :s :p 2)");
 
-    //static { LogCtl.enable(Fuseki.actionLog); }
+    static {
+        if ( false )
+            LogCtl.enable(Fuseki.actionLog);
+        }
 
     @BeforeClass public static void beforeClass() {
         int port = WebLib.choosePort();
@@ -66,7 +74,6 @@ public class TestHttpQuery {
             .build();
         server.start();
     }
-
 
     @AfterClass public static void afterClass() {
         server.stop();
@@ -240,4 +247,92 @@ public class TestHttpQuery {
             assertEquals(1,jsonArray.size());
         }
     }
+
+    @Test
+    public void query_graph_uri_1() {
+        String queryString = "SELECT * { ?s ?p ?o }";
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+                    .service(dsURL)
+                    .queryString(queryString)
+                    .addDefaultGraphURI("http://example/g1")
+                    .build() ) {
+            long x = Iter.count(qExec.execSelect());
+            assertEquals(1, x);
+        }
+    }
+
+    @Test
+    public void query_graph_uri_2() {
+        String queryString = "SELECT * { ?s ?p ?o }";
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+                    .service(dsURL)
+                    .queryString(queryString)
+                    .addDefaultGraphURI("http://example/g1")
+                    .addDefaultGraphURI("http://example/g2")
+                    .build() ) {
+            long x = Iter.count(qExec.execSelect());
+            assertEquals(2, x);
+        }
+    }
+
+
+    @Test
+    public void query_graph_uri_3() {
+        String queryString = "SELECT * { ?s ?p ?o }";
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+                    .service(dsURL)
+                    .queryString(queryString)
+                    .addNamedGraphURI("http://example/g1")
+                    .build() ) {
+            long x = Iter.count(qExec.execSelect());
+            assertEquals(0, x);
+        }
+    }
+
+    @Test
+    public void query_graph_uri_4() {
+        String queryString = "SELECT * { GRAPH <urn:x-arq:UnionGraph> { ?s ?p ?o } }";
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+                    .service(dsURL)
+                    .queryString(queryString)
+                    .addNamedGraphURI("http://example/g1")
+                    .build() ) {
+            long x = Iter.count(qExec.execSelect());
+            assertEquals(1, x);
+        }
+    }
+
+    @Test
+    public void query_graph_uri_5() {
+        String queryString = "SELECT * { GRAPH <urn:x-arq:UnionGraph> { ?s ?p ?o } }";
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+                    .service(dsURL)
+                    .queryString(queryString)
+                    .addNamedGraphURI("http://example/g2")
+                    .addNamedGraphURI("http://example/g1")
+                    .build() ) {
+            long x = Iter.count(qExec.execSelect());
+            assertEquals(2, x);
+        }
+    }
+
+    @Test(expected=HttpException.class)
+    public void query_timeout_1() {
+        String queryString = strjoinNL
+            ("PREFIX afn:     <http://jena.apache.org/ARQ/function#>"
+            ,"SELECT * {"
+            ,"  BIND (afn:wait(100) AS ?X)"
+            ,"}");
+
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+                    .service(dsURL)
+                    .queryString(queryString)
+                    // Short!
+                    .timeout(10, TimeUnit.MILLISECONDS)
+                    .build() ) {
+            long x = Iter.count(qExec.execSelect());
+            assertEquals(2, x);
+        }
+    }
+
 }

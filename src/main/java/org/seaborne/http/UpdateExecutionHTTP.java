@@ -19,19 +19,21 @@
 package org.seaborne.http;
 
 import static org.seaborne.http.HttpLib.bodyStringFetcher;
+import static org.seaborne.http.HttpLib.copyArray;
 import static org.seaborne.http.HttpLib.dft;
+import static org.seaborne.http.HttpLib.requestURL;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import org.apache.jena.query.ARQ;
+import org.apache.jena.query.QueryException;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -59,6 +61,9 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
         private SendMode sendMode = SendMode.asPostBody;
         private UpdateRequest updateRequest;
 
+        private List<String> usingGraphURIs = null;
+        private List<String> usingNamedGraphURIs = null;
+
         public Builder service(String serviceURL) {
             this.serviceURL = serviceURL;
             return this;
@@ -70,15 +75,11 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
             return this;
         }
 
-        public Builder updateString(String updateRequestString) {
+        public Builder update(String updateRequestString) {
             this.updateRequest = null;
             this.updateString = updateRequestString;
             return this;
         }
-
-        // Protocol
-        //using-graph-uri (0 or more)
-        //using-named-graph-uri
 
         public Builder httpClient(HttpClient httpClient) {
             this.httpClient = Objects.requireNonNull(httpClient);
@@ -89,37 +90,42 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
          * Whether to send the update request using POST and an HTML form, content type
          * "application/x-www-form-urlencoded".
          *
-         * If false, send as "application/sparql-query" (default).
+         * If false (the default), send as "application/sparql-query" (default).
          */
         public Builder sendHtmlForm(boolean htmlForm) {
             this.sendMode =  htmlForm ? SendMode.asPostForm : SendMode.asPostBody;
             return this;
         }
 
-//        /**
-//         * Whether to send the update request using POST with a Content-Type of as a
-//         * "application/sparql-query".
-//         *
-//         * If true, send as "application/sparql-query" (default); if false, send using an HTML form.
-//         * @see #sendHtmlForm(boolean)
-//         */
-//        public Builder postUpdate(boolean post) {
-//            this.sendMode = post ? SendMode.asPostBody : SendMode.asPostForm;
-//            return this;
-//        }
+        // The old code, UpdateProcessRemote, didn't support this so may be not
+        // provide it as its not being used.
 
-//        public Builder param(String name) {
-//            Objects.requireNonNull(name);
-//            this.params.addParam(name);
-//            return this;
-//        }
-//
-//        public Builder param(String name, String value) {
-//            Objects.requireNonNull(name);
-//            Objects.requireNonNull(value);
-//            this.params.addParam(name, value);
-//            return this;
-//        }
+        public Builder addUsingGraphURI(String uri) {
+            if (this.usingGraphURIs == null)
+                this.usingGraphURIs = new ArrayList<>();
+            this.usingGraphURIs.add(uri);
+            return this;
+        }
+
+        public Builder addUsingNamedGraphURI(String uri) {
+            if (this.usingNamedGraphURIs == null)
+                this.usingNamedGraphURIs = new ArrayList<>();
+            this.usingNamedGraphURIs.add(uri);
+            return this;
+        }
+
+        public Builder param(String name) {
+            Objects.requireNonNull(name);
+            this.params.addParam(name);
+            return this;
+        }
+
+        public Builder param(String name, String value) {
+            Objects.requireNonNull(name);
+            Objects.requireNonNull(value);
+            this.params.addParam(name, value);
+            return this;
+        }
 
         public Builder httpHeader(String headerName, String headerValue) {
             Objects.requireNonNull(headerName);
@@ -130,28 +136,40 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
 
         public UpdateExecutionHTTP build() {
             Objects.requireNonNull("No service URL", serviceURL);
-            return new UpdateExecutionHTTP(serviceURL, update, updateString, httpClient, params, httpHeaders, sendMode);
+            if ( update == null && updateString == null )
+                throw new QueryException("No update for UpdateExecutionHTTP");
+            return new UpdateExecutionHTTP(serviceURL, update, updateString, httpClient, params,
+                                           copyArray(usingGraphURIs),
+                                           copyArray(usingNamedGraphURIs),
+                                           new HashMap<>(httpHeaders),
+                                           sendMode);
         }
     }
 
-    private Context context;
-    private String service;
-    private UpdateRequest update;
-    private String updateString;
-    private Map<String, String> httpHeaders;
-    private HttpClient httpClient;
-    private SendMode sendMode;
-    private Params params;
+    private final Context context;
+    private final String service;
+    private final UpdateRequest update;
+    private final String updateString;
+    private final Map<String, String> httpHeaders;
+    private final HttpClient httpClient;
+    private final SendMode sendMode;
+    private final Params params;
+    private final List<String> usingGraphURIs;
+    private final List<String> usingNamedGraphURIs;
 
     private UpdateExecutionHTTP(String serviceURL, UpdateRequest update, String updateString,
-                                HttpClient httpClient, Params params, Map<String, String> httpHeaders, SendMode sendMode) {
+                                HttpClient httpClient, Params params,
+                                List<String> usingGraphURIs,
+                                List<String> usingNamedGraphURIs,
+                                Map<String, String> httpHeaders, SendMode sendMode) {
         this.context = ARQ.getContext().copy();
         this.service = serviceURL;
         this.update = update;
         this.updateString = updateString;
-        this.httpHeaders = new HashMap<>(httpHeaders);
         this.httpClient = dft(httpClient, HttpEnv.getDftHttpClient());
         this.params = params;
+        this.usingGraphURIs = usingGraphURIs;
+        this.usingNamedGraphURIs = usingNamedGraphURIs;
         this.httpHeaders = httpHeaders;
         this.sendMode = sendMode;
     }
@@ -168,43 +186,61 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
 
     @Override
     public void execute() {
+
+        Params thisParams = new Params(params);
+        if ( usingGraphURIs != null ) {
+            for ( String uri : usingGraphURIs )
+                thisParams.addParam(HttpNames.paramUsingGraphURI, uri);
+        }
+        if ( usingNamedGraphURIs != null ) {
+            for ( String uri : usingNamedGraphURIs )
+                thisParams.addParam(HttpNames.paramUsingNamedGraphURI, uri);
+        }
+
         switch(sendMode) {
             case asPostBody :
-                executePostBody(); break;
+                executePostBody(thisParams); break;
             case asPostForm :
-                executePostForm(); break;
+                executePostForm(thisParams); break;
         }
     }
 
-    private void executePostBody() {
+    private void executePostBody(Params thisParams) {
         String str = (updateString != null) ? updateString : update.toString();
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
-            .uri(HttpLib.toURI(service))
-            .POST(BodyPublishers.ofString(str))
-            .header(HttpNames.hContentType, WebContent.contentTypeSPARQLUpdate);
-        httpHeaders.forEach((k,v)->builder.header(k,v));
-        HttpRequest request = builder.build();
-        executeUpdate(httpClient, request);
+        String requestURL = service;
+        if ( thisParams.count() > 0 ) {
+            String qs = thisParams.httpString();
+            requestURL = requestURL(requestURL, qs);
+        }
+        execute(requestURL, BodyPublishers.ofString(str), WebContent.contentTypeSPARQLUpdate);
     }
 
-    private HttpResponse<String> executeUpdate(HttpClient httpClient2, HttpRequest request) {
+    private void executePostForm(Params thisParams) {
+        thisParams.addParam(HttpParams.pUpdate, updateString);
+        String formString = thisParams.httpString();
+        // Everything does into the form body, no use of the request URI query string.
+        String requestURL = service;
+
+        execute(requestURL, BodyPublishers.ofString(formString, StandardCharsets.US_ASCII), WebContent.contentTypeHTMLForm);
+
+//        HttpRequest.Builder builder = HttpRequest.newBuilder()
+//            .uri(HttpLib.toURI(requestURL))
+//            .POST(BodyPublishers.ofString(formString, StandardCharsets.US_ASCII))
+//            .header(HttpNames.hContentType, WebContent.contentTypeHTMLForm);
+//        httpHeaders.forEach((k,v)->builder.header(k,v));
+//        HttpRequest request = builder.build();
+//        executeUpdate(httpClient, request);
+    }
+
+    private HttpResponse<String> execute(String requestURL, BodyPublisher body, String contentType) {
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+            .uri(HttpLib.toURI(requestURL))
+            .POST(body)
+            .header(HttpNames.hContentType, contentType);
+        httpHeaders.forEach((k,v)->builder.header(k,v));
+        HttpRequest request = builder.build();
         HttpResponse<String> response = HttpLib.execute(httpClient, request, BodyHandlers.ofString());
         HttpLib.handleHttpStatusCode(response, bodyStringFetcher);
         return response;
-    }
-
-    private void executePostForm() {
-        Params thisParams = new Params(params);
-        String postStr = params.toString();
-        thisParams.addParam(HttpParams.pUpdate, updateString);
-        String formString = thisParams.httpString();
-
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
-            .uri(HttpLib.toURI(service))
-            .POST(BodyPublishers.ofString(formString, StandardCharsets.US_ASCII))
-            .header(HttpNames.hContentType, WebContent.contentTypeHTMLForm);
-        httpHeaders.forEach((k,v)->builder.header(k,v));
-        HttpRequest request = builder.build();
-        executeUpdate(httpClient, request);
     }
 }

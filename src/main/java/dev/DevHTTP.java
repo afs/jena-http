@@ -18,60 +18,62 @@
 
 package dev;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest.BodyPublishers;
-import java.time.Duration;
-import java.util.Base64;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
-import org.apache.jena.atlas.lib.DateTimeUtils;
+import org.apache.jena.atlas.lib.StrUtils;
 import org.apache.jena.atlas.logging.LogCtl;
-import org.apache.jena.atlas.web.AuthScheme;
-import org.apache.jena.fuseki.auth.Auth;
-import org.apache.jena.fuseki.jetty.JettyLib;
 import org.apache.jena.fuseki.main.FusekiServer;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.Syntax;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.WebContent;
+import org.apache.jena.riot.web.HttpNames;
+import org.apache.jena.riot.web.HttpOp;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.UsingList;
 import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.sparql.util.QueryExecUtils;
-import org.eclipse.jetty.security.SecurityHandler;
-import org.eclipse.jetty.security.UserStore;
-import org.seaborne.http.HttpOp2;
-import org.seaborne.http.HttpRDF;
+import org.apache.jena.update.UpdateAction;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 import org.seaborne.http.QueryExecutionHTTP;
-import org.seaborne.http.UpdateExecutionHTTP;
 
 public class DevHTTP {
     static { LogCtl.setLog4j(); }
 
-    public static void main(String...args) throws IOException, InterruptedException {
-//        System.setProperty("jdk.internal.httpclient.debug", "true");
-//        System.setProperty("jdk.httpclient.HttpClient.log", "requests");
+    public static void main(String...args) {
+        //String updateString = "INSERT DATA { <x:s> <x:q> 123}";
+        String updateString = "INSERT { <x:s> <x:q> ?o} WHERE { ?s ?p ?o }";
 
-//        -Djdk.httpclient.HttpClient.log=
-//            errors,requests,headers,
-//            frames[:control:data:window:all],content,ssl,trace,channel
+        UsingList usingList = new UsingList();
+        //usingList.addUsing(NodeFactory.createURI("http://example/gx"));
+        DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
+        Quad q = SSE.parseQuad("(:g :s :p 456)");
+        dsg.add(q);
 
-//        String g = HttpRDF.httpGetString("http://www.sparql.org/D.ttl");
-//        System.out.print(g);
-//        System.exit(0);
+        // Not updating the underlying graph!
+        //DatasetGraph dsg = DatasetGraphFactory.createGeneral();
 
-        // Connection caching and pooling?
+        byte[] b = StrUtils.asUTF8bytes(updateString);
+        ByteArrayInputStream input = new ByteArrayInputStream(b);
 
-        UserStore userStore = JettyLib.makeUserStore("u", "p");
-        SecurityHandler sh = JettyLib.makeSecurityHandler("TripleStore",  userStore, AuthScheme.BASIC);
+        UpdateAction.parseExecute(usingList, dsg, input, "http://server/unset-base/", Syntax.syntaxARQ);
 
+        RDFDataMgr.write(System.out,  dsg, Lang.TRIG);
+        System.out.println("----");
+    }
+
+    public static void mainX(String...args) throws IOException, InterruptedException {
         FusekiServer server = FusekiServer.create()
             //.parseConfigFile("/home/afs/tmp/config.ttl")
             .add("/ds", DatasetGraphFactory.createTxnMem())
             .port(3030)
-            .securityHandler(sh)
-            .serverAuthPolicy(Auth.policyAllowSpecific("u"))
             //.verbose(true)
             .addServlet("/data", new TestServlet())
             .build();
@@ -90,96 +92,37 @@ public class DevHTTP {
 
     private static void clientQueryExec() {
 
-        Authenticator authenticator = new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                //System.err.println("**** getPasswordAuthentication");
-                return new PasswordAuthentication("u", "p".toCharArray());
-            }
-        };
+        //String updateString = "INSERT DATA { <x:s> <x:q> 123}";
+        String updateString = "INSERT { <x:s> <x:q> 123} WHERE {}";
+        UpdateRequest req = UpdateFactory.create(updateString);
 
-        HttpClient hc = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .authenticator(authenticator)
-            .build();
+        String URL = "http://localhost:3030/ds/update";
+        String graph = "http://example/gx";
+        URL = URL+"?"+HttpNames.paramUsingGraphURI+"="+URLEncoder.encode(graph, StandardCharsets.UTF_8);
 
-        UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
-            .service("http://localhost:3030/ds")
-            .updateString("INSERT DATA { <x:s> <x:q> 123}")
-            .httpClient(hc)
-            .build();
-        uExec.execute();
+        //UpdateExecutionFactory.createRemote(req, URL).execute();
+        HttpOp.execHttpPost(URL, WebContent.contentTypeSPARQLUpdate, updateString);
 
+
+//        UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
+//            .service("http://localhost:3030/ds")
+//            .updateString("INSERT DATA { <x:s> <x:q> 123}")
+//            .build();
+//        uExec.execute();
 
         String[] x = {
-            "SELECT * { ?s ?p ?o }"
-            , "ASK  {}"
-            , "CONSTRUCT WHERE { ?s ?p ?o }"
+            "SELECT * { { ?s ?p ?o } UNION { GRAPH ?g { ?s ?p ?o } } }"
+//            , "ASK  {}"
+//            , "CONSTRUCT WHERE { ?s ?p ?o }"
         };
 
         for ( var qs : x ) {
             try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
-                    .httpClient(hc)
                     .service("http://localhost:3030/ds/query")
                     .queryString(qs)
                     .build()) {
                 QueryExecUtils.executeQuery(qexec);
             }
         }
-
-//        if ( true ) return;
-//        try ( QueryExecution qexec = new QueryExecutionHTTP("http://localhost:3030/ds/query", "SELECT * { BIND(1 AS ?X) }") ) {
-//            ResultSet rs = qexec.execSelect();
-//            ResultSetFormatter.out(rs);
-//        }
-//        try ( QueryExecution qexec = new QueryExecutionHTTP("http://localhost:3030/ds/query", "ASK  {}" ) ) {
-//            boolean b = qexec.execAsk();
-//        }
-//        try ( QueryExecution qexec = new QueryExecutionHTTP("http://localhost:3030/ds/query", "CONSTRUCT {<x:s> <x:p> 123 } WHERE {}" ) ) {
-//            Model m = qexec.execConstruct();
-//            RDFDataMgr.write(System.out,  m, Lang.RDFXML);
-//        }
-
-    }
-
-    private static void clientBasic() {
-
-        // 404 - test needed
-        //String x = HttpRDF.httpGetString("http://localhost:3030/no");
-
-
-        HttpRDF.httpGetGraph("http://localhost:3030/no");
-
-        if ( true ) return;
-
-        HttpOp2.httpPut("http://localhost:3030/data", "text/plain", BodyPublishers.ofString("TEST"));
-        printServletGet("http://localhost:3030/data");
-
-        HttpOp2.httpPost("http://localhost:3030/data", "text/plain", BodyPublishers.ofString("2"));
-        printServletGet("http://localhost:3030/data");
-
-        HttpOp2.httpDelete("http://localhost:3030/data");
-        printServletGet("http://localhost:3030/data");
-
-        if ( true ) return;
-
-        Graph g1 = SSE.parseGraph("(graph (:s :p '"+DateTimeUtils.nowAsString()+"'))");
-        HttpRDF.httpPostGraph("http://localhost:3030/ds?default", g1);
-        Graph g2 = HttpRDF.httpGetGraph("http://localhost:3030/ds?default");
-        System.out.println();
-        RDFDataMgr.write(System.out, g2, Lang.TTL);
-        System.out.println();
-    }
-
-    public static void printServletGet(String url) {
-        String s = HttpOp2.httpGetString(url);
-        if ( s.isEmpty() )
-            System.out.println("<empty>");
-        else
-            System.out.println(s);
-        }
-
-    private static String basicAuth(String username, String password) {
-        return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
     }
 }

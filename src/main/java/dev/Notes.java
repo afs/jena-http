@@ -20,18 +20,16 @@ package dev;
 
 public class Notes {
     // New!
+    //  HttpGSP??
+    // Look for XXX
+    //   using-graph-uri, using-named-graph-uri,
+    //   Basic SPARQL Update is broken for WITH
+    //   Protocol SPARQL Update is broken for using-graph-uri, using-named-graph-uri.
 
     // Security for scripts
     //    Per destination setup./ SERVICE
     //    Setting User/password for first use calls. / basic.
     //    Registry : inc prefix of URL.
-
-    // Check test coverage.
-    //    TestHttpQuery - timeouts.
-
-    // Support:
-    //   default-graph-uri, named-graph-uri
-    //   using-graph-uri, using-named-graph-uri
 
     // ----
 
