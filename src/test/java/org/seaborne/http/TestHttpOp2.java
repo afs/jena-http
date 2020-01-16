@@ -38,7 +38,6 @@ import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
-//import org.apache.jena.riot.web.HttpOp;
 import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.system.Txn;
 import org.apache.jena.web.HttpSC;
@@ -51,7 +50,7 @@ import org.junit.Test;
  * {@link HttpOp2} testing, and including {@link HttpOp2} used directly for SPARQL operations.
  * Includes error cases and unusual usage that the higher level APIs may not use but are correct.
  */
-public class TestHttpOp1 {
+public class TestHttpOp2 {
 
     private static FusekiServer server;
     private static DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
@@ -192,27 +191,27 @@ public class TestHttpOp1 {
                 () -> HttpOp2.httpPost(sparqlURL(), WebContent.contentTypeOctets, BodyPublishers.ofString("ASK{}")));
     }
 
-    @Test public void httpPost_04() {
+    @Test public void httpPostForm_01() {
         Params params = new Params().addParam("query", "ASK{}");
         HttpResponse<InputStream> response = HttpOp2.httpPostForm(sparqlURL(), params, WebContent.contentTypeResultsJSON);
         try ( InputStream in = response.body() ) {} catch (IOException e) { IO.exception(e); }
     }
 
-    @Test public void httpPost_05() {
+    @Test public void httpPostForm_02() {
         Params params = new Params().addParam("query", "ASK{}");
         // Query to Update
         execWithHttpException(HttpSC.BAD_REQUEST_400,
                 () -> HttpOp2.httpPostForm(updateURL(), params, WebContent.contentTypeResultsJSON));
     }
 
-    @Test public void httpPost_06() {
+    @Test public void httpPostForm_03() {
         Params params = new Params().addParam("update", "CLEAR ALL");
         // Update to Query
         execWithHttpException(HttpSC.BAD_REQUEST_400,
             ()->HttpOp2.httpPostForm(queryURL(), params, "*/*"));
     }
 
-    @Test public void httpPost_07() {
+    @Test public void httpPostForm_04() {
         Params params = new Params().addParam("update", "CLEAR ALL");
         // Update to update
         HttpOp2.httpPostForm(updateURL(), params, "*/*");

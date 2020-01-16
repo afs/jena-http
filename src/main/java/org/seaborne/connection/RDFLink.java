@@ -22,9 +22,12 @@ import java.util.function.Consumer;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdfconnection.*;
+import org.apache.jena.rdfconnection.JenaConnectionException;
+import org.apache.jena.rdfconnection.RDFConnectionFactory;
+import org.apache.jena.rdfconnection.RDFConnectionLocal;
+import org.apache.jena.rdfconnection.RDFConnectionRemote;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.core.Transactional;
 import org.apache.jena.system.Txn;
 import org.apache.jena.update.Update;
@@ -37,9 +40,9 @@ import org.apache.jena.update.UpdateRequest;
  * interfaces for a subset of the operations.
  *
  * <ul>
- * <li>query ({@link ConnSparqlQuery})
- * <li>update ({@link ConnSparqlUpdate})
- * <li>graph store protocol ({@link ConnDatasetGraph}).
+ * <li>query ({@link LinkSparqlQuery})
+ * <li>update ({@link LinkSparqlUpdate})
+ * <li>graph store protocol ({@link LinkDatasetGraph} and read-only {@link LinkDatasetGraphAccess}).
  * </ul>
  *
  * For remote operations, the
@@ -62,13 +65,13 @@ import org.apache.jena.update.UpdateRequest;
  * @see RDFConnectionFactory
  * @see RDFConnectionLocal
  * @see RDFConnectionRemote
- * @see ConnSparqlQuery
- * @see ConnSparqlUpdate
- * @see ConnDatasetGraph
+ * @see LinkSparqlQuery
+ * @see LinkSparqlUpdate
+ * @see LinkDatasetGraph
  */
 
-public interface ConnRDF extends
-        ConnSparqlQuery, ConnSparqlUpdate, ConnDatasetGraph,
+public interface RDFLink extends
+        LinkSparqlQuery, LinkSparqlUpdate, LinkDatasetGraph,
         Transactional, AutoCloseable
  {
     // Default implementations could be pushed up but then they can't be mentioned here
@@ -116,16 +119,22 @@ public interface ConnRDF extends
         } );
     }
 
+    private static void forEachRow(ResultSet resultSet, Consumer<Binding> rowAction) {
+        while(resultSet.hasNext()) {
+            rowAction.accept(resultSet.nextBinding());
+        }
+    }
+
     /**
      * Execute a SELECT query and process the rows of the results with the handler code.
      * @param queryString
      * @param rowAction
      */
     @Override
-    public default void querySelect(String queryString, Consumer<QuerySolution> rowAction) {
+    public default void querySelect(String queryString, Consumer<Binding> rowAction) {
         Txn.executeRead(this, ()->{
             try ( QueryExecution qExec = query(queryString) ) {
-                qExec.execSelect().forEachRemaining(rowAction);
+                forEachRow(qExec.execSelect(), rowAction);
             }
         } );
     }
@@ -136,56 +145,56 @@ public interface ConnRDF extends
      * @param rowAction
      */
     @Override
-    public default void querySelect(Query query, Consumer<QuerySolution> rowAction) {
+    public default void querySelect(Query query, Consumer<Binding> rowAction) {
         if ( ! query.isSelectType() )
             throw new JenaConnectionException("Query is not a SELECT query");
         Txn.executeRead(this, ()->{
             try ( QueryExecution qExec = query(query) ) {
-                qExec.execSelect().forEachRemaining(rowAction);
+                forEachRow(qExec.execSelect(), rowAction);
             }
         } );
     }
 
-    /** Execute a CONSTRUCT query and return as a Model */
+    /** Execute a CONSTRUCT query and return as a Graph */
     @Override
-    public default Model queryConstruct(String queryString) {
+    public default Graph queryConstruct(String queryString) {
         return
             Txn.calculateRead(this, ()->{
                 try ( QueryExecution qExec = query(queryString) ) {
-                    return qExec.execConstruct();
+                    return qExec.execConstruct().getGraph();
                 }
             } );
     }
 
-    /** Execute a CONSTRUCT query and return as a Model */
+    /** Execute a CONSTRUCT query and return as a Graph */
     @Override
-    public default Model queryConstruct(Query query) {
+    public default Graph queryConstruct(Query query) {
         return
             Txn.calculateRead(this, ()->{
                 try ( QueryExecution qExec = query(query) ) {
-                    return qExec.execConstruct();
+                    return qExec.execConstruct().getGraph();
                 }
             } );
     }
 
-    /** Execute a DESCRIBE query and return as a Model */
+    /** Execute a DESCRIBE query and return as a Graph */
     @Override
-    public default Model queryDescribe(String queryString) {
+    public default Graph queryDescribe(String queryString) {
         return
             Txn.calculateRead(this, ()->{
                 try ( QueryExecution qExec = query(queryString) ) {
-                    return qExec.execDescribe();
+                    return qExec.execDescribe().getGraph();
                 }
             } );
     }
 
-    /** Execute a DESCRIBE query and return as a Model */
+    /** Execute a DESCRIBE query and return as a Graph */
     @Override
-    public default Model queryDescribe(Query query) {
+    public default Graph queryDescribe(Query query) {
         return
             Txn.calculateRead(this, ()->{
                 try ( QueryExecution qExec = query(query) ) {
-                    return qExec.execDescribe();
+                    return qExec.execDescribe().getGraph();
                 }
             } );
     }

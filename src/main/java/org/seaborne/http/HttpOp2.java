@@ -20,12 +20,12 @@ package org.seaborne.http;
 
 import static org.seaborne.http.HttpLib.bodyInputStreamToString;
 import static org.seaborne.http.HttpLib.bodyStringFetcher;
-import static org.seaborne.http.HttpLib.dft;
 import static org.seaborne.http.HttpLib.execute;
+import static org.seaborne.http.HttpLib.urlEncode;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URLEncoder;
+//import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
@@ -49,8 +49,14 @@ import org.apache.jena.sparql.engine.http.Params;
 
 
 /**
- * This is the HTTP engine for RDF handling.
- * It does not cover the  GSP naming (?default, ?graph=).
+ * This is a collection of convenience operations for HTTP requests
+ * mostly in support of RDF handling and common, basic use case for HTTP.
+ * It is not comprehensive.
+ *
+ *
+ *
+ * @see HttpRDF
+ * @see GSP
  */
 public class HttpOp2 {
 
@@ -129,20 +135,6 @@ public class HttpOp2 {
         return HttpLib.getInputStream(response);
     }
 
-//    /** POST */
-//    public static void httpPost(String url, String contentType, Path file) {
-//        httpPost(HttpEnv.getDftHttpClient(), url, contentType, file);
-//    }
-//
-//    /** POST */
-//    public static void httpPost(HttpClient httpClient, String url, String contentType, Path file) {
-//        try {
-//            BodyPublisher x = BodyPublishers.ofFile(file);
-//        } catch (FileNotFoundException ex) {
-//            throw new NotFoundException(file.toString());
-//        }
-//    }
-
     /** POST
      * @see BodyPublishers
      * @see BodyPublishers#ofFile
@@ -178,7 +170,6 @@ public class HttpOp2 {
 
     /** Push data. POST or PUT request with no response body data. */
     private static void httpPushData(HttpClient httpClient, boolean isPost, String url, String contentType, BodyPublisher body) {
-        // XXX newPostPutRequest
         URI uri = HttpLib.toURI(url);
         HttpRequest.Builder builder = HttpRequest.newBuilder();
         builder.uri(uri);
@@ -189,14 +180,20 @@ public class HttpOp2 {
         if ( contentType != null )
             builder.header(HttpNames.hContentType, contentType);
         HttpRequest request = builder.build();
-        HttpResponse<Void> response = execute(httpClient, request, BodyHandlers.discarding());
+        HttpResponse<String> response = execute(httpClient, request, BodyHandlers.ofString());
+        HttpLib.handleHttpStatusCode(response, bodyStringFetcher);
     }
 
-    public static HttpResponse<InputStream> httpPostForm(String url, Params params, String acceptString) {
+    // POST form - probably not needed in this convenience class.
+    // Retain for reference.
+
+    /*package*/ static HttpResponse<InputStream> httpPostForm(String url, Params params, String acceptString) {
+        return httpPostForm(HttpEnv.getDftHttpClient(), url, params, acceptString);
+    }
+
+    /*package*/  static HttpResponse<InputStream> httpPostForm(HttpClient httpClient, String url, Params params, String acceptString) {
         Objects.requireNonNull(url);
-        // XXX Other httpClients.
-        HttpClient hc = HttpEnv.getDftHttpClient();
-        acceptString = dft(acceptString, "*/*");
+        acceptString = HttpLib.dft(acceptString, "*/*");
         URI uri = HttpLib.toURI(url);
         String formData =
             params.pairs().stream()
@@ -210,23 +207,10 @@ public class HttpOp2 {
             .header(HttpNames.hAccept, acceptString)
             .build();
 
-        HttpResponse<InputStream> response = execute(hc, request, BodyHandlers.ofInputStream());
+        HttpResponse<InputStream> response = execute(httpClient, request, BodyHandlers.ofInputStream());
         HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
         return response;
     }
-
-    private static String urlEncode(String str) {
-        return URLEncoder.encode(str, StandardCharsets.UTF_8);
-    }
-
-//    private static HttpResponse<InputStream> httpGetToInput(HttpClient client, String url, String acceptHeader) {
-//        Objects.requireNonNull(client);
-//        Objects.requireNonNull(url);
-//        URI uri = toURI(url);
-//        HttpRequest requestData = newGetRequest(client, url, acceptHeader);
-//        HttpResponse<InputStream> response = execute(client, requestData, HttpEnv.getBodyInputStream());
-//        return response;
-//    }
 
     /** DELETE */
     public static void httpDelete(String url) {
@@ -246,8 +230,8 @@ public class HttpOp2 {
 
     private static String bodyString(ResponseInfo responseInfo) {
         try {
-            BodySubscriber<InputStream> x = BodySubscribers.ofInputStream();
-            return bodyString(responseInfo.headers(), x.getBody().toCompletableFuture().get());
+            BodySubscriber<InputStream> bodySubscriber = BodySubscribers.ofInputStream();
+            return bodyString(responseInfo.headers(), bodySubscriber.getBody().toCompletableFuture().get());
         } catch (InterruptedException | ExecutionException e) {
             throw new HttpException("Error capturing body of "+responseInfo.statusCode(), e);
         }

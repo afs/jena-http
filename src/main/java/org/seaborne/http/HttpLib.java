@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
@@ -86,14 +87,13 @@ public class HttpLib {
 
     private static BodyHandler<InputStream> buildDftBodyHandlerInputStream() {
         return responseInfo -> {
-            // For simplicity, deal with at the start of body processing.
-            // handleHttpStatusCode(responseInfo);
-            // XXX Add compression decode. here or later?
             return BodySubscribers.ofInputStream();
         };
     }
 
     static BodyHandler<InputStream> getBodyInputStream() { return HttpLib.bodyHandlerInputStream; }
+
+    static Function<HttpResponse<String>, String> noBodyFetcher = r -> null;
 
     static Function<HttpResponse<String>, String> bodyStringFetcher = r-> {
         String msg = r.body();
@@ -114,7 +114,7 @@ public class HttpLib {
     };
 
     /** Calculate basic auth header. */
-    static String basicAuth(String username, String password) {
+    public static String basicAuth(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
     }
 
@@ -144,11 +144,11 @@ public class HttpLib {
             throw new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), null);
         }
         else if ( HttpLib.inRange(httpStatusCode, 400, 499) ) {
-            String msg = bodyFetcher.apply(response);
+            String msg = ( bodyFetcher != null ) ? bodyFetcher.apply(response) : null;
             throw new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), msg);
         }
         else if ( HttpLib.inRange(httpStatusCode, 500, 599) ) {
-            String msg = bodyFetcher.apply(response);
+            String msg = ( bodyFetcher != null ) ? bodyFetcher.apply(response) : null;
             throw new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), msg);
         }
     }
@@ -178,6 +178,13 @@ public class HttpLib {
         return new ArrayList<>(array);
     }
 
+    /** Encode a string suitable for use in an URL query string */
+    static String urlEncode(String str) {
+        return URLEncoder.encode(str, StandardCharsets.UTF_8);
+    }
+
+
+    /** Query string is assumed to already be encoded. */
     static String requestURL(String url, String queryString) {
         String sep =  url.contains("?") ? "&" : "?";
         String requestURL = url+sep+queryString;

@@ -57,6 +57,7 @@ import org.apache.jena.sparql.engine.http.Service;
 import org.apache.jena.sparql.graph.GraphFactory ;
 import org.apache.jena.sparql.resultset.ResultSetException;
 import org.apache.jena.sparql.util.Context ;
+import org.seaborne.http.ServiceRegistry.ServiceTuning;
 import org.slf4j.Logger ;
 import org.slf4j.LoggerFactory ;
 
@@ -95,7 +96,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     private boolean allowCompression = false;
 
     // Content Types: these list the standard formats and also include */*.
-    // XXX Rename.
+    // XXX Merge WebContent2 into WebContent
     private String selectContentType    = WebContent2.sparqlResultsHeader;
     private String askContentType       = WebContent2.sparqlAskHeader;
     private String describeContentType  = WebContent.defaultGraphAcceptHeader;
@@ -117,40 +118,6 @@ public class QueryExecutionHTTP implements QueryExecution {
 
     private Map<String, String> httpHeaders;
 
-
-
-
-//    public QueryExecutionHTTP(String serviceURI, Query query) {
-//        this(serviceURI, query, null, null);
-//    }
-//
-//    public QueryExecutionHTTP(String serviceURI, Query query, HttpClient client) {
-//        this(serviceURI, query, null, client);
-//    }
-//
-//    public QueryExecutionHTTP(String serviceURI, String queryString) {
-//        this(serviceURI, null, queryString, null);
-//    }
-//
-//    public QueryExecutionHTTP(String serviceURI, String queryString, HttpClient client) {
-//        this(serviceURI, null, queryString, client);
-//    }
-//
-//    private QueryExecutionHTTP(String serviceURI, Query query, String queryString, HttpClient client) {
-//        this.query = query;
-//        this.queryString = queryString;
-//        this.service = serviceURI;
-//        this.context = ARQ.getContext().copy();
-//
-//        // Apply service configuration if relevant
-//        applyServiceConfig(serviceURI, this);
-//
-//        // Don't want to overwrite client config we may have picked up from
-//        // service context in the parent constructor if the specified
-//        // client is null
-//        this.httpClient = dft(client, HttpEnv.getDftHttpClient());
-//    }
-
     public enum SendMode { asGetWithLimit, asGetAlways, asPostForm, asPostBody }
 
     public static Builder newBuilder() { return new Builder(); }
@@ -167,7 +134,7 @@ public class QueryExecutionHTTP implements QueryExecution {
         private long timeout = -1;
         private TimeUnit timeoutUnit = null;
 
-        private int urlLimit = -1;
+        private int urlLimit = HttpEnv.urlLimit;
         private SendMode sendMode = SendMode.asGetWithLimit;
         private List<String> defaultGraphURIs = new ArrayList<>();
         private List<String> namedGraphURIs = new ArrayList<>();
@@ -308,10 +275,8 @@ public class QueryExecutionHTTP implements QueryExecution {
             Objects.requireNonNull("No service URL", serviceURL);
             if ( queryString == null && query == null )
                 throw new QueryException("No query for QueryExecutionHTTP");
-            // XXX urlLimit
-            return new QueryExecutionHTTP(serviceURL, query, queryString, httpClient,
-                                          new HashMap<>(httpHeaders),
-                                          new Params(params),
+            return new QueryExecutionHTTP(serviceURL, query, queryString, urlLimit,
+                                          httpClient, new HashMap<>(httpHeaders), new Params(params),
                                           copyArray(defaultGraphURIs),
                                           copyArray(namedGraphURIs),
                                           sendMode, acceptHeader, allowCompression,
@@ -319,7 +284,7 @@ public class QueryExecutionHTTP implements QueryExecution {
         }
     }
 
-    private QueryExecutionHTTP(String serviceURL, Query query, String queryString,
+    private QueryExecutionHTTP(String serviceURL, Query query, String queryString, int urlLimit,
                                HttpClient httpClient, Map<String, String> httpHeaders, Params params,
                                List<String> defaultGraphURIs, List<String> namedGraphURIs,
                                SendMode sendMode, String acceptHeader, boolean allowCompression,
@@ -328,6 +293,7 @@ public class QueryExecutionHTTP implements QueryExecution {
         this.service = serviceURL;
         this.query = query;
         this.queryString = queryString;
+        this.urlLimit = urlLimit;
         this.httpHeaders = httpHeaders;
         this.defaultGraphURIs = defaultGraphURIs;
         this.namedGraphURIs = namedGraphURIs;
@@ -782,30 +748,7 @@ public class QueryExecutionHTTP implements QueryExecution {
         return (duration < 0) ? duration : timeUnit.toMillis(duration);
     }
 
-    // Use SPARQL query body and MIME type.
-    // XXX Use!
-    // XXX Extract and share with SPARQL Update.
-    // Common steps with query()
-    private HttpResponse<InputStream> queryPush(Params thisParams, String acceptHeader) {
-        if (closed)
-            throw new ARQException("HTTP execution already closed");
-
-        // Use thisParams (for default-graph-uri etc)
-        String url = service;
-        if ( thisParams.count() > 0 )
-            url = url + "&"+thisParams.httpString();
-
-        HttpRequest request = HttpLib.newBuilder(service, httpHeaders, acceptHeader, allowCompression, readTimeout, readTimeoutUnit)
-            .POST(BodyPublishers.ofString(queryString))
-            .header(HttpNames.hContentType, WebContent.contentTypeSPARQLQuery)
-            .build();
-
-        HttpResponse<InputStream> response = execute(httpClient, request, BodyHandlers.ofInputStream());
-        HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
-        return response;
-    }
-
-    // Use GET/POST-form.
+    // Make a query.
     private HttpResponse<InputStream> query(String acceptHeader) {
         if (closed)
             throw new ARQException("HTTP execution already closed");
@@ -827,12 +770,16 @@ public class QueryExecutionHTTP implements QueryExecution {
             if ( allowCompression )
                 httpHeaders.put(HttpNames.hAcceptEncoding, "gzip,inflate");
         }
-        thisParams.merge(getServiceParams(service, context));
+        modifyByService(service,  context,  thisParams,  httpHeaders);
 
         // Query string or HTML form.
         if ( sendMode == SendMode.asPostBody )
             return queryPush(thisParams, acceptHeader);
+        else
+            return queryGetForm(thisParams, acceptHeader);
+    }
 
+    private HttpResponse<InputStream> queryGetForm(Params thisParams, String acceptHeader) {
         thisParams.addParam(HttpParams.pQuery, queryString);
 
         int thisLengthLimit = urlLimit;
@@ -850,17 +797,6 @@ public class QueryExecutionHTTP implements QueryExecution {
             default :
                 throw new HttpException("Send mode not recognized for query string based request: "+sendMode);
         }
-
-        // XXX
-//        // check for service context overrides
-//        if (context.isDefined(Service.serviceContext)) {
-//            Map<String, Context> servicesContext = context.get(Service.serviceContext);
-//            if (servicesContext.containsKey(service)) {
-//                Context serviceContext = servicesContext.get(service);
-//                if (serviceContext.isDefined(Service.queryClient)) client = serviceContext.get(Service.queryClient);
-//            }
-//        }
-
         return execRequestQS(service, httpClient, sendMode, thisLengthLimit, httpHeaders, thisParams, acceptHeader, allowCompression, readTimeout, readTimeoutUnit);
     }
 
@@ -913,27 +849,35 @@ public class QueryExecutionHTTP implements QueryExecution {
         return response;
     }
 
-    // This is to allow setting additional/optional query parameters on a per
-    // SERVICE level, see: JENA-195
-    protected static Params getServiceParams(String serviceURI, Context context) throws QueryExecException {
-        Params params = new Params();
-        @SuppressWarnings("unchecked")
-        Map<String, Map<String, List<String>>> serviceParams = (Map<String, Map<String, List<String>>>) context
-                .get(ARQ.serviceParams);
-        if (serviceParams != null) {
-            Map<String, List<String>> paramsMap = serviceParams.get(serviceURI);
-            if (paramsMap != null) {
-                for (String param : paramsMap.keySet()) {
-                    if (HttpParams.pQuery.equals(param))
-                        throw new QueryExecException("ARQ serviceParams overrides the 'query' SPARQL protocol parameter");
+    // Use SPARQL query body and MIME type.
+    private HttpResponse<InputStream> queryPush(Params thisParams, String acceptHeader) {
+        if (closed)
+            throw new ARQException("HTTP execution already closed");
 
-                    List<String> values = paramsMap.get(param);
-                    for (String value : values)
-                        params.addParam(param, value);
-                }
-            }
+        // Use thisParams (for default-graph-uri etc)
+        String url = service;
+        if ( thisParams.count() > 0 )
+            url = url + "&"+thisParams.httpString();
+
+        HttpRequest request = HttpLib.newBuilder(service, httpHeaders, acceptHeader, allowCompression, readTimeout, readTimeoutUnit)
+            .POST(BodyPublishers.ofString(queryString))
+            .header(HttpNames.hContentType, WebContent.contentTypeSPARQLQuery)
+            .build();
+
+        HttpResponse<InputStream> response = execute(httpClient, request, BodyHandlers.ofInputStream());
+        HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
+        return response;
+    }
+
+    // This is to allow setting additional/optional query parameters on a per remote service (including for SERVICE).
+    protected static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
+        // XXX Old Constant.
+        ServiceRegistry srvReg = context.get(ARQ.serviceParams);
+        if ( srvReg != null ) {
+            ServiceTuning mods = srvReg.find(serviceURI);
+            if ( mods != null )
+                mods.modify(params, httpHeaders);
         }
-        return params;
     }
 
     /**

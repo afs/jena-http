@@ -32,10 +32,9 @@ import org.apache.jena.web.HttpSC;
  * A simple servlet for testing client-side code;
  * maintains a string manipulated by all HTTP operations.
  */
-class TestServlet extends HttpServlet {
+class StringHolderServlet extends HttpServlet {
 
     private String content = "";
-
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

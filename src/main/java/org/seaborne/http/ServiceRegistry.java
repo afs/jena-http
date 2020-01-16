@@ -18,17 +18,32 @@
 
 package org.seaborne.http;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import java.util.Map;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses( {
-    TestHttpOp2.class
-    , TestHttpRDF.class
-    , TestGSP.class
-    , TestQueryExecutionHTTP.class
-    , TestHttpQueryAuth.class
-    , TestUpdateExecutionHTTP.class
-})
+import org.apache.jena.atlas.lib.Trie;
+import org.apache.jena.sparql.engine.http.Params;
 
-public class TS_JenaHttp { }
+/**
+ * A service registry is a set of actions to take to modify an HTTP request before
+ * sending it to a specific endpoint.
+ * The key can be a prefix.
+ */
+public class ServiceRegistry {
+    public interface ServiceTuning { void modify(Params params, Map<String, String> httpHeaders) ; }
+
+    public ServiceRegistry() { super(); }
+
+    Trie<ServiceTuning> trie = new Trie<>();
+
+    public void add(String key, ServiceTuning action) {
+        trie.add(key, action);
+    }
+
+    public ServiceTuning find(String key) {
+        return trie.longestMatch(key);
+    }
+
+    public void remove(String key) {
+        trie.remove(key);
+    }
+}

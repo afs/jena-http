@@ -45,7 +45,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** Tests for {@link QueryExecutionHTTP} with no authentication. */
-public class TestHttpQuery {
+public class TestQueryExecutionHTTP {
     private static FusekiServer server = null;
     private static String URL;
     private static String dsName = "/ds";

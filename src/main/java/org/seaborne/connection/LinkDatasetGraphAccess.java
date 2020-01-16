@@ -18,36 +18,38 @@
 
 package org.seaborne.connection;
 
+import org.apache.jena.graph.Graph;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Transactional;
-import org.apache.jena.update.Update;
-import org.apache.jena.update.UpdateRequest;
 
-/** SPARQL Update Operations on a connection.
+/**
+ * SPARQL Graph Store Protocol (read operations) and whole dataset access.
+ * {@link RDFLink} adds the write operations.
  *
- * @see ConnRDF
- * @see ConnRDFFactory
+ * @see RDFLink
  */
-public interface ConnSparqlUpdate extends Transactional, AutoCloseable
+public interface LinkDatasetGraphAccess extends Transactional, AutoCloseable
 {
-    /** Execute a SPARQL Update.
+    /** Fetch a named graph.
+     * This is SPARQL Graph Store Protocol HTTP GET or equivalent.
      *
-     * @param update
+     * @param graphName URI string for the graph name (null or "default" for the default graph)
+     * @return Graph
      */
-    public void update(Update update);
+    public Graph fetch(String graphName);
 
-    /** Execute a SPARQL Update.
-     *
-     * @param update
+    /** Fetch the default graph.
+     * This is SPARQL Graph Store Protocol HTTP GET or equivalent.
+     * @return Graph
      */
-    public void update(UpdateRequest update);
+    public Graph fetch();
 
-    /** Execute a SPARQL Update.
-     *
-     * @param updateString
-     */
-    public void update(String updateString);
+    /** Fetch the contents of the dataset */
+    public DatasetGraph fetchDataset();
 
-    /** Close this connection. */
+    /** Test whether this connection is closed or not */
+    public boolean isClosed();
+
+    /** Close this connection.  Use with try-resource. */
     @Override public void close();
 }
-

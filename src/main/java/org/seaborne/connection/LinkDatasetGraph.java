@@ -24,13 +24,11 @@ import org.apache.jena.sparql.core.Transactional;
 
 /**
  * SPARQL Graph Store Protocol and whole dataset access.
- * This adds the write operations. The read operations are defined by {@link ConnDatasetGraphAccess}.
+ * This adds the write operations. The read operations are defined by {@link LinkDatasetGraphAccess}.
  *
- * @see ConnDatasetGraphAccess
- * @see ConnRDF
- * @see ConnRDFFactory
+ * @see RDFLink
  */
-public interface ConnDatasetGraph extends ConnDatasetGraphAccess, Transactional, AutoCloseable
+public interface LinkDatasetGraph extends LinkDatasetGraphAccess, Transactional, AutoCloseable
 {
     /** Load (add, append) RDF into a named graph in a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.

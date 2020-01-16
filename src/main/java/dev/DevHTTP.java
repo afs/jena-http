@@ -18,64 +18,53 @@
 
 package dev;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.jena.atlas.lib.StrUtils;
+import org.apache.jena.atlas.lib.Trie;
 import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.fuseki.main.FusekiServer;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.Syntax;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.riot.web.HttpOp;
-import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
-import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.modify.UsingList;
-import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.sparql.util.QueryExecUtils;
-import org.apache.jena.update.UpdateAction;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
+import org.seaborne.http.GSP;
+import org.seaborne.http.HttpOp2;
 import org.seaborne.http.QueryExecutionHTTP;
 
 public class DevHTTP {
     static { LogCtl.setLog4j(); }
 
-    public static void main(String...args) {
-        //String updateString = "INSERT DATA { <x:s> <x:q> 123}";
-        String updateString = "INSERT { <x:s> <x:q> ?o} WHERE { ?s ?p ?o }";
+    public static void mainDev(String...args) {
+        Trie<String> trie = new Trie<>();
+        trie.add("ABC", "ABC");
+        trie.add("ABCD", "ABCD");
+        trie.add("ABCX", "ABCX");
+        String x = trie.longestMatch("AB");
 
-        UsingList usingList = new UsingList();
-        //usingList.addUsing(NodeFactory.createURI("http://example/gx"));
-        DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
-        Quad q = SSE.parseQuad("(:g :s :p 456)");
-        dsg.add(q);
+        System.out.println(trie.partialSearch("AB"));
+        System.out.println(trie.prefixSearch("ABC"));
 
-        // Not updating the underlying graph!
-        //DatasetGraph dsg = DatasetGraphFactory.createGeneral();
+        System.out.println(trie.longestMatch("AB"));
+        System.out.println(trie.shortestMatch("AB"));
 
-        byte[] b = StrUtils.asUTF8bytes(updateString);
-        ByteArrayInputStream input = new ByteArrayInputStream(b);
+        System.out.println(x);
 
-        UpdateAction.parseExecute(usingList, dsg, input, "http://server/unset-base/", Syntax.syntaxARQ);
-
-        RDFDataMgr.write(System.out,  dsg, Lang.TRIG);
-        System.out.println("----");
     }
 
-    public static void mainX(String...args) throws IOException, InterruptedException {
+    public static void main(String...args) {
         FusekiServer server = FusekiServer.create()
             //.parseConfigFile("/home/afs/tmp/config.ttl")
             .add("/ds", DatasetGraphFactory.createTxnMem())
             .port(3030)
             //.verbose(true)
-            .addServlet("/data", new TestServlet())
             .build();
         server.start();
         //server.start().join();
@@ -83,7 +72,20 @@ public class DevHTTP {
 
         try {
             //clientBasic();
-            clientQueryExec();
+            //clientQueryExec();
+
+            GSP.request("http://localhost:3030/ds")
+                .defaultGraph()
+                .POST("/home/afs/tmp/D.ttl");
+            Graph graph = GSP.request("http://localhost:3030/ds")
+                .defaultGraph()
+                .GET();
+            RDFDataMgr.write(System.out, graph, Lang.TTL);
+            GSP.request("http://localhost:3030/ds")
+                .graphName("http;//graph/")
+                .POST("/home/afs/tmp/D.ttl");
+            String x = HttpOp2.httpGetString("http://localhost:3030/ds");
+            System.out.print(x);
         }
         catch (Exception ex) {
             ex.printStackTrace();

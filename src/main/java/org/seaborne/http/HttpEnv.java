@@ -22,10 +22,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpClient.Redirect;
 import java.time.Duration;
 
+import org.apache.jena.riot.RDFFormat;
+
 /**
  * JVM wide settings.
  */
 public class HttpEnv {
+
+    // These preserve prefixes.
+    public static final RDFFormat dftTriplesFormat = RDFFormat.TURTLE_BLOCKS;
+    public static final RDFFormat dftQuadsFormat = RDFFormat.TRIG_BLOCKS;
 
     /**
      * Maximum length of URL for GET requests for SPARQL queries

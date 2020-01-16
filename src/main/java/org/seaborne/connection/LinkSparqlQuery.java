@@ -20,16 +20,18 @@ package org.seaborne.connection;
 
 import java.util.function.Consumer;
 
-import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.Model;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.Transactional;
+import org.apache.jena.sparql.engine.binding.Binding;
 
 /** SPARQL Query Operations on a connection.
  *
- * @see ConnRDF
- * @see ConnRDFFactory
+ * @see RDFLink
  */
-public interface ConnSparqlQuery extends Transactional, AutoCloseable
+public interface LinkSparqlQuery extends Transactional, AutoCloseable
 {
     /**
      * Execute a SELECT query and process the ResultSet with the handler code.
@@ -50,26 +52,26 @@ public interface ConnSparqlQuery extends Transactional, AutoCloseable
      * @param query
      * @param rowAction
      */
-    public void querySelect(String query, Consumer<QuerySolution> rowAction);
+    public void querySelect(String query, Consumer<Binding> rowAction);
 
     /**
      * Execute a SELECT query and process the rows of the results with the handler code.
      * @param query
      * @param rowAction
      */
-    public void querySelect(Query query, Consumer<QuerySolution> rowAction);
+    public void querySelect(Query query, Consumer<Binding> rowAction);
 
     /** Execute a CONSTRUCT query and return as a Model */
-    public Model queryConstruct(String query);
+    public Graph queryConstruct(String query);
 
     /** Execute a CONSTRUCT query and return as a Model */
-    public Model queryConstruct(Query query);
+    public Graph queryConstruct(Query query);
 
     /** Execute a DESCRIBE query and return as a Model */
-    public Model queryDescribe(String query);
+    public Graph queryDescribe(String query);
 
     /** Execute a DESCRIBE query and return as a Model */
-    public Model queryDescribe(Query query);
+    public Graph queryDescribe(Query query);
 
     /** Execute a ASK query and return a boolean */
     public boolean queryAsk(String query);

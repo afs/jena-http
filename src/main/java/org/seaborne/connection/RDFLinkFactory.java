@@ -16,19 +16,8 @@
  * limitations under the License.
  */
 
-package org.seaborne.http;
+package org.seaborne.connection;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+public class RDFLinkFactory {
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses( {
-    TestHttpOp2.class
-    , TestHttpRDF.class
-    , TestGSP.class
-    , TestQueryExecutionHTTP.class
-    , TestHttpQueryAuth.class
-    , TestUpdateExecutionHTTP.class
-})
-
-public class TS_JenaHttp { }
+}

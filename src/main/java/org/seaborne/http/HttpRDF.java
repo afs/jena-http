@@ -40,6 +40,7 @@ import org.apache.jena.riot.*;
 import org.apache.jena.riot.system.StreamRDF;
 import org.apache.jena.riot.system.StreamRDFLib;
 import org.apache.jena.riot.web.HttpNames;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.graph.GraphFactory;
 
 /**
@@ -69,6 +70,18 @@ public class HttpRDF {
         return graph;
     }
 
+    /**
+     * GET a graph from a URL using the {@link HttpClient} provided
+     * and the "Accept" header.
+     *
+     * @throws HttpException
+     */
+    public static Graph httpGetGraph(HttpClient httpClient, String url, String acceptHeader) {
+        Graph graph = GraphFactory.createDefaultGraph();
+        execGetGraph(httpClient, graph, url, acceptHeader);
+        return graph;
+    }
+
     // Not API? Put pattern in documentation, with warnings!
     /**
      * GET RDF data and place in the given graph.
@@ -78,42 +91,42 @@ public class HttpRDF {
     // Because of the issues with bad data, may not be good to have this in the "easy" API.
     // Using graph txn when the graph transaction API becomes "Transactional".
     static void execGetGraph(HttpClient httpClient, Graph graph, String url) {
+        execGetGraph(httpClient, graph, url, WebContent.defaultGraphAcceptHeader);
+    }
+
+    static void execGetGraph(HttpClient httpClient, Graph graph, String url, String acceptHeader) {
         TransactionHandler th = graph.getTransactionHandler();
         if ( th.transactionsSupported() ) {
-            th.execute(() -> httpGetToStream(httpClient, StreamRDFLib.graph(graph), url, WebContent.defaultGraphAcceptHeader));
+            th.execute(() -> httpGetToStream(httpClient, StreamRDFLib.graph(graph), url, acceptHeader));
         } else
-            httpGetToStream(httpClient, StreamRDFLib.graph(graph), url, WebContent.defaultGraphAcceptHeader);
+            httpGetToStream(httpClient, StreamRDFLib.graph(graph), url, acceptHeader);
     }
 
     /**
-         * Send the RDF data from the resource at the URL to the StreamRDF.
-         * Beware of parse errors!
-         * @throws HttpException
-         */
-        public static void httpGetToStream(HttpClient client, StreamRDF dest, String url, String acceptHeader) {
-            HttpResponse<InputStream> response = execGetToInput(client, url, acceptHeader);
-            //response.previousResponse();
-            String base = determineBaseURI(url, response);
-            Lang lang = determineSyntax(response, Lang.RDFXML);
-            InputStream in = HttpLib.getInputStream(response);
-            try ( in ) {
-                RDFParser.create()
-                    .base(base)
-                    .source(in)
-                    .lang(lang)
-                    .parse(dest);
-                // No need to exhaust InputStream?
-            } catch (RiotParseException ex) {
-    //          // Unclear: need to flush out the body unparsed junk.
-    //          IO.close(x.body());
-                throw ex;
-            } catch (IOException e) {
-                throw new HttpException(response.request().method()+" "+response.request().uri().toString(), e);
-            }
+     * Send the RDF data from the resource at the URL to the StreamRDF.
+     * Beware of parse errors!
+     * @throws HttpException
+     */
+    public static void httpGetToStream(HttpClient client, StreamRDF dest, String url, String acceptHeader) {
+        if ( acceptHeader == null )
+            acceptHeader = "*/*";
+        HttpResponse<InputStream> response = execGetToInput(client, url, acceptHeader);
+        String base = determineBaseURI(url, response);
+        Lang lang = determineSyntax(response, Lang.RDFXML);
+        try ( InputStream in = HttpLib.getInputStream(response) ) {
+            RDFParser.create()
+                .base(base)
+                .source(in)
+                .lang(lang)
+                .parse(dest);
+        } catch (RiotParseException ex) {
+            // Only read part of the input stream.
+            throw ex;
+        } catch (IOException e) {
+            throw new HttpException(response.request().method()+" "+response.request().uri().toString(), e);
         }
+    }
 
-    // Should be same as HttpOp2 code? execGet->InputStream.
-    // XXX Compression.
     static HttpResponse<InputStream> execGetToInput(HttpClient client, String url, String acceptHeader) {
         Objects.requireNonNull(client);
         Objects.requireNonNull(url);
@@ -124,14 +137,22 @@ public class HttpRDF {
         return response;
     }
 
+
     public static void httpPostGraph(String url, Graph graph) {
-        httpPostGraph(HttpEnv.getDftHttpClient(), url, graph);
+        httpPostGraph(HttpEnv.getDftHttpClient(), url, graph, HttpEnv.dftTriplesFormat);
     }
 
-    public static void httpPostGraph(HttpClient httpClient, String url, Graph graph) {
+    public static void httpPostGraph(HttpClient httpClient, String url, Graph graph, RDFFormat format) {
+        postGraph(httpClient, url, graph, format);
+    }
+
+    public static void httpPostDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
+        postDataset(httpClient, url, dataset, format);
+    }
+
+    private static void postGraph(HttpClient httpClient, String url, Graph graph, RDFFormat fmt) {
         URI uri = HttpLib.toURI(url);
-        RDFFormat fmt = RDFFormat.NT;
-        BodyPublisher x = graphToHttpWithLength(graph, fmt);
+        BodyPublisher x = graphToHttpBody(graph, fmt);
         HttpRequest request = HttpRequest.newBuilder()
             .POST(x)
             .uri(uri)
@@ -141,14 +162,47 @@ public class HttpRDF {
         HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
     }
 
-    public static void httpPutGraph(String url, Graph graph) {
-        httpPutGraph(HttpEnv.getDftHttpClient(), url, graph);
+    private static void postDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
+        URI uri = HttpLib.toURI(url);
+        BodyPublisher x = datasetToHttpBody(dataset, format);
+        HttpRequest request = HttpRequest.newBuilder()
+            .POST(x)
+            .uri(uri)
+            .header(HttpNames.hContentType, format.getLang().getHeaderString())
+            .build();
+        HttpResponse<InputStream> response = HttpLib.execute(httpClient, request, HttpLib.getBodyInputStream());
+        HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
     }
 
-    public static void httpPutGraph(HttpClient httpClient, String url, Graph graph) {
+    public static void httpPutGraph(String url, Graph graph) {
+        httpPutGraph(HttpEnv.getDftHttpClient(), url, graph, HttpEnv.dftTriplesFormat);
+    }
+
+    public static void httpPutGraph(HttpClient httpClient, String url, Graph graph, RDFFormat fmt) {
+        putGraph(httpClient, url, graph, fmt);
+    }
+
+    public static void httpPutDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
+        putDataset(httpClient, url, dataset, format);
+    }
+
+    // XXX DRY!
+
+    private static void putGraph(HttpClient httpClient, String url, Graph graph, RDFFormat fmt) {
         URI uri = HttpLib.toURI(url);
-        RDFFormat fmt = RDFFormat.NT;
-        BodyPublisher x = graphToHttpWithLength(graph, fmt);
+        BodyPublisher x = graphToHttpBody(graph, fmt);
+        HttpRequest requestData = HttpRequest.newBuilder()
+            .PUT(x)
+            .uri(uri)
+            .header(HttpNames.hContentType, fmt.getLang().getHeaderString())
+            .build();
+        HttpResponse<InputStream> response = HttpLib.execute(httpClient, requestData, HttpLib.getBodyInputStream());
+        HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
+    }
+
+    private static void putDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat fmt) {
+        URI uri = HttpLib.toURI(url);
+        BodyPublisher x = datasetToHttpBody(dataset, fmt);
         HttpRequest requestData = HttpRequest.newBuilder()
             .PUT(x)
             .uri(uri)
@@ -184,18 +238,26 @@ public class HttpRDF {
         return uri.toString();
     }
 
-    static BodyPublisher graphToHttpWithLength(Graph graph, RDFFormat syntax) {
-        String ct = syntax.getLang().getContentType().toHeaderString();
+    // This sets Content-Length but requires the entire graph being serialized
+    // to get the serialization size.
+    //
+    // An alternative is to stream the output but then the HTTP connection can't
+    // be reused (don't know when the request finishes, only closing the connection
+    // indicates that).
+
+    static BodyPublisher graphToHttpBody(Graph graph, RDFFormat syntax) {
         ByteArrayOutputStream out = new ByteArrayOutputStream(128*1024);
         RDFDataMgr.write(out, graph, syntax);
         byte[] bytes = out.toByteArray();
         IO.close(out);
-        // This has a Content-Length but required the entire graph being serialized
-        // to know the serialization size.
-        // An alternative is to stream the output but then the HTTP connection can't
-        // be reused (don't know when the request finishes, only closing the connection
-        // indicates that).
         return BodyPublishers.ofByteArray(bytes);
     }
 
+    /*package*/ static BodyPublisher datasetToHttpBody(DatasetGraph dataset, RDFFormat syntax) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream(128*1024);
+        RDFDataMgr.write(out, dataset, syntax);
+        byte[] bytes = out.toByteArray();
+        IO.close(out);
+        return BodyPublishers.ofByteArray(bytes);
+    }
 }

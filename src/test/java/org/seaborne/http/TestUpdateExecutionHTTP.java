@@ -34,7 +34,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TestHttpUpdate {
+public class TestUpdateExecutionHTTP {
 
     private static FusekiServer server = null;
     private static String URL;
@@ -47,7 +47,7 @@ public class TestHttpUpdate {
     static {
         if ( false )
             LogCtl.enable(Fuseki.actionLog);
-        }
+    }
 
     @BeforeClass public static void beforeClass() {
         int port = WebLib.choosePort();

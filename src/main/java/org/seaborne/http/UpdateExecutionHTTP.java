@@ -197,6 +197,8 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
                 thisParams.addParam(HttpNames.paramUsingNamedGraphURI, uri);
         }
 
+        modifyByService(service, context, params, httpHeaders);
+
         switch(sendMode) {
             case asPostBody :
                 executePostBody(thisParams); break;
@@ -220,16 +222,7 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
         String formString = thisParams.httpString();
         // Everything does into the form body, no use of the request URI query string.
         String requestURL = service;
-
         execute(requestURL, BodyPublishers.ofString(formString, StandardCharsets.US_ASCII), WebContent.contentTypeHTMLForm);
-
-//        HttpRequest.Builder builder = HttpRequest.newBuilder()
-//            .uri(HttpLib.toURI(requestURL))
-//            .POST(BodyPublishers.ofString(formString, StandardCharsets.US_ASCII))
-//            .header(HttpNames.hContentType, WebContent.contentTypeHTMLForm);
-//        httpHeaders.forEach((k,v)->builder.header(k,v));
-//        HttpRequest request = builder.build();
-//        executeUpdate(httpClient, request);
     }
 
     private HttpResponse<String> execute(String requestURL, BodyPublisher body, String contentType) {
@@ -242,5 +235,9 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
         HttpResponse<String> response = HttpLib.execute(httpClient, request, BodyHandlers.ofString());
         HttpLib.handleHttpStatusCode(response, bodyStringFetcher);
         return response;
+    }
+
+    protected static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
+        // XXX modifyByService
     }
 }

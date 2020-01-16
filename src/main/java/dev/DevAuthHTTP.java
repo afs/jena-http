@@ -32,18 +32,18 @@ import org.apache.jena.fuseki.auth.Auth;
 import org.apache.jena.fuseki.jetty.JettyLib;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.sparql.util.QueryExecUtils;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.security.UserStore;
-import org.seaborne.http.HttpOp2;
-import org.seaborne.http.HttpRDF;
-import org.seaborne.http.QueryExecutionHTTP;
-import org.seaborne.http.UpdateExecutionHTTP;
+import org.seaborne.http.*;
+import org.seaborne.http.ServiceRegistry.ServiceTuning;
 
 public class DevAuthHTTP {
     static { LogCtl.setLog4j(); }
@@ -72,7 +72,7 @@ public class DevAuthHTTP {
             .securityHandler(sh)
             .serverAuthPolicy(Auth.policyAllowSpecific("u"))
             //.verbose(true)
-            .addServlet("/data", new TestServlet())
+            .addServlet("/data", new StringHolderServlet())
             .build();
         server.start();
         //server.start().join();
@@ -87,6 +87,8 @@ public class DevAuthHTTP {
         } finally  { server.stop(); }
     }
 
+
+
     private static void clientQueryExec() {
 
         Authenticator authenticator = new Authenticator() {
@@ -99,13 +101,25 @@ public class DevAuthHTTP {
 
         HttpClient hc = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
-            .authenticator(authenticator)
+            //.authenticator(authenticator)
             .build();
+
+
+        // Query
+        ServiceTuning mods = (params, headers) ->
+             headers.put(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"));
+
+        // Need to do that for update.
+        ServiceRegistry svcReg = new ServiceRegistry();
+        svcReg.add("http://localhost:3030/ds", mods);
+        ARQ.getContext().put(ARQ.serviceParams, svcReg);
+
 
         UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
             .service("http://localhost:3030/ds")
             .update("INSERT DATA { <x:s> <x:q> 123}")
-            .httpClient(hc)
+            .httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
+            //.httpClient(hc)
             .build();
         uExec.execute();
 
