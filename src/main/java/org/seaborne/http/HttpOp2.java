@@ -45,8 +45,6 @@ import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
-import org.apache.jena.sparql.engine.http.Params;
-
 
 /**
  * This is a collection of convenience operations for HTTP requests

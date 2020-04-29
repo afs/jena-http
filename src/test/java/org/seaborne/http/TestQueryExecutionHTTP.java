@@ -18,19 +18,16 @@
 
 package org.seaborne.http;
 
-import static org.apache.jena.atlas.lib.StrUtils.strjoinNL;
 import static org.apache.jena.sparql.sse.SSE.parseQuad;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.logging.LogCtl;
-import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.atlas.web.WebLib;
 import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.fuseki.main.FusekiServer;
@@ -44,7 +41,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/** Tests for {@link QueryExecutionHTTP} with no authentication. */
+/**
+ * Tests for {@link QueryExecutionHTTP} with no authentication.
+ * See also {@link TestQueryExecutionCleanServer}.
+ */
 public class TestQueryExecutionHTTP {
     private static FusekiServer server = null;
     private static String URL;
@@ -315,24 +315,4 @@ public class TestQueryExecutionHTTP {
             assertEquals(2, x);
         }
     }
-
-    @Test(expected=HttpException.class)
-    public void query_timeout_1() {
-        String queryString = strjoinNL
-            ("PREFIX afn:     <http://jena.apache.org/ARQ/function#>"
-            ,"SELECT * {"
-            ,"  BIND (afn:wait(100) AS ?X)"
-            ,"}");
-
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
-                    .service(dsURL)
-                    .queryString(queryString)
-                    // Short!
-                    .timeout(10, TimeUnit.MILLISECONDS)
-                    .build() ) {
-            long x = Iter.count(qExec.execSelect());
-            assertEquals(2, x);
-        }
-    }
-
 }

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.connection;
+package org.seaborne.link;
 
 import java.util.function.Consumer;
 

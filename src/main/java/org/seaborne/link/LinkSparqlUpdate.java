@@ -16,8 +16,37 @@
  * limitations under the License.
  */
 
-package org.seaborne.connection;
+package org.seaborne.link;
 
-public class QExec {
+import org.apache.jena.sparql.core.Transactional;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateRequest;
 
+/** SPARQL Update Operations on a connection.
+ *
+ * @see RDFLink
+ */
+public interface LinkSparqlUpdate extends Transactional, AutoCloseable
+{
+    /** Execute a SPARQL Update.
+     *
+     * @param update
+     */
+    public void update(Update update);
+
+    /** Execute a SPARQL Update.
+     *
+     * @param update
+     */
+    public void update(UpdateRequest update);
+
+    /** Execute a SPARQL Update.
+     *
+     * @param updateString
+     */
+    public void update(String updateString);
+
+    /** Close this connection. */
+    @Override public void close();
 }
+

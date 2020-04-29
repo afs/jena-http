@@ -27,6 +27,7 @@ import org.junit.runners.Suite;
     , TestHttpRDF.class
     , TestGSP.class
     , TestQueryExecutionHTTP.class
+    , TestQueryExecutionCleanServer.class
     , TestHttpQueryAuth.class
     , TestUpdateExecutionHTTP.class
 })

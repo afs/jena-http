@@ -16,17 +16,16 @@
  * limitations under the License.
  */
 
-package org.seaborne.connection;
+package org.seaborne.link;
 
 import java.util.function.Consumer;
 
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.*;
-import org.apache.jena.rdfconnection.JenaConnectionException;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionLocal;
-import org.apache.jena.rdfconnection.RDFConnectionRemote;
+import org.apache.jena.rdfconnection.*;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.core.Transactional;
 import org.apache.jena.system.Txn;
@@ -283,11 +282,11 @@ public interface RDFLink extends
     /** Load (add, append) RDF into a named graph in a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
      *
-     * @param graphName Graph name (null or "default" for the default graph)
+     * @param graphName Graph name (null or {@link Quad#defaultGraphIRI} for the default graph)
      * @param file File of the data.
      */
     @Override
-    public void load(String graphName, String file);
+    public void load(Node graphName, String file);
 
     /** Load (add, append) RDF into the default graph of a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
@@ -300,11 +299,11 @@ public interface RDFLink extends
     /** Load (add, append) RDF into a named graph in a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
      *
-     * @param graphName Graph name (null or "default" for the default graph)
+     * @param graphName Graph name (null or {@link Quad#defaultGraphIRI} for the default graph)
      * @param graph Data.
      */
     @Override
-    public void load(String graphName, Graph graph);
+    public void load(Node graphName, Graph graph);
 
     /** Load (add, append) RDF into the default graph of a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
@@ -318,11 +317,11 @@ public interface RDFLink extends
      * Any existing data is lost.
      * This is SPARQL Graph Store Protocol HTTP PUT or equivalent.
      *
-     * @param graphName Graph name (null or "default" for the default graph)
+     * @param graphName Graph name (null or {@link Quad#defaultGraphIRI} for the default graph)
      * @param file File of the data.
      */
     @Override
-    public void put(String graphName, String file);
+    public void put(Node graphName, String file);
 
     /** Set the contents of the default graph of a dataset.
      * Any existing data is lost.
@@ -337,11 +336,11 @@ public interface RDFLink extends
      * Any existing data is lost.
      * This is SPARQL Graph Store Protocol HTTP PUT or equivalent.
      *
-     * @param graphName Graph name (null or "default" for the default graph)
+     * @param graphName Graph name (null or {@link Quad#defaultGraphIRI} for the default graph)
      * @param graph Data.
      */
     @Override
-    public void put(String graphName, Graph graph);
+    public void put(Node graphName, Graph graph);
 
     /** Set the contents of the default graph of a dataset.
      * Any existing data is lost.
@@ -354,12 +353,12 @@ public interface RDFLink extends
 
     /**
      * Delete a graph from the dataset.
-     * Null or "default" means the default graph, which is cleared, not removed.
+     * Null or {@link Quad#defaultGraphIRI} means the default graph, which is cleared, not removed.
      *
      * @param graphName
      */
     @Override
-    public void delete(String graphName);
+    public void delete(Node graphName);
 
     /**
      * Remove all data from the default graph.

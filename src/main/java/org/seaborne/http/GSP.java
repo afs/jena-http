@@ -163,17 +163,20 @@ public class GSP {
     private void validateDatasetOperation() {
         Objects.requireNonNull(serviceEndpoint);
         if ( defaultGraph || graphName != null )
-            throw new ARQException("Default graph or a graph name specificied for dataset operation");
+            throw new ARQException("Default graph or a graph name specified for dataset operation");
     }
 
     /** POST the contents of a file using the filename extension to deduce the RDF syntax and hence the Content-Type to use */
     public void POST(String file) {
+        String contentType = RDFLanguages.guessContentType(file).getContentTypeStr();
+        POST(file, contentType);
     }
 
     /** POST the content of a file using the given Content-Type */
     public void POST(String file, String contentType) {
         validateGraphOperation();
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
+        // XXX uploadTriples opnly every infer content type.
         uploadTriples(httpClient, url, file, Push.POST);
     }
 
@@ -253,7 +256,7 @@ public class GSP {
      */
     public DatasetGraph dataset(String acceptHeader) {
         validateDatasetOperation();
-        DatasetGraph dsg = DatasetGraphFactory.create();
+        DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
         HttpRDF.httpGetToStream(httpClient, StreamRDFLib.dataset(dsg), serviceEndpoint, acceptHeader);
         return dsg;
     }

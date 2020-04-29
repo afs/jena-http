@@ -22,45 +22,60 @@ import org.apache.jena.atlas.web.WebLib;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 
-public abstract class AbstractTestRDF {
-    protected static FusekiServer server;
-    protected static DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
-    protected static int port = -1;
-    protected static String dsName = "/ds";
-    protected static String URL;
+public class EnvTest {
 
-    // Includes the trailing "/" so it is correct in itself.
-    protected static String urlRoot() { return URL; }
+    public final FusekiServer server;
+    private final String dsName;
 
-    protected static String url(String path) {
-        if ( path.startsWith("/") )
-            path = path.substring(1);
-        return URL+path;
+    public EnvTest(String dsName) {
+        this(dsName, DatasetGraphFactory.createTxnMem());
     }
 
-    protected static String srvUrl(String path) {
+    public EnvTest(String path, DatasetGraph dsg) {
         if ( ! path.startsWith("/") )
             path = "/"+path;
-        return url(dsName)+path;
+        this.dsName = path;
+        server = startServer(dsName, dsg);
     }
 
-    @BeforeClass public static void beforeClass() {
-        port = WebLib.choosePort();
-        server = FusekiServer.create()
+
+
+//    public static EnvTest env;
+//    @BeforeClass public static void beforeClass() {
+//        env = new EnvTest("/ds");
+//    }
+//
+//    @AfterClass public static void afterClass() {
+//        Envtest.stop();
+//    }
+
+    private static FusekiServer startServer(String dsName, DatasetGraph dsg) {
+        int port = WebLib.choosePort();
+        FusekiServer server = FusekiServer.create()
             .port(port)
-            .verbose(true)
+            //.verbose(true)
             .enablePing(true)
             .add(dsName, dsg)
             .build();
         server.start();
-        URL = "http://localhost:"+port+"/";
+        return server;
     }
 
-    @AfterClass public static void afterClass() {
-        if ( server != null )
-            server.stop();
+    public String serverBaseURL() {
+        return "http://localhost:"+server.getPort()+"/";
+    }
+
+    // Typicsally path includes dsName
+    public String url(String path) {
+        String url = "http://localhost:"+server.getPort();
+        if ( ! path.startsWith(dsName) )
+            path = dsName+path;
+        return url+path;
+    }
+
+    public static void stop(EnvTest env) {
+        if ( env != null && env.server != null )
+            env.server.stop();
     }
 }

@@ -117,7 +117,7 @@ public class DevAuthHTTP {
 
         UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
             .service("http://localhost:3030/ds")
-            .update("INSERT DATA { <x:s> <x:q> 123}")
+            .updateString("INSERT DATA { <x:s> <x:q> 123}")
             .httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
             //.httpClient(hc)
             .build();

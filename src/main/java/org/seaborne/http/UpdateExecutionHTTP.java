@@ -75,7 +75,7 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
             return this;
         }
 
-        public Builder update(String updateRequestString) {
+        public Builder updateString(String updateRequestString) {
             this.updateRequest = null;
             this.updateString = updateRequestString;
             return this;
@@ -135,7 +135,7 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
         }
 
         public UpdateExecutionHTTP build() {
-            Objects.requireNonNull("No service URL", serviceURL);
+            Objects.requireNonNull(serviceURL, "No service URL");
             if ( update == null && updateString == null )
                 throw new QueryException("No update for UpdateExecutionHTTP");
             return new UpdateExecutionHTTP(serviceURL, update, updateString, httpClient, params,

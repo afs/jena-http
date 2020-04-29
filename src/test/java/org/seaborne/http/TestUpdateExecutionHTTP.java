@@ -71,7 +71,7 @@ public class TestUpdateExecutionHTTP {
     private static void clear() {
         UpdateExecutionHTTP.newBuilder()
             .service(service())
-            .update("CLEAR ALL")
+            .updateString("CLEAR ALL")
             .build()
             .execute();
     }
@@ -83,7 +83,7 @@ public class TestUpdateExecutionHTTP {
     @Test public void update_1() {
         UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
             .service(service())
-            .update("INSERT DATA { <x:s> <x:p> 234 } ")
+            .updateString("INSERT DATA { <x:s> <x:p> 234 } ")
             .build();
         uExec.execute();
         try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()

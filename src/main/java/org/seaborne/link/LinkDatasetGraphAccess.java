@@ -16,10 +16,12 @@
  * limitations under the License.
  */
 
-package org.seaborne.connection;
+package org.seaborne.link;
 
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Transactional;
 
 /**
@@ -33,10 +35,10 @@ public interface LinkDatasetGraphAccess extends Transactional, AutoCloseable
     /** Fetch a named graph.
      * This is SPARQL Graph Store Protocol HTTP GET or equivalent.
      *
-     * @param graphName URI string for the graph name (null or "default" for the default graph)
+     * @param graphName URI string for the graph name (null or {@link Quad#defaultGraphIRI} for the default graph)
      * @return Graph
      */
-    public Graph fetch(String graphName);
+    public Graph fetch(Node graphName);
 
     /** Fetch the default graph.
      * This is SPARQL Graph Store Protocol HTTP GET or equivalent.

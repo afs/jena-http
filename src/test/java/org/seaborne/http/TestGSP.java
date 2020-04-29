@@ -18,6 +18,8 @@
 
 package org.seaborne.http;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.apache.jena.fuseki.test.FusekiTest.expect404;
 import static org.junit.Assert.assertFalse;
@@ -25,10 +27,21 @@ import static org.junit.Assert.assertFalse;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.sparql.sse.SSE;
 
-public class TestGSP extends AbstractTestRDF  {
+public class TestGSP {
+
+    private static EnvTest env;
+    @BeforeClass public static void beforeClass() {
+        env = new EnvTest("/ds");
+    }
+
+    @AfterClass public static void afterClass() {
+        EnvTest.stop(env);
+    }
 
     private static Graph graph1 = SSE.parseGraph("(graph (:s :p :x) (:s :p 1))");
     private static Graph graph2 = SSE.parseGraph("(graph (:s :p :x) (:s :p 2))");
+
+    private String url(String path) { return env.url(path); }
 
     @Test public void gsp_get_dft() {
         GSP.request(url("/ds")).defaultGraph().GET();

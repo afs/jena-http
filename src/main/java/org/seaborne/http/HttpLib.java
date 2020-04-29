@@ -179,10 +179,9 @@ public class HttpLib {
     }
 
     /** Encode a string suitable for use in an URL query string */
-    static String urlEncode(String str) {
+    public static String urlEncode(String str) {
         return URLEncoder.encode(str, StandardCharsets.UTF_8);
     }
-
 
     /** Query string is assumed to already be encoded. */
     static String requestURL(String url, String queryString) {

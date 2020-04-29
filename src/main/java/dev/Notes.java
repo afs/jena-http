@@ -20,6 +20,33 @@ package dev;
 
 public class Notes {
 
+    // RDFLink :
+    //    GSP.POST(,contentType) ignores content type.
+    //    RDFLinkFactory and authentication
+
+    // Binding version of a ResultSet -> Add forEachBinding() to ResultSet interface?
+
+
+    // **** RDFLinkFactory and authentication
+
+    // URLEncodedUtils.format better than URLEncoder?
+
+    // Check RDFConnectionAdapter for using defaults - wrapper all? queryAsk(String) etc
+
+    // No autoparse of RDFConnection.quert(string), update(string)
+
+    // HttpEnv.dft settings vs RDFLinkRemoteBuilder output* settings.
+
+    // GSP dataset operation naming is odd.
+
+    // Instead of copy, use /** {@inheritDoc} */
+    // Does not seem to pop-up in Eclipse.
+
+    // RDFLink
+    //   Review
+
+    // All XXX and TODO
+
     // Security for scripts
     //    Per destination setup./ SERVICE
     //      QueryExecutionHTTP
@@ -32,9 +59,6 @@ public class Notes {
     // XXX markers.
 
     // ----
-
-    // ConnRDF - RDFConnection for graphs.
-    // What about a QueryExecution but for graphs/nodes?
 
     // Set initial bindings: simple version
     //   Local builder?

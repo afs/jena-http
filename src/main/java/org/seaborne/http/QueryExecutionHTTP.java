@@ -272,7 +272,7 @@ public class QueryExecutionHTTP implements QueryExecution {
         }
 
         public QueryExecutionHTTP build() {
-            Objects.requireNonNull("No service URL", serviceURL);
+            Objects.requireNonNull(serviceURL, "No service URL");
             if ( queryString == null && query == null )
                 throw new QueryException("No query for QueryExecutionHTTP");
             return new QueryExecutionHTTP(serviceURL, query, queryString, urlLimit,

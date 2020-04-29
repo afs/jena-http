@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-package org.seaborne.connection;
+package org.seaborne.link;
 
-public class RDFLinkFactory {
+public class QExec {
 
 }

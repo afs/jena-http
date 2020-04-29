@@ -38,7 +38,6 @@ import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
-import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.system.Txn;
 import org.apache.jena.web.HttpSC;
 import org.junit.AfterClass;

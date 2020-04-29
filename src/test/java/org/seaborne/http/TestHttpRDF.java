@@ -21,15 +21,31 @@ package org.seaborne.http;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.sparql.sse.SSE;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TestHttpRDF extends AbstractTestRDF {
+public class TestHttpRDF {
+    private static FusekiServer server;
+
+    private static EnvTest env;
+    @BeforeClass public static void beforeClass() {
+        env = new EnvTest("/ds");
+    }
+
+    @AfterClass public static void afterClass() {
+        EnvTest.stop(env);
+    }
+
+    private String url(String path) { return env.url(path); }
+
     @Test public void httpRDF_01() {
         var graph = HttpRDF.httpGetGraph(url("/ds?default"));
         assertNotNull(graph);
-        assertTrue(graph.isEmpty());
+        assertTrue("Graph is empty", graph.isEmpty());
     }
 
     // Control conneg.

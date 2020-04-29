@@ -16,37 +16,17 @@
  * limitations under the License.
  */
 
-package org.seaborne.connection;
+package dev;
 
-import org.apache.jena.sparql.core.Transactional;
-import org.apache.jena.update.Update;
-import org.apache.jena.update.UpdateRequest;
+import org.apache.jena.atlas.logging.Log;
+import org.apache.jena.atlas.logging.LogCtl;
 
-/** SPARQL Update Operations on a connection.
- *
- * @see RDFLink
- */
-public interface LinkSparqlUpdate extends Transactional, AutoCloseable
-{
-    /** Execute a SPARQL Update.
-     *
-     * @param update
-     */
-    public void update(Update update);
+public class ReportHTTP {
+    static { LogCtl.setLog4j2(); }
+    //static { LogCtl.setCmdLogging(); }
 
-    /** Execute a SPARQL Update.
-     *
-     * @param update
-     */
-    public void update(UpdateRequest update);
-
-    /** Execute a SPARQL Update.
-     *
-     * @param updateString
-     */
-    public void update(String updateString);
-
-    /** Close this connection. */
-    @Override public void close();
+    public static void main(String...a) {
+        Log.info(ReportHTTP.class, "A log message");
+        System.exit(0);
+    }
 }
-

@@ -16,19 +16,25 @@
  * limitations under the License.
  */
 
-package org.seaborne.connection;
+package org.seaborne.link;
 
-import org.apache.jena.graph.Graph;
+import static org.seaborne.link.LibRDFLink.asDatasetGraph;
+import static org.seaborne.link.LibRDFLink.graph2model;
+import static org.seaborne.link.LibRDFLink.model2graph;
+import static org.seaborne.link.LibRDFLink.name;
+
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.update.UpdateRequest;
 
 /** Provide {@link RDFConnection} using a {@link RDFLink} */
 
 public class RDFConnectionAdapter implements RDFConnection {
+
+    public static RDFConnection wrap(RDFLink link) {
+        return new RDFConnectionAdapter(link);
+    }
 
     RDFConnectionAdapter(RDFLink conn) {
         this.other = conn;
@@ -37,22 +43,6 @@ public class RDFConnectionAdapter implements RDFConnection {
     private final RDFLink other ;
     protected RDFLink get() { return other; }
 
-    private Model graph2model(Graph graph) {
-        return ModelFactory.createModelForGraph(graph);
-    }
-
-    private Graph model2graph(Model model) {
-        return model.getGraph();
-    }
-
-    private Dataset asDataset(DatasetGraph dsg) {
-        return DatasetFactory.wrap(dsg);
-    }
-
-    private DatasetGraph asDatasetGraph(Dataset dataset) {
-        return dataset.asDatasetGraph();
-    }
-
     @Override
     public Model fetch() {
         return graph2model(get().fetch());
@@ -60,12 +50,12 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public Model fetch(String graphName) {
-        return  graph2model(get().fetch(graphName));
+        return  graph2model(get().fetch(name(graphName)));
     }
 
     @Override
     public Dataset fetchDataset() {
-        return asDataset(get().fetchDataset());
+        return LibRDFLink.asDataset(get().fetchDataset());
     }
 
     @Override
@@ -74,13 +64,23 @@ public class RDFConnectionAdapter implements RDFConnection {
     }
 
     @Override
+    public QueryExecution query(String queryString) {
+        return get().query(queryString);
+    }
+
+    @Override
     public void update(UpdateRequest update) {
         get().update(update);
     }
 
     @Override
+    public void update(String update) {
+        get().update(update);
+    }
+
+    @Override
     public void load(String graphName, String file) {
-        get().load(graphName, file);
+        get().load(name(graphName), file);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public void load(String graphName, Model model) {
-        get().load(graphName, model2graph(model));
+        get().load(name(graphName), model2graph(model));
     }
 
     @Override
@@ -100,7 +100,7 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public void put(String graphName, String file) {
-        get().put(graphName, file);
+        get().put(name(graphName), file);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public void put(String graphName, Model model) {
-        get().put(graphName, model2graph(model));
+        get().put(name(graphName), model2graph(model));
     }
 
     @Override
@@ -120,7 +120,7 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public void delete(String graphName) {
-        get().delete(graphName);
+        get().delete(name(graphName));
     }
 
     @Override
