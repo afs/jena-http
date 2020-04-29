@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
@@ -39,16 +38,20 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
 import org.apache.jena.atlas.io.IO;
+import org.apache.jena.atlas.lib.IRILib;
 import org.apache.jena.atlas.web.HttpException;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.web.HttpNames;
+import org.apache.jena.sparql.engine.http.Params;
+import org.apache.jena.sparql.util.Context;
 import org.apache.jena.web.HttpSC;
+import org.seaborne.http.ServiceRegistry.ServiceTuning;
 
 /**
  * Operations related to SPARQL HTTP request - Query, Update and Graph Store protocols.
@@ -61,6 +64,8 @@ public class HttpLib {
 
     /**
      * Get the InputStream from an HttpResponse, handling possible compression settings.
+     * The application mjst consume or close the InputStream.
+     * Closing the InputStream may close the HTTP connection.
      */
     static InputStream getInputStream(HttpResponse<InputStream> httpResponse) {
         String encoding = httpResponse.headers().firstValue("Content-Encoding").orElse("");
@@ -91,74 +96,163 @@ public class HttpLib {
         };
     }
 
-    static BodyHandler<InputStream> getBodyInputStream() { return HttpLib.bodyHandlerInputStream; }
-
-    static Function<HttpResponse<String>, String> noBodyFetcher = r -> null;
-
-    static Function<HttpResponse<String>, String> bodyStringFetcher = r-> {
-        String msg = r.body();
-        if ( msg != null && msg.isEmpty() )
-            return null;
-        return msg;
-    };
-
-    static Function<HttpResponse<InputStream>, String> bodyInputStreamToString = r-> {
+    /** Read the body of a response as a string in UTF-8. */
+    private static Function<HttpResponse<InputStream>, String> bodyInputStreamToString = r-> {
         InputStream in = r.body();
         String msg;
         try {
             msg = IO.readWholeFileAsUTF8(in);
-            if ( msg.isEmpty() )
-                return null;
+            // Convert no body, no Content-Length to null.
+//            if ( msg.isEmpty() ) {
+//                if ( r.headers().firstValue(HttpNames.hContentLength).isEmpty() )
+//                    // No Content-Length -> null
+//                    return null;
+//            }
             return msg;
         } catch (IOException e) { throw new HttpException(e); }
     };
+
+    /*package*/ static String asString(HttpResponse<InputStream> response) {
+        return bodyInputStreamToString.apply(response);
+    }
 
     /** Calculate basic auth header. */
     public static String basicAuth(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
     }
 
-
-
-    // StatusCode to exception, at the start of response handling.
-    static <T> void handleHttpStatusCode(HttpResponse<T> response, Function<HttpResponse<T>, String> bodyFetcher) {
+    /**
+     * Deal with status code and any error message sent as a body in the response.
+     * <p>
+     * It is this handling 4xx/5xx error messages in the body that forces the use of
+     * {@code InputStream}, not generic {@code T}. We don't know until we see the
+     * status code how we are going to process the response body.
+     * <p>
+     * Exits normally without processing the body if the response is 200.
+     * <p>
+     * Throws {@link HttpException} for 3xx (redirection should have happened by
+     * now), 4xx and 5xx, having consumed the body input stream.
+     */
+    static void handleHttpStatusCode(HttpResponse<InputStream> response) {
         int httpStatusCode = response.statusCode();
         // There is no status message in HTTP/2.
-        if ( ! HttpLib.inRange(httpStatusCode, 100, 599) )
+        if ( ! inRange(httpStatusCode, 100, 599) )
             throw new HttpException("Status code out of range: "+httpStatusCode);
-        else if ( HttpLib.inRange(httpStatusCode, 100, 199) ) {
+        else if ( inRange(httpStatusCode, 100, 199) ) {
             // Informational
         }
-        else if ( HttpLib.inRange(httpStatusCode, 200, 299) ) {
+        else if ( inRange(httpStatusCode, 200, 299) ) {
             // Success. Continue processing.
         }
-        else if ( HttpLib.inRange(httpStatusCode, 300, 399) ) {
+        else if ( inRange(httpStatusCode, 300, 399) ) {
             // We had follow redirects on (default client) so it's http->https,
             // or the application passed on a HttpClient with redirects off.
             // Either way, we should not continue processing.
             try {
-                BodySubscribers.discarding().getBody().toCompletableFuture().get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new HttpException("Error discarding body of "+httpStatusCode , e);
+                HttpLib.finish(response.body());
+                //BodySubscribers.discarding().getBody().toCompletableFuture().get();
+            //} catch (InterruptedException | ExecutionException | IOException ex) {
+            } catch (Exception ex) {
+                throw new HttpException("Error discarding body of "+httpStatusCode , ex);
             }
             throw new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), null);
         }
-        else if ( HttpLib.inRange(httpStatusCode, 400, 499) ) {
-            String msg = ( bodyFetcher != null ) ? bodyFetcher.apply(response) : null;
-            throw new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), msg);
+        else if ( inRange(httpStatusCode, 400, 499) ) {
+            throw exception(response, httpStatusCode);
         }
-        else if ( HttpLib.inRange(httpStatusCode, 500, 599) ) {
-            String msg = ( bodyFetcher != null ) ? bodyFetcher.apply(response) : null;
-            throw new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), msg);
+        else if ( inRange(httpStatusCode, 500, 599) ) {
+            throw exception(response, httpStatusCode);
         }
+    }
+
+    /**
+     * Handle the HTTP response and consume the body if a 200.
+     * Otherwise, throw an {@link HttpExpection}.
+     * @param response
+     */
+    static void handleResponseNoBody(HttpResponse<InputStream> response) {
+        handleHttpStatusCode(response);
+        finish(response);
+    }
+
+    /**
+     * Handle the HTTP response and read the body to produce a string if a 200.
+     * Otherwise, throw an {@link HttpExpection}.
+     * @param response
+     */
+    static String handleResponseRtnString(HttpResponse<InputStream> response) {
+        handleHttpStatusCode(response);
+        return asString(response);
+    }
+
+    static HttpException exception(HttpResponse<InputStream> response, int httpStatusCode) {
+        InputStream in = response.body();
+        String msg = null;
+        try {
+            msg = IO.readWholeFileAsUTF8(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), msg);
     }
 
     /** Test x:int in [min, max] */
     private static boolean inRange(int x, int min, int max) { return min <= x && x <= max; }
 
-    static URI toURI(String uriStr) {
+    /** Finish with {@code HttpResponse<InputStream>}.
+     * This read and drops any remaining bytes in the response body.
+     * {@code close} may close the underlying HTTP connection.
+     *  See {@link BodySubscribers#ofInputStream()}.
+     */
+    /*package*/ static void finish(HttpResponse<InputStream> response) {
+        finish(response.body());
+    }
+
+    /** Read to end of {@link InputStream}.
+     *  {@code close} may close the underlying HTTP connection.
+     *  See {@link BodySubscribers#ofInputStream()}.
+     */
+    /*package*/ static void finish(InputStream input) {
+        consume(input);
+    }
+
+    // This is extracted from commons-io, IOUtils.skip.
+    // Changes:
+    // * No exception.
+    // * Always consumes to the end of stream (or stream throws IOException)
+    // * Larger buffer
+    private static int SKIP_BUFFER_SIZE = 8*1024;
+    private static byte[] SKIP_BYTE_BUFFER = null;
+
+    private static void consume(final InputStream input) {
+        /*
+         * N.B. no need to synchronize this because: - we don't care if the buffer is created multiple times (the data
+         * is ignored) - we always use the same size buffer, so if it it is recreated it will still be OK (if the buffer
+         * size were variable, we would need to synch. to ensure some other thread did not create a smaller one)
+         */
+        if (SKIP_BYTE_BUFFER == null) {
+            SKIP_BYTE_BUFFER = new byte[SKIP_BUFFER_SIZE];
+        }
+        int bytesRead = 0; // Informational
         try {
-            return new URI(uriStr);
+            for(;;) {
+                // See https://issues.apache.org/jira/browse/IO-203 for why we use read() rather than delegating to skip()
+                final long n = input.read(SKIP_BYTE_BUFFER, 0, SKIP_BUFFER_SIZE);
+                if (n < 0) { // EOF
+                    break;
+                }
+                bytesRead += n;
+            }
+        } catch (IOException ex) { /*ignore*/ }
+    }
+
+    /** String to {@link URI}. Throws {@link HttpException} on bad syntax or if the URI isn't absolute. */
+    static URI toRequestURI(String uriStr) {
+        try {
+            URI uri = new URI(uriStr);
+            if ( ! uri.isAbsolute() )
+                throw new HttpException("Not an absolute URL: "+uriStr);
+            return uri;
         } catch (URISyntaxException ex) {
             int idx = ex.getIndex();
             String msg = (idx<0)
@@ -179,8 +273,10 @@ public class HttpLib {
     }
 
     /** Encode a string suitable for use in an URL query string */
-    public static String urlEncode(String str) {
-        return URLEncoder.encode(str, StandardCharsets.UTF_8);
+    public static String urlEncodeQueryString(String str) {
+        // java.net.URLEncoder is excessive - it encodes / and : which
+        // is not necessary in a query string or fragement.
+        return IRILib.encodeUriQueryFrag(str);
     }
 
     /** Query string is assumed to already be encoded. */
@@ -192,7 +288,7 @@ public class HttpLib {
 
     /*package*/ static Builder newBuilder(String url, Map<String, String> httpHeaders, String acceptHeader, boolean allowCompression, long readTimeout, TimeUnit readTimeoutUnit) {
         HttpRequest.Builder builder = HttpRequest.newBuilder();
-        builder.uri(toURI(url));
+        builder.uri(toRequestURI(url));
         if ( acceptHeader != null )
             builder.header(HttpNames.hAccept, acceptHeader);
         if ( readTimeout >= 0 )
@@ -203,11 +299,39 @@ public class HttpLib {
         return builder;
     }
 
+    /** Execute a request, return a {@code HttpResponse<InputStream>} which can be passed to
+     * {@link #handleHttpStatusCode(HttpResponse)}.
+     * @param httpClient
+     * @param httpRequest
+     * @return
+     */
+    static HttpResponse<InputStream> execute(HttpClient httpClient, HttpRequest httpRequest) {
+        return execute(httpClient, httpRequest, BodyHandlers.ofInputStream());
+    }
+
+    /** Execute request and return a response - error messages as JSON in 4xx and 5xx can not be handled.
+     * See {@link #execute(HttpClient, HttpRequest)} because we need an {@code InputStream} response.
+     * @param httpClient
+     * @param httpRequest
+     * @param bodyHandler
+     * @return
+     */
     static <T> HttpResponse<T> execute(HttpClient httpClient, HttpRequest httpRequest, BodyHandler<T> bodyHandler) {
         try {
             return httpClient.send(httpRequest, bodyHandler);
         } catch (IOException | InterruptedException e) {
             throw new HttpException(httpRequest.method()+" "+httpRequest.uri().toString(), e);
+        }
+    }
+
+    // This is to allow setting additional/optional query parameters on a per remote service (including for SERVICE).
+    protected static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
+        // Old Constant.
+        ServiceRegistry srvReg = context.get(ARQ.serviceParams);
+        if ( srvReg != null ) {
+            ServiceTuning mods = srvReg.find(serviceURI);
+            if ( mods != null )
+                mods.modify(params, httpHeaders);
         }
     }
 }

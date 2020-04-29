@@ -18,40 +18,29 @@
 
 package org.seaborne.http;
 
-import static org.seaborne.http.HttpLib.bodyInputStreamToString;
-import static org.seaborne.http.HttpLib.bodyStringFetcher;
-import static org.seaborne.http.HttpLib.execute;
-import static org.seaborne.http.HttpLib.urlEncode;
+import static org.seaborne.http.HttpLib.*;
+import static org.seaborne.http.Push.PATCH;
+import static org.seaborne.http.Push.POST;
+import static org.seaborne.http.Push.PUT;
 
 import java.io.InputStream;
 import java.net.URI;
 //import java.net.URLEncoder;
 import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.net.http.HttpResponse.BodySubscriber;
-import java.net.http.HttpResponse.BodySubscribers;
-import java.net.http.HttpResponse.ResponseInfo;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import org.apache.jena.atlas.io.IO;
-import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
 
 /**
- * This is a collection of convenience operations for HTTP requests
- * mostly in support of RDF handling and common, basic use case for HTTP.
+ * This is a collection of convenience operations for HTTP requests,
+ * mostly in support of RDF handling and common, basic use cases for HTTP.
  * It is not comprehensive.
- *
- *
  *
  * @see HttpRDF
  * @see GSP
@@ -68,16 +57,14 @@ public class HttpOp2 {
 
     public static String httpGetString(HttpClient httpClient, String url, String acceptHeader) {
         HttpRequest request = newGetRequest(httpClient, url, acceptHeader);
-        HttpResponse<String> response = execute(httpClient, request, BodyHandlers.ofString());
-        HttpLib.handleHttpStatusCode(response, bodyStringFetcher);
-        return response.body();
+        HttpResponse<InputStream> response = execute(httpClient, request);
+        return handleResponseRtnString(response);
     }
 
     static HttpRequest newGetRequest(HttpClient httpClient, String url, String acceptHeader) {
 //        if ( acceptHeader == null )
 //            acceptHeader = "*/*";
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
-            .GET().uri(HttpLib.toURI(url));
+        HttpRequest.Builder builder = HttpRequest.newBuilder().uri(toRequestURI(url)).GET();
         if ( acceptHeader != null )
             builder.header(HttpNames.hAccept, acceptHeader);
         HttpRequest request = builder.build();
@@ -93,11 +80,10 @@ public class HttpOp2 {
     public static String httpPostRtnString(HttpClient httpClient, String url) {
         HttpRequest requestData = HttpRequest.newBuilder()
             .POST(BodyPublishers.noBody())
-            .uri(HttpLib.toURI(url))
+            .uri(toRequestURI(url))
             .build();
-        HttpResponse<String> response = execute(httpClient, requestData, BodyHandlers.ofString());
-        HttpLib.handleHttpStatusCode(response, bodyStringFetcher);
-        return response.body();
+        HttpResponse<InputStream> response = execute(httpClient, requestData);
+        return handleResponseRtnString(response);
     }
 
     /** MUST close the InputStream */
@@ -105,21 +91,22 @@ public class HttpOp2 {
         return httpGet(HttpEnv.getDftHttpClient(), url);
     }
 
-    /** MUST close the InputStream */
+    /** MUST consume or close the InputStream */
     public static InputStream httpGet(String url, String acceptHeader) {
         return httpGet(HttpEnv.getDftHttpClient(), url, acceptHeader);
     }
 
-    /** MUST close the InputStream */
+    /** MUST consume or close the InputStream */
     public static InputStream httpGet(HttpClient httpClient, String url) {
         return httpGet(httpClient, url, null);
     }
 
-    /** MUST close the InputStream */
+    /** MUST consume or close the InputStream */
     public static InputStream httpGet(HttpClient httpClient, String url, String acceptHeader) {
         return execGet(httpClient, url, acceptHeader);
     }
 
+    /** MUST read the whole InputStream or close it. */
     private static InputStream execGet(HttpClient httpClient, String url, String acceptHeader) {
         if ( acceptHeader == null )
             acceptHeader = "*/*";
@@ -127,10 +114,11 @@ public class HttpOp2 {
         return execGet(httpClient, request);
     }
 
+    /** MUST read the whole InputStream or close it. */
     private static InputStream execGet(HttpClient httpClient, HttpRequest request) {
-        HttpResponse<InputStream> response = execute(httpClient, request, BodyHandlers.ofInputStream());
-        HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
-        return HttpLib.getInputStream(response);
+        HttpResponse<InputStream> response = execute(httpClient, request);
+        handleHttpStatusCode(response);
+        return getInputStream(response);
     }
 
     /** POST
@@ -143,43 +131,57 @@ public class HttpOp2 {
     }
 
     /** POST
-     * @see BodyPublishers
      * @see BodyPublishers#ofFile
      * @see BodyPublishers#ofString
      */
     public static void httpPost(HttpClient httpClient, String url, String contentType, BodyPublisher body) {
-        httpPushData(httpClient, true, url, contentType, body);
+        httpPushData(httpClient, POST, url, contentType, body);
     }
 
+    /** PUT
+     * @see BodyPublishers#ofFile
+     * @see BodyPublishers#ofString
+     */
     public static void httpPut(String url, String contentType, BodyPublisher body) {
         httpPut(HttpEnv.getDftHttpClient(), url, contentType, body);
     }
 
     /** PUT
-     * <p>
-     * {@link HttpEnv#getDftHttpClient()}
-     * @see BodyPublishers
      * @see BodyPublishers#ofFile
      * @see BodyPublishers#ofString
      */
     public static void httpPut(HttpClient httpClient, String url, String contentType, BodyPublisher body) {
-        httpPushData(httpClient, false, url, contentType, body);
+        httpPushData(httpClient, PUT, url, contentType, body);
     }
 
-    /** Push data. POST or PUT request with no response body data. */
-    private static void httpPushData(HttpClient httpClient, boolean isPost, String url, String contentType, BodyPublisher body) {
-        URI uri = HttpLib.toURI(url);
+    /** PATCH
+     * @see BodyPublishers#ofFile
+     * @see BodyPublishers#ofString
+     */
+    public static void httpPatch(String url, String contentType, BodyPublisher body) {
+        httpPatch(HttpEnv.getDftHttpClient(), url, contentType, body);
+    }
+
+    /** PATCH
+     * @see BodyPublishers
+     * @see BodyPublishers#ofFile
+     * @see BodyPublishers#ofString
+     */
+    public static void httpPatch(HttpClient httpClient, String url, String contentType, BodyPublisher body) {
+        httpPushData(httpClient, PATCH, url, contentType, body);
+    }
+
+    /** Push data. POST, PUT, PATCH request with no response body data. */
+    /*package*/ static void httpPushData(HttpClient httpClient, Push style, String url, String contentType, BodyPublisher body) {
+        URI uri = toRequestURI(url);
         HttpRequest.Builder builder = HttpRequest.newBuilder();
         builder.uri(uri);
-        if ( isPost )
-            builder.POST(body);
-        else
-            builder.PUT(body);
+        builder.method(style.method(), body);
         if ( contentType != null )
             builder.header(HttpNames.hContentType, contentType);
         HttpRequest request = builder.build();
-        HttpResponse<String> response = execute(httpClient, request, BodyHandlers.ofString());
-        HttpLib.handleHttpStatusCode(response, bodyStringFetcher);
+        HttpResponse<InputStream> response = execute(httpClient, request);
+        handleResponseNoBody(response);
     }
 
     // POST form - probably not needed in this convenience class.
@@ -189,13 +191,13 @@ public class HttpOp2 {
         return httpPostForm(HttpEnv.getDftHttpClient(), url, params, acceptString);
     }
 
-    /*package*/  static HttpResponse<InputStream> httpPostForm(HttpClient httpClient, String url, Params params, String acceptString) {
+    /*package*/ static HttpResponse<InputStream> httpPostForm(HttpClient httpClient, String url, Params params, String acceptString) {
         Objects.requireNonNull(url);
         acceptString = HttpLib.dft(acceptString, "*/*");
-        URI uri = HttpLib.toURI(url);
+        URI uri = toRequestURI(url);
         String formData =
             params.pairs().stream()
-                .map(p->urlEncode(p.getLeft())+"="+urlEncode(p.getRight()))
+                .map(p->urlEncodeQueryString(p.getLeft())+"="+urlEncodeQueryString(p.getRight()))
                 .collect(Collectors.joining("&"));
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -204,9 +206,8 @@ public class HttpOp2 {
             .header(HttpNames.hContentType, WebContent.contentTypeHTMLForm)
             .header(HttpNames.hAccept, acceptString)
             .build();
-
-        HttpResponse<InputStream> response = execute(httpClient, request, BodyHandlers.ofInputStream());
-        HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
+        HttpResponse<InputStream> response = execute(httpClient, request);
+        handleHttpStatusCode(response);
         return response;
     }
 
@@ -217,32 +218,43 @@ public class HttpOp2 {
 
     /** DELETE */
     public static void httpDelete(HttpClient httpClient, String url) {
-        URI uri = HttpLib.toURI(url);
+        URI uri = toRequestURI(url);
         HttpRequest requestData = HttpRequest.newBuilder()
             .DELETE()
             .uri(uri)
             .build();
-        HttpResponse<String> response = execute(httpClient, requestData, BodyHandlers.ofString());
-        HttpLib.handleHttpStatusCode(response, bodyStringFetcher);
+        HttpResponse<InputStream> response = execute(httpClient, requestData);
+        handleResponseNoBody(response);
     }
 
-    private static String bodyString(ResponseInfo responseInfo) {
-        try {
-            BodySubscriber<InputStream> bodySubscriber = BodySubscribers.ofInputStream();
-            return bodyString(responseInfo.headers(), bodySubscriber.getBody().toCompletableFuture().get());
-        } catch (InterruptedException | ExecutionException e) {
-            throw new HttpException("Error capturing body of "+responseInfo.statusCode(), e);
-        }
+
+    /** OPTIONS. Returns the HTTP reponse "Allow" field string. */
+    public static String httpOptions(String url) {
+        return httpOptions(HttpEnv.getDftHttpClient(), url);
     }
 
-    private static String bodyString(HttpHeaders httpHeaders, InputStream input) {
-        // XXX Missing : Conneg on MIME type/charset
-        byte[] bytes = IO.readWholeFile(input);
-        return new String(bytes, StandardCharsets.UTF_8);
+    /** OPTIONS. Returns the HTTP reponse "Allow" field string. */
+    public static String httpOptions(HttpClient httpClient, String url) {
+        // Need to access the response headers
+        HttpRequest.Builder builder =
+            HttpRequest.newBuilder().uri(toRequestURI(url)).method(HttpNames.METHOD_OPTIONS, BodyPublishers.noBody());
+        HttpRequest request = builder.build();
+        HttpResponse<InputStream> response = execute(httpClient, request);
+        String allowValue = response.headers().firstValue(HttpNames.hAllow).orElse(null);
+        handleResponseNoBody(response);
+        return allowValue;
     }
 
-    // OPTIONS
-    // ------------------------------------------------------------------------
+    /**
+     * General HTTP request, String only version. Processes the HTTP status response.
+     */
+    public static String httpRequest(HttpClient httpClient, String method, String url) {
+        HttpRequest.Builder builder =
+            HttpRequest.newBuilder().uri(toRequestURI(url)).method(method, BodyPublishers.noBody());
+        HttpRequest request = builder.build();
+        HttpResponse<InputStream> response = execute(httpClient, request);
+        return handleResponseRtnString(response);
+    }
 
     /**
      * Content-Type, without charset.

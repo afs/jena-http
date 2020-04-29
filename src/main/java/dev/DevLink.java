@@ -18,6 +18,10 @@
 
 package dev;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
+import org.apache.jena.atlas.lib.IRILib;
 import org.apache.jena.atlas.web.WebLib;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.fuseki.system.FusekiLogging;
@@ -26,6 +30,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RIOT;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.util.QueryExecUtils;
@@ -35,10 +40,16 @@ import org.seaborne.link.RDFLinkFactory;
 
 public class DevLink {
     static {
+        RIOT.getContext().set(RIOT.symTurtleDirectiveStyle, "sparql");
 //        LogCtl.setLog4j2();
         }
 
     public static void main(String...args) {
+        mainDev();
+        //mainEncode();
+    }
+
+    public static void mainDev(String...args) {
         FusekiLogging.setLogging();
 
         int port = WebLib.choosePort();
@@ -56,7 +67,7 @@ public class DevLink {
             RDFLink link = RDFLinkFactory.connect("http://localhost:"+port+"/ds");
             RDFConnection conn = RDFConnectionAdapter.wrap(link);
 
-            //conn.putDataset("D.ttl");
+            conn.putDataset("D.ttl");
 
             conn.update("INSERT DATA {<x:s> <x:p> 1914}");
             Model model = conn.fetch();
@@ -66,5 +77,31 @@ public class DevLink {
                 QueryExecUtils.executeQuery(qExec);
             }
         } finally { server.stop(); }
+    }
+
+    public static void mainEncode() {
+        String[] x = {
+            "http://example/graph",
+            "http://example/graph/-àá-/foo#bar",
+            "http://example/graph/::/foo#bar/baz",
+            "http://example/graph?name=value#zzzz"
+        } ;
+        for ( String s : x ) {
+            String e = URLEncoder.encode(s, StandardCharsets.UTF_8);
+            System.out.printf("%s  ==>  %s\n", s, e);
+            String e2 = IRILib.encodeUriQueryFrag(s);
+            System.out.printf("%s  ==>  %s\n", s, e2);
+//
+//            URI uri = null;
+//            try {
+//                uri = new URI(s);
+//            } catch (URISyntaxException e1) {
+//                e1.printStackTrace();
+//            }
+//            System.out.println(uri);
+//            System.out.println(uri.toASCIIString());
+        }
+
+
     }
 }

@@ -23,10 +23,8 @@ import static org.seaborne.link.LibRDFLink.name;
 import java.net.http.HttpClient;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import org.apache.jena.atlas.lib.InternalErrorException;
-import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.*;
@@ -40,7 +38,6 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.system.Txn;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
-import org.apache.jena.web.HttpSC;
 import org.seaborne.http.GSP;
 import org.seaborne.http.HttpEnv;
 import org.seaborne.http.QueryExecutionHTTP;
@@ -238,10 +235,7 @@ public class RDFLinkRemote implements RDFLink {
 
         // Use the query string as provided if possible, otherwise serialize the query.
         String queryStringToSend = ( queryString != null ) ? queryString : query.toString();
-        // XXX Is exec needed any more now we use new QueryExecutionHTTP.Builder?
-        // Use .query(Query)
-
-        return exec(()-> createQueryExecution(query, queryStringToSend, queryType));
+        return createQueryExecution(query, queryStringToSend, queryType);
     }
 
     // Create the QueryExecution
@@ -320,38 +314,31 @@ public class RDFLinkRemote implements RDFLink {
         }
         // Use the update string as provided if possible, otherwise serialize the update.
         String updateStringToSend = ( updateString != null ) ? updateString  : update.toString();
-        // XXX Use update(update)
-        exec(()->
-            UpdateExecutionHTTP.newBuilder()
-                .service(svcUpdate)
-                .httpClient(httpClient)
-                .updateString(updateStringToSend)
-                .build()
-                .execute()
-        );
-        //exec(()->HttpOp.execHttpPost(svcUpdate, WebContent.contentTypeSPARQLUpdate, updateStringToSend, this.httpClient, this.httpContext));
+        UpdateExecutionHTTP.newBuilder()
+            .service(svcUpdate)
+            .httpClient(httpClient)
+            .updateString(updateStringToSend)
+            .build()
+            .execute();
     }
 
-    // TEMP
-    /** Convert HTTP status codes to exceptions */
-    static protected void exec(Runnable action)  {
-        try { action.run(); }
-        catch (HttpException ex) { handleHttpException(ex, false); }
-    }
-
-    /** Convert HTTP status codes to exceptions */
-    static protected <X> X exec(Supplier<X> action)  {
-        try { return action.get(); }
-        catch (HttpException ex) { handleHttpException(ex, true); return null;}
-    }
-
-    private static void handleHttpException(HttpException ex, boolean ignore404) {
-        if ( ex.getStatusCode() == HttpSC.NOT_FOUND_404 && ignore404 )
-            return ;
-        throw ex;
-    }
-
-
+//    /** Convert HTTP status codes to exceptions */
+//    static protected void exec(Runnable action)  {
+//        try { action.run(); }
+//        catch (HttpException ex) { handleHttpException(ex, false); }
+//    }
+//
+//    /** Convert HTTP status codes to exceptions */
+//    static protected <X> X exec(Supplier<X> action)  {
+//        try { return action.get(); }
+//        catch (HttpException ex) { handleHttpException(ex, true); return null;}
+//    }
+//
+//    private static void handleHttpException(HttpException ex, boolean ignore404) {
+//        if ( ex.getStatusCode() == HttpSC.NOT_FOUND_404 && ignore404 )
+//            return ;
+//        throw ex;
+//    }
 
     /** {@inheritDoc} */
     @Override
@@ -370,18 +357,17 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public void load(Node graphName, String file) {
         checkGSP();
-        gsp(graphName).POST(file);
+        gsp(graphName).POST(file, ct(outputTriples));
     }
 
     @Override
     public void load(String file) {
         checkGSP();
-        gsp().POST(file);
+        gsp().POST(file, ct(outputTriples));
     }
 
     @Override
     public void load(Graph graph) {
-        // XXX Unify with GSP using HttpEnv.dftTriplesFormat and outputTriples
         gsp().POST(graph, outputTriples);
     }
 
@@ -393,20 +379,18 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public void put(Node graphName, String file) {
         checkGSP();
-        // XXX ContentType for file.
-        gsp(graphName).PUT(file);
+        gsp(graphName).PUT(file, ct(outputTriples));
     }
 
     @Override
     public void put(String file) {
         checkGSP();
-        gsp().POST(file);
+        gsp().PUT(file, ct(outputTriples));
     }
 
     @Override
     public void put(Node graphName, Graph graph) {
         checkGSP();
-        // XXX ContentType mgt issue
         gsp(graphName).PUT(graph, outputTriples);
     }
 
@@ -417,6 +401,8 @@ public class RDFLinkRemote implements RDFLink {
     }
 
     // ---- GSP requests
+    private String ct(RDFFormat format) { return format.getLang().getHeaderString(); }
+
     private GSP gsp() {
         return gspRequest().defaultGraph();
     }
@@ -447,7 +433,7 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public DatasetGraph fetchDataset() {
         checkDataset();
-        return gspRequest().dataset();
+        return gspRequest().getDataset();
     }
 
     @Override

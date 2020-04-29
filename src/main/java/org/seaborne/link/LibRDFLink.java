@@ -46,9 +46,7 @@ import org.seaborne.http.HttpLib;
     }
 
     private static String encode(Node node) {
-        // Awaiting Jena change.
-        //return IRILib.encodeUriQueryFrag(node.getURI());
-        return HttpLib.urlEncode(node.getURI());
+        return HttpLib.urlEncodeQueryString(node.getURI());
     }
 
     /*package*/ static String urlForGraph(String graphStoreProtocolService, Node graphName) {

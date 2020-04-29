@@ -27,7 +27,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit ;
@@ -57,7 +56,6 @@ import org.apache.jena.sparql.engine.http.Service;
 import org.apache.jena.sparql.graph.GraphFactory ;
 import org.apache.jena.sparql.resultset.ResultSetException;
 import org.apache.jena.sparql.util.Context ;
-import org.seaborne.http.ServiceRegistry.ServiceTuning;
 import org.slf4j.Logger ;
 import org.slf4j.LoggerFactory ;
 
@@ -325,8 +323,7 @@ public class QueryExecutionHTTP implements QueryExecution {
      * the {@link QueryExecutionHTTP} instance makes a query for remote submission.
      * </p>
      *
-     * @param serviceURI
-     *            Service URI
+     * @param serviceURI   Service URI
      */
     private static void applyServiceConfig(String serviceURI, QueryExecutionHTTP engine) {
         if (engine.context == null)
@@ -339,28 +336,19 @@ public class QueryExecutionHTTP implements QueryExecution {
             if (log.isDebugEnabled())
                 log.debug("Endpoint URI {} has SERVICE Context: {} ", serviceURI, serviceContext);
 
-            // Apply behavioral options
+            // Apply behavioural options
             //engine.setAllowCompression(serviceContext.isTrueOrUndef(Service.queryCompression));
             applyServiceTimeouts(engine, serviceContext);
-
             // Apply context-supplied client settings
             HttpClient client = serviceContext.get(Service.queryClient);
-
-//            if (client != null) {
-//                if (log.isDebugEnabled())
-//                    log.debug("Using context-supplied HTTP client for endpoint URI {}", serviceURI);
-//                engine.setClient(client);
-//            }
         }
     }
 
     /**
      * Applies context provided timeouts to the given engine
      *
-     * @param engine
-     *            Engine
-     * @param context
-     *            Context
+     * @param engine    Engine
+     * @param context   Context
      */
     private static void applyServiceTimeouts(QueryExecutionHTTP engine, Context context) {
         if (context.isDefined(Service.queryTimeout)) {
@@ -423,7 +411,6 @@ public class QueryExecutionHTTP implements QueryExecution {
         String thisAcceptHeader = dft(acceptHeader, selectContentType);
 
         HttpResponse<InputStream> response = query(thisAcceptHeader);
-
         InputStream in = HttpLib.getInputStream(response);
         // Don't assume the endpoint actually gives back the content type we asked for
         String actualContentType = response.headers().firstValue(HttpNames.hContentType).orElse(null);
@@ -442,7 +429,6 @@ public class QueryExecutionHTTP implements QueryExecution {
         }
 
         retainedConnection = in; // This will be closed on close()
-
 
         // If the server fails to return a Content-Type then we will assume
         // the server returned the type we asked for.
@@ -566,8 +552,7 @@ public class QueryExecutionHTTP implements QueryExecution {
         InputStream in = HttpLib.getInputStream(response);
 
         // XXX DRY
-        // Don't assume the endpoint actually gives back the content type we
-        // asked for
+        // Don't assume the endpoint actually gives back the content type we asked for
         String actualContentType = response.headers().firstValue(HttpNames.hContentType).orElse(null);
         httpResponseContentType = actualContentType;
         actualContentType = removeCharset(actualContentType);
@@ -591,7 +576,6 @@ public class QueryExecutionHTTP implements QueryExecution {
         checkNotClosed() ;
         String thisAcceptHeader = dft(acceptHeader, askContentType);
         HttpResponse<InputStream> response = query(thisAcceptHeader);
-
         InputStream in = HttpLib.getInputStream(response);
         // XXX DRY
         String actualContentType = response.headers().firstValue(HttpNames.hContentType).orElse(null);
@@ -770,7 +754,8 @@ public class QueryExecutionHTTP implements QueryExecution {
             if ( allowCompression )
                 httpHeaders.put(HttpNames.hAcceptEncoding, "gzip,inflate");
         }
-        modifyByService(service,  context,  thisParams,  httpHeaders);
+
+        HttpLib.modifyByService(service,  context,  thisParams,  httpHeaders);
 
         // Query string or HTML form.
         if ( sendMode == SendMode.asPostBody )
@@ -844,8 +829,8 @@ public class QueryExecutionHTTP implements QueryExecution {
 
         HttpRequest request = builder.build();
 
-        HttpResponse<InputStream> response = execute(httpClient, request, BodyHandlers.ofInputStream());
-        HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
+        HttpResponse<InputStream> response = execute(httpClient, request);
+        handleHttpStatusCode(response);
         return response;
     }
 
@@ -864,20 +849,9 @@ public class QueryExecutionHTTP implements QueryExecution {
             .header(HttpNames.hContentType, WebContent.contentTypeSPARQLQuery)
             .build();
 
-        HttpResponse<InputStream> response = execute(httpClient, request, BodyHandlers.ofInputStream());
-        HttpLib.handleHttpStatusCode(response, bodyInputStreamToString);
+        HttpResponse<InputStream> response = execute(httpClient, request);
+        handleHttpStatusCode(response);
         return response;
-    }
-
-    // This is to allow setting additional/optional query parameters on a per remote service (including for SERVICE).
-    protected static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
-        // XXX Old Constant.
-        ServiceRegistry srvReg = context.get(ARQ.serviceParams);
-        if ( srvReg != null ) {
-            ServiceTuning mods = srvReg.find(serviceURI);
-            if ( mods != null )
-                mods.modify(params, httpHeaders);
-        }
     }
 
     /**

@@ -20,45 +20,55 @@ package dev;
 
 public class Notes {
 
+    // package.html or web page.
+
+    // Per endpoint modification.
+    //   ServiceRegistry and per endpoint tuning. Now outside? HttpClient per link.
+    //   QueryExecutionHTTP.applyServiceConfig
+    //   UpdateExecutionHTTP.modifyByService
+    // Need to influence choice of HttpClient.
+    //
+    // All XXX and TODO
+
+    // 1) QueryEecutionHTTP, UpdateEecutionHTTP - are headers copied into the request?
+
+    // Merge:
+    //   Merge WebContent2 into WebContent (now?)
+    //   Merge: G2,G to Glib (now?)
+    //   Remove RDFConnectionFuseki
+
+    // 2) QueryExecutionHTTP.modifyByService
+    //    UpdateExecutionHTTP.modifyByService
+    //      Per destination setup./ SERVICE
+
+    // 3) QueryExecutionHTTP DRY
+
+    // 4) ** RDFLinkremote - use content Type
+    // outputTriples vs defaults on HttpEnv. (fixed?)
+
+    // 5) GSP does not use headers
+    //    GSP.request().accept(string).GET().
+    //    GSP.request().contentType(string).POST(), ?? contentType(RDFFormat)
+    //       and less operations.
+
+    // ** RDFLinkFuseki
+
     // RDFLink :
-    //    GSP.POST(,contentType) ignores content type.
-    //    RDFLinkFactory and authentication
+    //    RDFLinkFactory and authentication (more tests)
+
+    // ----------------------------------------
+
+    // Jena networking markdown
+    //  * RDFConnection
+    //  * RDFLink
+    //  * SPARQL : GSP | QueryExecutionHTTP | UpdateExecutionHTTP
+    //  * HttpRDF
+    //  * HttpOp2
 
     // Binding version of a ResultSet -> Add forEachBinding() to ResultSet interface?
 
-
-    // **** RDFLinkFactory and authentication
-
-    // URLEncodedUtils.format better than URLEncoder?
-
-    // Check RDFConnectionAdapter for using defaults - wrapper all? queryAsk(String) etc
-
-    // No autoparse of RDFConnection.quert(string), update(string)
-
-    // HttpEnv.dft settings vs RDFLinkRemoteBuilder output* settings.
-
-    // GSP dataset operation naming is odd.
-
-    // Instead of copy, use /** {@inheritDoc} */
-    // Does not seem to pop-up in Eclipse.
-
-    // RDFLink
-    //   Review
-
-    // All XXX and TODO
-
-    // Security for scripts
-    //    Per destination setup./ SERVICE
-    //      QueryExecutionHTTP
-    //      UpdateExecutionHTTP
-    //      HttpOp2, HttpRDF, HttpGSP
-
-    //    Setting User/password for first use calls. / basic.
-    //    Registry : inc prefix of URL.
-
-    // XXX markers.
-
-    // ----
+    // ---- Review
+    // Check read to end or close on input streams. try-resource? -> use HttpLib.finish
 
     // Set initial bindings: simple version
     //   Local builder?

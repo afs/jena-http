@@ -261,15 +261,15 @@ public interface RDFLink extends
         update(new UpdateRequest(update));
     }
 
-    /** Execute a SPARQL Update.
-     *
+    /**
+     * Execute a SPARQL Update.
      * @param update
      */
     @Override
     public void update(UpdateRequest update);
 
-    /** Execute a SPARQL Update.
-     *
+    /**
+     * Execute a SPARQL Update.
      * @param updateString
      */
     @Override

@@ -300,4 +300,3 @@ public class RDFLinkLocal implements RDFLink {
     @Override public ReadWrite transactionMode()        { return dataset.transactionMode(); }
     @Override public TxnType transactionType()          { return dataset.transactionType(); }
 }
-

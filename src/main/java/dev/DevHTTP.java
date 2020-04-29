@@ -40,7 +40,7 @@ import org.seaborne.http.HttpOp2;
 import org.seaborne.http.QueryExecutionHTTP;
 
 public class DevHTTP {
-    static { LogCtl.setLog4j(); }
+    static { LogCtl.setLog4j2(); }
 
     public static void mainDev(String...args) {
         Trie<String> trie = new Trie<>();
@@ -68,7 +68,6 @@ public class DevHTTP {
             .build();
         server.start();
         //server.start().join();
-
 
         try {
             //clientBasic();

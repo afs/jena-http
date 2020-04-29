@@ -28,6 +28,7 @@ import org.apache.jena.riot.*;
 import org.apache.jena.sparql.core.Transactional;
 import org.apache.jena.sparql.core.TransactionalLock;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
+import org.seaborne.http.HttpEnv;
 
 /** Builder class for {@link RDFLinkRemote} */
 public class RDFLinkRemoteBuilder {
@@ -46,8 +47,8 @@ public class RDFLinkRemoteBuilder {
     protected String        gspURL        = null;
 
     // On-the-wire settings.
-    protected RDFFormat     outputQuads        = RDFFormat.NQUADS;
-    protected RDFFormat     outputTriples      = RDFFormat.NTRIPLES;
+    protected RDFFormat     outputQuads        = HttpEnv.dftQuadsFormat;
+    protected RDFFormat     outputTriples      = HttpEnv.dftTriplesFormat;
 
     protected String        acceptGraph        = WebContent.defaultGraphAcceptHeader;
     protected String        acceptDataset      = WebContent.defaultDatasetAcceptHeader;

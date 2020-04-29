@@ -46,7 +46,7 @@ import org.seaborne.http.*;
 import org.seaborne.http.ServiceRegistry.ServiceTuning;
 
 public class DevAuthHTTP {
-    static { LogCtl.setLog4j(); }
+    static { LogCtl.setLog4j2(); }
 
     public static void main(String...args) throws IOException, InterruptedException {
 //        System.setProperty("jdk.internal.httpclient.debug", "true");

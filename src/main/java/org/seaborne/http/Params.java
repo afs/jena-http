@@ -20,8 +20,6 @@ package org.seaborne.http;
 
 import static java.util.stream.Collectors.toList;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets ;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -85,23 +83,20 @@ import java.util.Map;
         return x.get(0);
     }
 
-    public List<String> getValues(String name)
-    {
-        return getMV(name) ;
+    public List<String> getValues(String name) {
+        return getMV(name);
     }
 
-    public void remove(String name)
-    {
+    public void remove(String name) {
         // Absolute record
         paramList.removeIf(p -> p.getName().equals(name));
         // Map
-        params.remove(name) ;
+        params.remove(name);
     }
 
     /** Exactly as seen */
-    public List<Param> pairs()
-    {
-        return paramList ;
+    public List<Param> pairs() {
+        return paramList;
     }
 
     public int count() { return paramList.size() ; }
@@ -111,7 +106,7 @@ import java.util.Map;
         return paramList.stream().map(Param::getName).distinct().collect(toList());
     }
 
-    /** Query string, without leading "?" */
+    /** URL query string, without leading "?" */
     public String httpString() {
         return format(paramList) ;
     }
@@ -135,9 +130,7 @@ import java.util.Map;
     private static String encode(String name) {
         if ( name == null )
             return name;
-        // XXX Better
-        // Code org.apache.http.client.utils.URLEncodedUtils
-        return URLEncoder.encode(name, StandardCharsets.UTF_8);
+        return HttpLib.urlEncodeQueryString(name);
     }
 
     @Override
@@ -155,12 +148,10 @@ import java.util.Map;
         }
     }
 
-    public static class Param extends org.apache.jena.atlas.lib.Pair<String, String> {
+    // Pair, with more appropriate method names.
+    static class Param extends org.apache.jena.atlas.lib.Pair<String, String> {
         public Param(String name, String value) { super(name, value); }
-
         public String getName()  { return getLeft() ;  }
-
         public String getValue() { return getRight() ; }
     }
 }
-

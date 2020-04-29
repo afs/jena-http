@@ -44,8 +44,8 @@ public class RDFLinkFuseki extends RDFLinkRemote {
     }
 
     /**
-     * Create a connection builder which is initialized from an existing {@code RDFConnectionFuseki}.
-     * @param other The RDFConnectionFuseki to clone.
+     * Create a connection builder which is initialized from an existing {@code RDFLinkFuseki}.
+     * @param other The RDFLinkFuseki to clone.
      * @return RDFLinkRemoteBuilder
      */
     public static RDFLinkRemoteBuilder create(RDFLinkFuseki other) {

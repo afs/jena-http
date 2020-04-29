@@ -39,8 +39,6 @@ public class EnvTest {
         server = startServer(dsName, dsg);
     }
 
-
-
 //    public static EnvTest env;
 //    @BeforeClass public static void beforeClass() {
 //        env = new EnvTest("/ds");

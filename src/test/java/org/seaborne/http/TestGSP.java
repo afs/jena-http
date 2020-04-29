@@ -59,5 +59,6 @@ public class TestGSP {
     }
 
     // XXX TestGSP : more tests, inc files.
+    // Move tests from TestHttpOp2
 
 }

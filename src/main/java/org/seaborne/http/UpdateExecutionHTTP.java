@@ -18,17 +18,14 @@
 
 package org.seaborne.http;
 
-import static org.seaborne.http.HttpLib.bodyStringFetcher;
-import static org.seaborne.http.HttpLib.copyArray;
-import static org.seaborne.http.HttpLib.dft;
-import static org.seaborne.http.HttpLib.requestURL;
+import static org.seaborne.http.HttpLib.*;
 
+import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -210,6 +207,7 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
     private void executePostBody(Params thisParams) {
         String str = (updateString != null) ? updateString : update.toString();
         String requestURL = service;
+        HttpLib.modifyByService(requestURL, context, thisParams, httpHeaders);
         if ( thisParams.count() > 0 ) {
             String qs = thisParams.httpString();
             requestURL = requestURL(requestURL, qs);
@@ -218,26 +216,22 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
     }
 
     private void executePostForm(Params thisParams) {
-        thisParams.addParam(HttpParams.pUpdate, updateString);
-        String formString = thisParams.httpString();
-        // Everything does into the form body, no use of the request URI query string.
         String requestURL = service;
+        thisParams.addParam(HttpParams.pUpdate, updateString);
+        HttpLib.modifyByService(requestURL, context, thisParams, httpHeaders);
+        String formString = thisParams.httpString();
+        // Everything goes into the form body, no use of the request URI query string.
         execute(requestURL, BodyPublishers.ofString(formString, StandardCharsets.US_ASCII), WebContent.contentTypeHTMLForm);
     }
 
-    private HttpResponse<String> execute(String requestURL, BodyPublisher body, String contentType) {
+    private String execute(String requestURL, BodyPublisher body, String contentType) {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
-            .uri(HttpLib.toURI(requestURL))
+            .uri(HttpLib.toRequestURI(requestURL))
             .POST(body)
             .header(HttpNames.hContentType, contentType);
         httpHeaders.forEach((k,v)->builder.header(k,v));
         HttpRequest request = builder.build();
-        HttpResponse<String> response = HttpLib.execute(httpClient, request, BodyHandlers.ofString());
-        HttpLib.handleHttpStatusCode(response, bodyStringFetcher);
-        return response;
-    }
-
-    protected static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
-        // XXX modifyByService
+        HttpResponse<InputStream> response = HttpLib.execute(httpClient, request);
+        return handleResponseRtnString(response);
     }
 }
