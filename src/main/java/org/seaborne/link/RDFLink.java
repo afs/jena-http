@@ -279,8 +279,28 @@ public interface RDFLink extends
 
     // ---- RDFDatasetConnection
 
+    /** Load (add, append) RDF into the default graph of a dataset.
+     * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
+     * <p>
+     * If this is a remote connection:
+     * <ul>
+     * <li> The file is sent as-is and not parsed in the RDFLink
+     * <li> The Content-Type is determined by the filename
+     * </ul>
+     *
+     * @param file File of the data.
+     */
+    @Override
+    public void load(String file);
+
     /** Load (add, append) RDF into a named graph in a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
+     * <p>
+     * If this is a remote connection:
+     * <ul>
+     * <li> The file is sent as-is and not parsed in the RDFLink
+     * <li> The Content-Type is determined by the filename
+     * </ul>
      *
      * @param graphName Graph name (null or {@link Quad#defaultGraphIRI} for the default graph)
      * @param file File of the data.
@@ -291,10 +311,10 @@ public interface RDFLink extends
     /** Load (add, append) RDF into the default graph of a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
      *
-     * @param file File of the data.
+     * @param graph Data.
      */
     @Override
-    public void load(String file);
+    public void load(Graph graph);
 
     /** Load (add, append) RDF into a named graph in a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
@@ -305,13 +325,20 @@ public interface RDFLink extends
     @Override
     public void load(Node graphName, Graph graph);
 
-    /** Load (add, append) RDF into the default graph of a dataset.
-     * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
+    /** Set the contents of the default graph of a dataset.
+     * Any existing data is lost.
+     * This is SPARQL Graph Store Protocol HTTP PUT or equivalent.
+     * <p>
+     * If this is a remote connection:
+     * <ul>
+     * <li> The file is sent as-is and not parsed in the RDFLink
+     * <li> The Content-Type is determined by the filename
+     * </ul>
      *
-     * @param graph Data.
+     * @param file File of the data.
      */
     @Override
-    public void load(Graph graph);
+    public void put(String file);
 
     /** Set the contents of a named graph of a dataset.
      * Any existing data is lost.
@@ -326,11 +353,17 @@ public interface RDFLink extends
     /** Set the contents of the default graph of a dataset.
      * Any existing data is lost.
      * This is SPARQL Graph Store Protocol HTTP PUT or equivalent.
+     * <p>
+     * If this is a remote connection:
+     * <ul>
+     * <li> The file is sent as-is and not parsed in the RDFLink
+     * <li> The Content-Type is determined by the filename
+     * </ul>
      *
-     * @param file File of the data.
+     * @param graph Data.
      */
     @Override
-    public void put(String file);
+    public void put(Graph graph);
 
     /** Set the contents of a named graph of a dataset.
      * Any existing data is lost.
@@ -341,15 +374,6 @@ public interface RDFLink extends
      */
     @Override
     public void put(Node graphName, Graph graph);
-
-    /** Set the contents of the default graph of a dataset.
-     * Any existing data is lost.
-     * This is SPARQL Graph Store Protocol HTTP PUT or equivalent.
-     *
-     * @param graph Data.
-     */
-    @Override
-    public void put(Graph graph);
 
     /**
      * Delete a graph from the dataset.
@@ -396,12 +420,15 @@ public interface RDFLink extends
     @Override
     public void putDataset(DatasetGraph dataset);
 
-    //    /** Clear the dataset - remove all named graphs, clear the default graph. */
-    //    public void clearDataset();
+    /** Clear the dataset - remove all named graphs, clear the default graph. */
+    public void clearDataset();
 
     /** Test whether this connection is closed or not */
     @Override
     public boolean isClosed();
+
+    /** Whether this RDFLink is to a remote server or not. */
+    public default boolean isRemote() { return false; }
 
     /** Close this connection.  Use with try-resource. */
     @Override

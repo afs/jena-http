@@ -20,44 +20,44 @@ package org.seaborne.http;
 
 import static org.seaborne.http.HttpLib.*;
 
-import java.io.ByteArrayInputStream ;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream ;
+import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.TimeUnit ;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.atlas.RuntimeIOException;
-import org.apache.jena.atlas.io.IO ;
+import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
-import org.apache.jena.atlas.lib.Pair ;
+import org.apache.jena.atlas.lib.Pair;
 import org.apache.jena.atlas.web.HttpException;
-import org.apache.jena.graph.Triple ;
-import org.apache.jena.query.* ;
-import org.apache.jena.rdf.model.Model ;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.*;
 import org.apache.jena.riot.resultset.ResultSetLang;
 import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
 import org.apache.jena.riot.web.HttpNames;
-import org.apache.jena.sparql.ARQException ;
+import org.apache.jena.sparql.ARQException;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.engine.ResultSetCheckCondition ;
+import org.apache.jena.sparql.engine.ResultSetCheckCondition;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.http.HttpParams;
 import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.apache.jena.sparql.engine.http.Service;
-import org.apache.jena.sparql.graph.GraphFactory ;
+import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.resultset.ResultSetException;
-import org.apache.jena.sparql.util.Context ;
-import org.slf4j.Logger ;
-import org.slf4j.LoggerFactory ;
+import org.apache.jena.sparql.util.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A query execution implementation where queries are executed against a remote
@@ -107,7 +107,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     private String acceptHeader         = null;
 
     // Received content type
-    private String httpResponseContentType = null ;
+    private String httpResponseContentType = null;
     // Releasing HTTP input streams is important. We remember this for SELECT,
     // and will close when the execution is closed
     private InputStream retainedConnection = null;
@@ -379,7 +379,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     }
 
     // public void setParams(Params params)
-    // { this.params = params ; }
+    // { this.params = params; }
 
     @Override
     public void setInitialBinding(QuerySolution binding) {
@@ -402,9 +402,10 @@ public class QueryExecutionHTTP implements QueryExecution {
 
 	@Override
     public ResultSet execSelect() {
-        checkNotClosed() ;
-        ResultSet rs = execResultSet() ;
-        return new ResultSetCheckCondition(rs, this) ;
+        checkNotClosed();
+        check(QueryType.SELECT);
+        ResultSet rs = execResultSet();
+        return new ResultSetCheckCondition(rs, this);
     }
 
 	private ResultSet execResultSet() {
@@ -456,62 +457,66 @@ public class QueryExecutionHTTP implements QueryExecution {
 
     @Override
     public Model execConstruct() {
-        checkNotClosed() ;
+        checkNotClosed();
         return execConstruct(GraphFactory.makeJenaDefaultModel());
     }
 
     @Override
     public Model execConstruct(Model model) {
-        checkNotClosed() ;
+        checkNotClosed();
+        check(QueryType.CONSTRUCT);
         return execModel(model);
     }
 
     @Override
     public Iterator<Triple> execConstructTriples() {
-        checkNotClosed() ;
+        checkNotClosed();
+        check(QueryType.CONSTRUCT);
         return execTriples();
     }
 
     @Override
     public Iterator<Quad> execConstructQuads(){
-        checkNotClosed() ;
+        checkNotClosed();
     	return execQuads();
     }
 
     @Override
     public Dataset execConstructDataset(){
-        checkNotClosed() ;
+        checkNotClosed();
         return execConstructDataset(DatasetFactory.createTxnMem());
     }
 
     @Override
     public Dataset execConstructDataset(Dataset dataset){
-        checkNotClosed() ;
-        return execDataset(dataset) ;
+        checkNotClosed();
+        check(QueryType.CONSTRUCT_QUADS);
+        return execDataset(dataset);
     }
 
     @Override
     public Model execDescribe() {
-        checkNotClosed() ;
+        checkNotClosed();
         return execDescribe(GraphFactory.makeJenaDefaultModel());
     }
 
     @Override
     public Model execDescribe(Model model) {
-        checkNotClosed() ;
+        checkNotClosed();
+        check(QueryType.DESCRIBE);
         return execModel(model);
     }
 
     @Override
     public Iterator<Triple> execDescribeTriples() {
-        checkNotClosed() ;
+        checkNotClosed();
         return execTriples();
     }
 
     private Model execModel(Model model) {
-        Pair<InputStream, Lang> p = execConstructWorker(modelContentType) ;
+        Pair<InputStream, Lang> p = execConstructWorker(modelContentType);
         try(InputStream in = p.getLeft()) {
-            Lang lang = p.getRight() ;
+            Lang lang = p.getRight();
             RDFDataMgr.read(model, in, lang);
         } catch (IOException ex) { IO.exception(ex); }
         finally { this.close(); }
@@ -521,7 +526,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     private Dataset execDataset(Dataset dataset) {
         Pair<InputStream, Lang> p = execConstructWorker(datasetContentType);
         try(InputStream in = p.getLeft()) {
-            Lang lang = p.getRight() ;
+            Lang lang = p.getRight();
             RDFDataMgr.read(dataset, in, lang);
         } catch (IOException ex) { IO.exception(ex); }
         finally { this.close(); }
@@ -529,24 +534,24 @@ public class QueryExecutionHTTP implements QueryExecution {
     }
 
     private Iterator<Triple> execTriples() {
-        Pair<InputStream, Lang> p = execConstructWorker(modelContentType) ;
-        InputStream in = p.getLeft() ;
-        Lang lang = p.getRight() ;
+        Pair<InputStream, Lang> p = execConstructWorker(modelContentType);
+        InputStream in = p.getLeft();
+        Lang lang = p.getRight();
         // Base URI?
         return RDFDataMgr.createIteratorTriples(in, lang, null);
     }
 
     private Iterator<Quad> execQuads() {
-        checkNotClosed() ;
-        Pair<InputStream, Lang> p = execConstructWorker(datasetContentType) ;
-        InputStream in = p.getLeft() ;
-        Lang lang = p.getRight() ;
+        checkNotClosed();
+        Pair<InputStream, Lang> p = execConstructWorker(datasetContentType);
+        InputStream in = p.getLeft();
+        Lang lang = p.getRight();
         // Base URI?
         return RDFDataMgr.createIteratorQuads(in, lang, null);
     }
 
     private Pair<InputStream, Lang> execConstructWorker(String contentType) {
-        checkNotClosed() ;
+        checkNotClosed();
         String thisAcceptHeader = dft(acceptHeader, contentType);
         HttpResponse<InputStream> response = query(thisAcceptHeader);
         InputStream in = HttpLib.getInputStream(response);
@@ -568,12 +573,13 @@ public class QueryExecutionHTTP implements QueryExecution {
             throw new QueryException("Endpoint returned Content Type: "
                                      + actualContentType
                                      + " which is not a valid RDF syntax");
-        return Pair.create(in, lang) ;
+        return Pair.create(in, lang);
     }
 
     @Override
     public boolean execAsk() {
-        checkNotClosed() ;
+        checkNotClosed();
+        check(QueryType.ASK);
         String thisAcceptHeader = dft(acceptHeader, askContentType);
         HttpResponse<InputStream> response = query(thisAcceptHeader);
         InputStream in = HttpLib.getInputStream(response);
@@ -608,11 +614,11 @@ public class QueryExecutionHTTP implements QueryExecution {
             log.warn("Returned content is not a boolean result", e);
             throw e;
         } catch (QueryExceptionHTTP e) {
-            throw e ;
+            throw e;
         }
         catch (java.io.IOException e) {
             log.warn("Failed to close connection", e);
-            return false ;
+            return false;
         }
         finally { this.close(); }
     }
@@ -620,6 +626,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     @Override
     public JsonArray execJson() {
         checkNotClosed();
+        check(QueryType.CONSTRUCT_JSON);
         String thisAcceptHeader = dft(acceptHeader, WebContent.contentTypeJSON);
         HttpResponse<InputStream> response = query(thisAcceptHeader);
         InputStream in = HttpLib.getInputStream(response);
@@ -640,7 +647,16 @@ public class QueryExecutionHTTP implements QueryExecution {
 
     private void checkNotClosed() {
         if ( closed )
-            throw new QueryExecException("HTTP QueryExecution has been closed") ;
+            throw new QueryExecException("HTTP QueryExecution has been closed");
+    }
+
+    private void check(QueryType queryType) {
+        if ( query == null ) {
+            // Pass through the queryString.
+            return;
+        }
+        if ( query.queryType() != queryType )
+            throw new QueryExecException("Not the right form of query. Expected "+queryType+" but got "+query.queryType());
     }
 
     @Override
@@ -667,7 +683,7 @@ public class QueryExecutionHTTP implements QueryExecution {
             // Try to parse it else return null;
             try { return QueryFactory.create(queryString, Syntax.syntaxARQ); }
             catch (QueryParseException ex) {}
-            return null ;
+            return null;
         }
         return null;
     }
@@ -897,6 +913,6 @@ public class QueryExecutionHTTP implements QueryExecution {
     }
 
     @Override
-    public boolean isClosed() { return closed ; }
+    public boolean isClosed() { return closed; }
 
 }

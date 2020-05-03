@@ -18,7 +18,7 @@
 
 package dev;
 
-public class Notes {
+public class NotesHttp {
 
     // package.html or web page.
 
@@ -29,32 +29,28 @@ public class Notes {
     // Need to influence choice of HttpClient.
     //
     // All XXX and TODO
+    // Fuseki binary -- add dataset operations.
 
     // 1) QueryEecutionHTTP, UpdateEecutionHTTP - are headers copied into the request?
 
-    // Merge:
+    // 2) QueryExecutionHTTP.modifyByService
+    //    UpdateExecutionHTTP.modifyByService
+    //      Per destination setup / SERVICE
+
+    // 3) QueryExecutionHTTP DRY
+
+    // 4) GSP does not use headers
+    // Javadoc
+    // *** Check outputTriples passing to GSP from RDFLinkRemote..
+
+    // 5)
     //   Merge WebContent2 into WebContent (now?)
     //   Merge: G2,G to Glib (now?)
     //   Remove RDFConnectionFuseki
 
-    // 2) QueryExecutionHTTP.modifyByService
-    //    UpdateExecutionHTTP.modifyByService
-    //      Per destination setup./ SERVICE
-
-    // 3) QueryExecutionHTTP DRY
-
-    // 4) ** RDFLinkremote - use content Type
-    // outputTriples vs defaults on HttpEnv. (fixed?)
-
-    // 5) GSP does not use headers
-    //    GSP.request().accept(string).GET().
-    //    GSP.request().contentType(string).POST(), ?? contentType(RDFFormat)
-    //       and less operations.
-
-    // ** RDFLinkFuseki
-
-    // RDFLink :
+    // 9) RDFLink :
     //    RDFLinkFactory and authentication (more tests)
+    //    Port tests from TestRDFConnection*
 
     // ----------------------------------------
 

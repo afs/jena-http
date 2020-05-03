@@ -119,6 +119,9 @@ public class RDFLinkRemote implements RDFLink {
         this.parseCheckUpdates = parseCheckUpdates;
     }
 
+    @Override
+    public boolean isRemote() { return true; }
+
     /** Return the {@link HttpClient} in-use. */
     public HttpClient getHttpClient() {
         return httpClient;
@@ -129,7 +132,17 @@ public class RDFLinkRemote implements RDFLink {
         return destination;
     }
 
-    // For custom content negotiation.
+    public String getQueryEndpoint() {
+        return svcQuery;
+    }
+
+    public String getUpdateEndpoint() {
+        return svcUpdate;
+    }
+
+    public String getGraphStoreEndpoint() {
+        return svcGraphStore;
+    }
 
     // This class overrides each of these to pass down the query type as well.
     // Then we can derive the accept header if customized without needing to parse
@@ -344,60 +357,64 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public Graph fetch(Node graphName) {
         checkGSP();
-        return GSP.request(svcGraphStore).graphName(graphName.getURI()).GET(acceptGraph);
+        return GSP.request(svcGraphStore).graphName(graphName.getURI()).acceptHeader(acceptGraph).GET();
     }
 
     @Override
     public Graph fetch() {
         checkGSP();
-        return GSP.request(svcGraphStore).defaultGraph().GET(acceptGraph);
-    }
-
-    // "load" => POST
-    @Override
-    public void load(Node graphName, String file) {
-        checkGSP();
-        gsp(graphName).POST(file, ct(outputTriples));
+        return GSP.request(svcGraphStore).defaultGraph().acceptHeader(acceptGraph).GET();
     }
 
     @Override
     public void load(String file) {
         checkGSP();
-        gsp().POST(file, ct(outputTriples));
+        gsp().contentType(outputTriples).POST(file);
+    }
+
+    // "load" => POST
+
+    // When sending a file (POST or PUT), we are going to send it raw (no syntax
+    // checking). The content type comes from the filename, not the link setting.
+
+    @Override
+    public void load(Node graphName, String file) {
+        checkGSP();
+        gsp(graphName).contentType(outputTriples).POST(file);
     }
 
     @Override
     public void load(Graph graph) {
-        gsp().POST(graph, outputTriples);
+        gsp().contentType(outputTriples).POST(graph);
     }
 
     @Override
     public void load(Node graphName, Graph graph) {
-        gsp(graphName).POST(graph, outputTriples);
-    }
-
-    @Override
-    public void put(Node graphName, String file) {
-        checkGSP();
-        gsp(graphName).PUT(file, ct(outputTriples));
+        gsp(graphName).contentType(outputTriples).POST(graph);
     }
 
     @Override
     public void put(String file) {
         checkGSP();
-        gsp().PUT(file, ct(outputTriples));
+        gsp().contentType(outputTriples).PUT(file);
     }
 
     @Override
-    public void put(Node graphName, Graph graph) {
+    public void put(Node graphName, String file) {
         checkGSP();
-        gsp(graphName).PUT(graph, outputTriples);
+        gsp(graphName).PUT(file);
     }
 
     @Override
     public void put(Graph graph) {
         checkGSP();
-        gsp().PUT(graph, outputTriples);
+        gsp().contentType(outputTriples).PUT(graph);
+    }
+
+    @Override
+    public void put(Node graphName, Graph graph) {
+        checkGSP();
+        gsp(graphName).contentType(outputTriples).PUT(graph);
     }
 
     // ---- GSP requests
@@ -433,7 +450,7 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public DatasetGraph fetchDataset() {
         checkDataset();
-        return gspRequest().getDataset();
+        return gspRequest().acceptHeader(acceptDataset).getDataset();
     }
 
     @Override
@@ -461,6 +478,12 @@ public class RDFLinkRemote implements RDFLink {
     }
 
     // -- Internal.
+
+    @Override
+    public void clearDataset() {
+        checkOpen();
+        update("CLEAR ALL");
+    }
 
     protected void checkQuery() {
         checkOpen();

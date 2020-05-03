@@ -54,23 +54,22 @@ public class RDFLinkFuseki extends RDFLinkRemote {
 
     /** Fuseki settings */
     private static RDFLinkRemoteBuilder setupForFuseki(RDFLinkRemoteBuilder builder) {
-        String ctRDFThrift = Lang.RDFTHRIFT.getContentType().getContentTypeStr();
+        String ctRDFThrift = Lang.RDFTHRIFT.getHeaderString();
         String acceptHeaderSPARQL = String.join(","
                             , ResultSetLang.SPARQLResultSetThrift.getHeaderString()
                             , ResultSetLang.SPARQLResultSetJSON.getHeaderString()+";q=0.9"
                             , Lang.RDFTHRIFT.getHeaderString());
-        return
-            builder
-                .quadsFormat(RDFFormat.RDF_THRIFT)
-                .triplesFormat(RDFFormat.RDF_THRIFT)
-                .acceptHeaderGraph(ctRDFThrift)
-                .acceptHeaderDataset(ctRDFThrift)
-                .acceptHeaderSelectQuery(ResultSetLang.SPARQLResultSetThrift.getHeaderString())
-                .acceptHeaderAskQuery(ResultSetLang.SPARQLResultSetJSON.getHeaderString())
-                .acceptHeaderQuery(acceptHeaderSPARQL)
-                .parseCheckSPARQL(false)
-                // Create object of this class.
-                .creator((b)->fusekiMaker(b));
+        return builder
+            .quadsFormat(RDFFormat.RDF_THRIFT)
+            .triplesFormat(RDFFormat.RDF_THRIFT)
+            .acceptHeaderGraph(ctRDFThrift)
+            .acceptHeaderDataset(ctRDFThrift)
+            .acceptHeaderSelectQuery(ResultSetLang.SPARQLResultSetThrift.getHeaderString())
+            .acceptHeaderAskQuery(ResultSetLang.SPARQLResultSetJSON.getHeaderString())
+            .acceptHeaderQuery(acceptHeaderSPARQL)
+            .parseCheckSPARQL(false)
+            // Create object of this class.
+            .creator((b)->fusekiMaker(b));
     }
 
     private static RDFLinkRemoteBuilder setupCreator(RDFLinkRemoteBuilder builder) {

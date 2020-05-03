@@ -144,7 +144,7 @@ public class RDFLinkLocal implements RDFLink {
         checkOpen();
         Txn.executeWrite(dataset, ()-> {
             Graph graphDst = graphFor(graphName);
-            G2.clear(graph);
+            G2.clear(graphDst);
             G2.copyGraphTo(graph, graphDst);
         });
     }
@@ -156,7 +156,7 @@ public class RDFLinkLocal implements RDFLink {
             if ( LibRDFLink.isDefault(graphName) )
                 G2.clear(dataset.getDefaultGraph());
             else
-                G2.clear(dataset.getGraph(null));
+                G2.clear(dataset.getGraph(graphName));
         });
     }
 
@@ -253,6 +253,7 @@ public class RDFLinkLocal implements RDFLink {
 
     @Override
     public void loadDataset(DatasetGraph dataset) {
+        checkOpen();
         Txn.executeWrite(dataset,() ->{
             dataset.find().forEachRemaining((q)->this.dataset.add(q));
         });
@@ -269,9 +270,16 @@ public class RDFLinkLocal implements RDFLink {
 
     @Override
     public void putDataset(DatasetGraph dataset) {
+        checkOpen();
         Txn.executeWrite(dataset,() ->{
             this.dataset = isolate(dataset);
         });
+    }
+
+    @Override
+    public void clearDataset() {
+        checkOpen();
+        Txn.executeWrite(dataset, dataset::clear);
     }
 
     @Override

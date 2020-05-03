@@ -30,6 +30,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RIOT;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -45,6 +46,15 @@ public class DevLink {
         }
 
     public static void main(String...args) {
+
+        Lang[] langs = { Lang.RDFTHRIFT, Lang.TTL, Lang.NQ };
+        for ( Lang lang : langs ) {
+            System.out.println(lang);
+            System.out.println("  "+RDFLanguages.isTriples(lang)+" " +RDFLanguages.isQuads(lang));
+        }
+        System.exit(0);
+
+
         mainDev();
         //mainEncode();
     }
