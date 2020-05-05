@@ -39,6 +39,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
@@ -286,16 +287,40 @@ public class HttpLib {
         return requestURL;
     }
 
-    /*package*/ static Builder newBuilder(String url, Map<String, String> httpHeaders, String acceptHeader, boolean allowCompression, long readTimeout, TimeUnit readTimeoutUnit) {
+//    /*package*/ static Builder xnewBuilder(String url, boolean allowCompression, long readTimeout, TimeUnit readTimeoutUnit) {
+//        return newBuilder(url, null, allowCompression, readTimeout, readTimeoutUnit);
+//    }
+
+    /*package*/ static Builder newBuilder(String url, Map<String, String> httpHeaders, boolean allowCompression, long readTimeout, TimeUnit readTimeoutUnit) {
         HttpRequest.Builder builder = HttpRequest.newBuilder();
+        headers(builder, httpHeaders);
         builder.uri(toRequestURI(url));
-        if ( acceptHeader != null )
-            builder.header(HttpNames.hAccept, acceptHeader);
         if ( readTimeout >= 0 )
             builder.timeout(Duration.ofMillis(readTimeoutUnit.toMillis(readTimeout)));
         if ( allowCompression )
             builder.header(HttpNames.hAcceptEncoding, "gzip,inflate");
-        httpHeaders.forEach(builder::header);
+        return builder;
+    }
+
+    /** Set the headers from the Map if the map is not null. Returns the Builder. */
+    static Builder headers(Builder builder, Map<String, String> httpHeaders) {
+        if ( httpHeaders != null )
+            httpHeaders.forEach(builder::header);
+        return builder;
+    }
+
+
+    /** Set the "Accept" header if value is not null. Returns the builder. */
+    static Builder acceptHeader(Builder builder, String acceptHeader) {
+        if ( acceptHeader != null )
+            builder.header(HttpNames.hAccept, acceptHeader);
+        return builder;
+    }
+
+    /** Set the "Content-Type" header if value is not null. Returns the builder. */
+    static Builder contentTypeHeader(Builder builder, String contentType) {
+        if ( contentType != null )
+            builder.header(HttpNames.hContentType, contentType);
         return builder;
     }
 
@@ -333,5 +358,44 @@ public class HttpLib {
             if ( mods != null )
                 mods.modify(params, httpHeaders);
         }
+    }
+
+    // XXX IF modifiers
+
+    /**
+     * Return a modifier that will set the Accept header to the value.
+     * An argument of "null" means "no action".
+     */
+    static Consumer<HttpRequest.Builder> setHeaders(Map<String, String> headers) {
+        if ( headers == null )
+            return (x)->{};
+        return x->headers.forEach(x::header);
+    }
+
+    /**
+     * Return a modifier that will set the Accept header to the value.
+     * An argument of "null" means "no action".
+     */
+    static Consumer<HttpRequest.Builder> setAcceptHeader(String acceptHeader) {
+        if ( acceptHeader == null )
+            return (x)->{};
+        return header(HttpNames.hAccept, acceptHeader);
+    }
+
+    /**
+     * Return a modifier that will set the Content-Type header to the value.
+     * An argument of "null" means "no action".
+     */
+    static Consumer<HttpRequest.Builder> setContentTypeHeader(String contentType) {
+        if ( contentType == null )
+            return (x)->{};
+        return header(HttpNames.hContentType, contentType);
+    }
+
+    /**
+     * Return a modifier that will set the named header to the value.
+     */
+    static Consumer<HttpRequest.Builder> header(String headerName, String headerValue) {
+        return x->x.header(headerName, headerValue);
     }
 }

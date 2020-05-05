@@ -798,12 +798,14 @@ public class QueryExecutionHTTP implements QueryExecution {
             default :
                 throw new HttpException("Send mode not recognized for query string based request: "+sendMode);
         }
-        return execRequestQS(service, httpClient, sendMode, thisLengthLimit, httpHeaders, thisParams, acceptHeader, allowCompression, readTimeout, readTimeoutUnit);
+        return execRequestQS(service, httpClient, sendMode, thisLengthLimit,
+                            httpHeaders, thisParams, acceptHeader,
+                            allowCompression, readTimeout, readTimeoutUnit);
     }
 
     /**
      * Make request using a query string, or, if too long, an HTTP HTML form.
-     * @param url
+     * @param service
      * @param sendMode
      * @param params -- The HTTP query string in the form of (name,value) pairs but not "query="
      * @param httpClient
@@ -811,40 +813,41 @@ public class QueryExecutionHTTP implements QueryExecution {
      * @param timeoutTimeUnit
      * @return HttpResponse<InputStream>
      */
-    private static HttpResponse<InputStream> execRequestQS(String url, HttpClient httpClient,
-                                                           SendMode sendMode, int lengthLimit,
+    private static HttpResponse<InputStream> execRequestQS(String service, HttpClient httpClient,
+                                                           SendMode sendMode, int thisLengthLimit,
                                                            Map<String, String> httpHeaders, Params params,
                                                            String acceptHeader, boolean allowCompression,
-                                                           long timeout, TimeUnit timeoutTimeUnit) {
-        Objects.requireNonNull(url);
+                                                           long readTimeout, TimeUnit readTimeoutUnit) {
+        // XXX Used once - merge methods?
+        Objects.requireNonNull(service);
         Objects.requireNonNull(params);
         Objects.requireNonNull(httpClient);
         boolean useGET;
-        String requestURL = url;
+        String requestURL = service;
         String qs = params.httpString();
         if ( params.count() > 0 ) {
-            if ( url.length()+qs.length()+1 > lengthLimit ) {
+            if ( service.length()+qs.length()+1 > thisLengthLimit ) {
                 useGET = false;
             } else {
                 useGET = true;
                 // Use GET with a query string.
-                requestURL = requestURL(url, qs);
+                requestURL = requestURL(service, qs);
             }
         } else
             useGET = true;
 
-        HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, acceptHeader, allowCompression, timeout, timeoutTimeUnit);
-
-        if ( useGET )
-            builder.GET();
-        else {
+        HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
+        acceptHeader(builder, acceptHeader);
+        if ( useGET ) {
+            builder = builder.GET();
+        } else {
+            acceptHeader(builder, acceptHeader);
             // Already UTF-8 encoded to ASCII.
-            builder.POST(BodyPublishers.ofString(qs, StandardCharsets.US_ASCII))
-                .header(HttpNames.hContentType, WebContent.contentTypeHTMLForm);
+            contentTypeHeader(builder, WebContent.contentTypeHTMLForm);
+            builder = builder.POST(BodyPublishers.ofString(qs, StandardCharsets.US_ASCII));
         }
 
         HttpRequest request = builder.build();
-
         HttpResponse<InputStream> response = execute(httpClient, request);
         handleHttpStatusCode(response);
         return response;
@@ -860,11 +863,10 @@ public class QueryExecutionHTTP implements QueryExecution {
         if ( thisParams.count() > 0 )
             url = url + "&"+thisParams.httpString();
 
-        HttpRequest request = HttpLib.newBuilder(service, httpHeaders, acceptHeader, allowCompression, readTimeout, readTimeoutUnit)
-            .POST(BodyPublishers.ofString(queryString))
-            .header(HttpNames.hContentType, WebContent.contentTypeSPARQLQuery)
-            .build();
-
+        HttpRequest.Builder builder = HttpLib.newBuilder(service, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
+        contentTypeHeader(builder, WebContent.contentTypeSPARQLQuery);
+        acceptHeader(builder, acceptHeader);
+        HttpRequest request = builder.POST(BodyPublishers.ofString(queryString)).build();
         HttpResponse<InputStream> response = execute(httpClient, request);
         handleHttpStatusCode(response);
         return response;

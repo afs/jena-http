@@ -99,7 +99,7 @@ public class RDFLinkLocal implements RDFLink {
         checkOpen();
         Txn.executeWrite(dataset, ()-> {
             Graph graphDst = graphFor(graphName);
-            G2.copyGraphTo(graphSrc, graphDst);
+            G2.copyGraphSrcToDst(graphSrc, graphDst);
         });
     }
 
@@ -145,7 +145,7 @@ public class RDFLinkLocal implements RDFLink {
         Txn.executeWrite(dataset, ()-> {
             Graph graphDst = graphFor(graphName);
             G2.clear(graphDst);
-            G2.copyGraphTo(graph, graphDst);
+            G2.copyGraphSrcToDst(graph, graphDst);
         });
     }
 
@@ -197,7 +197,7 @@ public class RDFLinkLocal implements RDFLink {
             case COPY: {
                 // Copy - the graph is completely isolated from the original.
                 Graph graph2 = GraphFactory.createDefaultGraph();
-                G2.copyGraphTo(graph, graph2);
+                G2.copyGraphSrcToDst(graph, graph2);
                 return graph2;
             }
             case READONLY : {

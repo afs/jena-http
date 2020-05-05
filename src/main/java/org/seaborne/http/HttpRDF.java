@@ -30,11 +30,11 @@ import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.TransactionHandler;
 import org.apache.jena.riot.*;
 import org.apache.jena.riot.system.StreamRDF;
 import org.apache.jena.riot.system.StreamRDFLib;
@@ -44,7 +44,7 @@ import org.apache.jena.sparql.graph.GraphFactory;
 
 /**
  * HTTP level operations for RDF related tasks.
- * This does not include GSP naming which is in {@link HttpRDF}.
+ * This does not include GSP naming which is in {@link GSP}.
  */
 public class HttpRDF {
 
@@ -64,7 +64,7 @@ public class HttpRDF {
      */
     public static Graph httpGetGraph(HttpClient httpClient, String url) {
         Graph graph = GraphFactory.createDefaultGraph();
-        execGetGraph(httpClient, graph, url);
+        httpGetToStream(httpClient, url,  WebContent.defaultGraphAcceptHeader, StreamRDFLib.graph(graph));
         return graph;
     }
 
@@ -76,28 +76,8 @@ public class HttpRDF {
      */
     public static Graph httpGetGraph(HttpClient httpClient, String url, String acceptHeader) {
         Graph graph = GraphFactory.createDefaultGraph();
-        execGetGraph(httpClient, graph, url, acceptHeader);
+        httpGetToStream(httpClient, url, acceptHeader, StreamRDFLib.graph(graph));
         return graph;
-    }
-
-    // Not API? Put pattern in documentation, with warnings!
-    /**
-     * GET RDF data and place in the given graph.
-     * Sending straight to an existing graph carries the risk of a parse error mid-operation.
-     * @throws HttpException
-     */
-    // Because of the issues with bad data, may not be good to have this in the "easy" API.
-    // Using graph txn when the graph transaction API becomes "Transactional".
-    private static void execGetGraph(HttpClient httpClient, Graph graph, String url) {
-        execGetGraph(httpClient, graph, url, WebContent.defaultGraphAcceptHeader);
-    }
-
-    private static void execGetGraph(HttpClient httpClient, Graph graph, String url, String acceptHeader) {
-        TransactionHandler th = graph.getTransactionHandler();
-        if ( th.transactionsSupported() ) {
-            th.execute(() -> httpGetToStream(httpClient, StreamRDFLib.graph(graph), url, acceptHeader));
-        } else
-            httpGetToStream(httpClient, StreamRDFLib.graph(graph), url, acceptHeader);
     }
 
     /**
@@ -105,10 +85,18 @@ public class HttpRDF {
      * Beware of parse errors!
      * @throws HttpException
      */
-    public static void httpGetToStream(HttpClient client, StreamRDF dest, String url, String acceptHeader) {
+    public static void httpGetToStream(String url, String acceptHeader, StreamRDF dest) {
+        httpGetToStream(HttpEnv.getDftHttpClient(), url, acceptHeader, dest);
+    }
+    /**
+     * Send the RDF data from the resource at the URL to the StreamRDF.
+     * Beware of parse errors!
+     * @throws HttpException
+     */
+    public static void httpGetToStream(HttpClient client, String url, String acceptHeader, StreamRDF dest) {
         if ( acceptHeader == null )
             acceptHeader = "*/*";
-        HttpResponse<InputStream> response = execGetToInput(client, url, acceptHeader);
+        HttpResponse<InputStream> response = execGetToInput(client, url, HttpLib.setAcceptHeader(acceptHeader));
         String base = determineBaseURI(url, response);
         Lang lang = determineSyntax(response, Lang.RDFXML);
         try (InputStream in = getInputStream(response)) {
@@ -129,10 +117,10 @@ public class HttpRDF {
     }
 
     // MUST close the input stream
-    private static HttpResponse<InputStream> execGetToInput(HttpClient client, String url, String acceptHeader) {
+    private static HttpResponse<InputStream> execGetToInput(HttpClient client, String url, Consumer<HttpRequest.Builder> modifier) {
         Objects.requireNonNull(client);
         Objects.requireNonNull(url);
-        HttpRequest requestData = HttpOp2.newGetRequest(client, url, acceptHeader);
+        HttpRequest requestData = HttpOp2.newGetRequest(client, url, modifier);
         HttpResponse<InputStream> response = HttpLib.execute(client, requestData);
         handleHttpStatusCode(response);
         return response;
@@ -164,15 +152,6 @@ public class HttpRDF {
     private static void postBody(HttpClient httpClient, String url, BodyPublisher x, RDFFormat format) {
         String contentType = format.getLang().getHeaderString();
         HttpOp2.httpPost(url, contentType, x);
-//        URI uri = toRequestURI(url);
-//        String contentType = format.getLang().getHeaderString();
-//        HttpRequest request = HttpRequest.newBuilder()
-//            .POST(x)
-//            .uri(uri)
-//            .header(HttpNames.hContentType, contentType)
-//            .build();
-//        HttpResponse<InputStream> response = HttpLib.execute(httpClient, request);
-//        handleResponseNoBody(response);
     }
 
     public static void httpPutGraph(String url, Graph graph) {

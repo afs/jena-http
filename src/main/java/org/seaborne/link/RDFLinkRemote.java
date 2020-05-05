@@ -92,21 +92,21 @@ public class RDFLinkRemote implements RDFLink {
 
     // Used by the builder.
     protected RDFLinkRemote(Transactional txnLifecycle, HttpClient httpClient, String destination,
-                                   String queryURL, String updateURL, String gspURL, RDFFormat outputQuads, RDFFormat outputTriples,
-                                   String acceptDataset, String acceptGraph,
-                                   String acceptSparqlResults,
-                                   String acceptSelectResult, String acceptAskResult,
-                                   boolean parseCheckQueries, boolean parseCheckUpdates) {
+                            String queryURL, String updateURL, String gspURL, RDFFormat outputQuads, RDFFormat outputTriples,
+                            String acceptDataset, String acceptGraph,
+                            String acceptSparqlResults,
+                            String acceptSelectResult, String acceptAskResult,
+                            boolean parseCheckQueries, boolean parseCheckUpdates) {
         // Any defaults.
         HttpClient hc =  httpClient!=null ? httpClient : HttpEnv.getDftHttpClient();
+        if ( txnLifecycle == null )
+            txnLifecycle  = TransactionalLock.createMRPlusSW();
 
         this.httpClient = hc;
         this.destination = destination;
         this.svcQuery = queryURL;
         this.svcUpdate = updateURL;
         this.svcGraphStore = gspURL;
-        if ( txnLifecycle == null )
-            txnLifecycle  = TransactionalLock.createMRPlusSW();
         this.txnLifecycle = txnLifecycle;
         this.outputQuads = outputQuads;
         this.outputTriples = outputTriples;
@@ -366,21 +366,22 @@ public class RDFLinkRemote implements RDFLink {
         return GSP.request(svcGraphStore).defaultGraph().acceptHeader(acceptGraph).GET();
     }
 
-    @Override
-    public void load(String file) {
-        checkGSP();
-        gsp().contentType(outputTriples).POST(file);
-    }
-
     // "load" => POST
 
     // When sending a file (POST or PUT), we are going to send it raw (no syntax
     // checking). The content type comes from the filename, not the link setting.
 
     @Override
+    public void load(String file) {
+        checkGSP();
+        // Use file extension for the ContentType
+        gsp().POST(file);
+    }
+
+    @Override
     public void load(Node graphName, String file) {
         checkGSP();
-        gsp(graphName).contentType(outputTriples).POST(file);
+        gsp(graphName).POST(file);
     }
 
     @Override
@@ -396,7 +397,8 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public void put(String file) {
         checkGSP();
-        gsp().contentType(outputTriples).PUT(file);
+        // Use file extension for the ContentType
+        gsp().PUT(file);
     }
 
     @Override

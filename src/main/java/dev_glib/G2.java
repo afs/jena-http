@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.link;
+package dev_glib;
 
 import java.util.function.Consumer;
 

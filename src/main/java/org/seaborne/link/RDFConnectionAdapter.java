@@ -39,7 +39,11 @@ public class RDFConnectionAdapter implements RDFConnection {
     }
 
     private final RDFLink other ;
+    // Class/subclass access. Ideally, call only once per method (for swappable links).
     protected RDFLink get() { return other; }
+
+    /** Return the {@link RDFLink} for this connection. */
+    public RDFLink getLink() { return get(); }
 
     private RDFConnectionAdapter(RDFLink conn) {
         this.other = conn;

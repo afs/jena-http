@@ -225,12 +225,9 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
     }
 
     private String execute(String requestURL, BodyPublisher body, String contentType) {
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
-            .uri(HttpLib.toRequestURI(requestURL))
-            .POST(body)
-            .header(HttpNames.hContentType, contentType);
-        httpHeaders.forEach((k,v)->builder.header(k,v));
-        HttpRequest request = builder.build();
+        HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, false, -1L, null);
+        builder = contentTypeHeader(builder, contentType);
+        HttpRequest request = builder.POST(body).build();
         HttpResponse<InputStream> response = HttpLib.execute(httpClient, request);
         return handleResponseRtnString(response);
     }

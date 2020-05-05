@@ -25,13 +25,13 @@ import static org.seaborne.http.Push.PUT;
 
 import java.io.InputStream;
 import java.net.URI;
-//import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.jena.riot.WebContent;
@@ -56,17 +56,19 @@ public class HttpOp2 {
     }
 
     public static String httpGetString(HttpClient httpClient, String url, String acceptHeader) {
-        HttpRequest request = newGetRequest(httpClient, url, acceptHeader);
+        HttpRequest request = newGetRequest(httpClient, url, setAcceptHeader(acceptHeader));
         HttpResponse<InputStream> response = execute(httpClient, request);
         return handleResponseRtnString(response);
     }
 
-    static HttpRequest newGetRequest(HttpClient httpClient, String url, String acceptHeader) {
+    static HttpRequest newGetRequest(HttpClient httpClient, String url, Consumer<HttpRequest.Builder> modifier) {
 //        if ( acceptHeader == null )
 //            acceptHeader = "*/*";
+//        if ( acceptHeader != null )
+//            builder.header(HttpNames.hAccept, acceptHeader);
         HttpRequest.Builder builder = HttpRequest.newBuilder().uri(toRequestURI(url)).GET();
-        if ( acceptHeader != null )
-            builder.header(HttpNames.hAccept, acceptHeader);
+        if ( modifier != null )
+            modifier.accept(builder);
         HttpRequest request = builder.build();
         return request;
     }
@@ -110,7 +112,7 @@ public class HttpOp2 {
     private static InputStream execGet(HttpClient httpClient, String url, String acceptHeader) {
         if ( acceptHeader == null )
             acceptHeader = "*/*";
-        HttpRequest request = newGetRequest(httpClient, url, acceptHeader);
+        HttpRequest request = newGetRequest(httpClient, url, setAcceptHeader(acceptHeader));
         return execGet(httpClient, request);
     }
 
@@ -171,14 +173,18 @@ public class HttpOp2 {
         httpPushData(httpClient, PATCH, url, contentType, body);
     }
 
-    /** Push data. POST, PUT, PATCH request with no response body data. */
     /*package*/ static void httpPushData(HttpClient httpClient, Push style, String url, String contentType, BodyPublisher body) {
+        httpPushData(httpClient, style, url, setContentTypeHeader(contentType), body);
+    }
+
+    /** Push data. POST, PUT, PATCH request with no response body data. */
+    /*package*/ static void httpPushData(HttpClient httpClient, Push style, String url, Consumer<HttpRequest.Builder> modifier, BodyPublisher body) {
         URI uri = toRequestURI(url);
         HttpRequest.Builder builder = HttpRequest.newBuilder();
         builder.uri(uri);
         builder.method(style.method(), body);
-        if ( contentType != null )
-            builder.header(HttpNames.hContentType, contentType);
+        if ( modifier != null )
+            modifier.accept(builder);
         HttpRequest request = builder.build();
         HttpResponse<InputStream> response = execute(httpClient, request);
         handleResponseNoBody(response);

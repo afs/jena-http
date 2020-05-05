@@ -31,26 +31,35 @@ public class NotesHttp {
     // All XXX and TODO
     // Fuseki binary -- add dataset operations.
 
-    // 1) QueryEecutionHTTP, UpdateEecutionHTTP - are headers copied into the request?
+    // Merge:
+    //  [MERGE]
+    //     Merge WebContent2 into WebContent (now?)
+    //     Merge: G2, G to Glib (now?)
+    //     getLink in RDFConnection.
+    //     Remove RDFConnection(Others)
 
-    // 2) QueryExecutionHTTP.modifyByService
+    // 2) QueryExecutionHTTP.setTimeout :: query timeout, not connection.
+
+    // 3) QueryExecutionHTTP.modifyByService
     //    UpdateExecutionHTTP.modifyByService
     //      Per destination setup / SERVICE
-
-    // 3) QueryExecutionHTTP DRY
-
-    // 4) GSP does not use headers
-    // Javadoc
-    // *** Check outputTriples passing to GSP from RDFLinkRemote..
-
-    // 5)
-    //   Merge WebContent2 into WebContent (now?)
-    //   Merge: G2,G to Glib (now?)
-    //   Remove RDFConnectionFuseki
+    //
+    // 4) QueryExecutionHTTP DRY
+    //
+    // 5) GSP
+    //      HttpLib
+    //      Javadoc
+    //      Connection Timeouts
+    // 6) Javadoc: HttpOp2, HttpRDF
 
     // 9) RDFLink :
     //    RDFLinkFactory and authentication (more tests)
-    //    Port tests from TestRDFConnection*
+
+    // )) HTTP headers [DONE]
+    //    QueryExecutionHTTP [DONE]
+    //    UpdateExecutionHTTP [DONE]
+    //    GSP [DONE]
+    //    RDFLink [DONE - files use extension, not controllable. Use GSP or HttoOp2 directly]
 
     // ----------------------------------------
 

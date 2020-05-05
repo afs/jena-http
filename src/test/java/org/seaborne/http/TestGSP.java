@@ -25,9 +25,13 @@ import static org.apache.jena.fuseki.test.FusekiTest.expect404;
 import static org.junit.Assert.assertFalse;
 
 import org.apache.jena.graph.Graph;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.sse.SSE;
 
 public class TestGSP {
+
+    static String DIR = "testing/RDFLink/";
 
     private static EnvTest env;
     @BeforeClass public static void beforeClass() {
@@ -58,7 +62,15 @@ public class TestGSP {
         expect404(()->GSP.request(url("/ds")).graphName("http://host/graph").GET());
     }
 
-    // XXX TestGSP : more tests, inc files.
+    // XXX TestGSP : more tests, inc files., inc .contentType
     // Move tests from TestHttpOp2
+
+    @Test public void gsp_dft_ct_1() {
+        GSP.request(url("/ds")).defaultGraph().contentType(RDFFormat.RDFXML).PUT(DIR+"data-rdfxml");
+    }
+
+    @Test public void gsp_dft_ct_2() {
+        GSP.request(url("/ds")).defaultGraph().contentTypeHeader(WebContent.contentTypeRDFXML).PUT(DIR+"data-rdfxml");
+    }
 
 }

@@ -20,17 +20,22 @@ package org.seaborne.http;
 
 import java.io.FileNotFoundException;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
+import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.riot.*;
 import org.apache.jena.riot.system.StreamRDFLib;
 import org.apache.jena.riot.system.StreamRDFWriter;
+import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.shared.NotFoundException;
 import org.apache.jena.sparql.ARQException;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -120,17 +125,36 @@ public class GSP {
 
     private GSP() {}
 
-    /** Set the URL of the query endpoint.
-     *  This replaces any value set in the {@link #request(String)} call. */
+    /**
+     * Set the URL of the query endpoint. This replaces any value set in the
+     * {@link #request(String)} call.
+     */
     public GSP service(String serviceURL) {
         this.serviceEndpoint = Objects.requireNonNull(serviceURL);
         return this;
     }
 
+    /**
+     * Set an HTTP header that is added to the request.
+     * See {@link #accept(Lang)}, {@link #accept(Lang)}, {@link #contentType(RDFFormat)} and {@link #contentTypeFromFilename(String)}
+     * for specific handling of {@code Accept:} and {@code Content-Type}.
+     */
     public GSP httpHeader(String headerName, String headerValue) {
         Objects.requireNonNull(headerName);
         Objects.requireNonNull(headerValue);
-        this.httpHeaders.put(headerName, headerValue);
+        // Manage "Accept", and "Content-Type" separately - these are not always
+        // needed (e.g. GET does not have an ContentType) and they have a system default.
+        if ( Objects.equals(headerName, HttpNames.hAccept)) {
+            this.acceptHeader = headerValue;
+            return this;
+        }
+        if ( Objects.equals(headerName, HttpNames.hContentType)) {
+            this.contentType = headerValue;
+            return this;
+        }
+        if ( httpHeaders == null )
+            httpHeaders = new HashMap<>();
+        httpHeaders.put(headerName, headerValue);
         return this;
     }
 
@@ -168,6 +192,7 @@ public class GSP {
 
     public GSP contentType(RDFFormat rdfFormat) {
         this.rdfFormat = rdfFormat;
+        this.contentType = rdfFormat.getLang().getContentType().getContentTypeStr();
         return this;
     }
 
@@ -201,8 +226,8 @@ public class GSP {
     public void POST(String file) {
         validateGraphOperation();
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
-        String requestContentType = contentType(file);
-        uploadTriples(httpClient, url, file, requestContentType, Push.POST);
+        String fileExtContentType = contentTypeFromFilename(file);
+        uploadTriples(httpClient, url, file, fileExtContentType, httpHeaders, Push.POST);
     }
 
     /** POST a graph. */
@@ -222,8 +247,8 @@ public class GSP {
     public void PUT(String file) {
         validateGraphOperation();
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
-        String requestContentType = contentType(file);
-        uploadTriples(httpClient, url, file, requestContentType, Push.PUT);
+        String fileExtContentType = contentTypeFromFilename(file);
+        uploadTriples(httpClient, url, file, fileExtContentType, httpHeaders, Push.PUT);
     }
 
     /** PUT a graph. */
@@ -251,7 +276,7 @@ public class GSP {
         validateDatasetOperation();
         String requestAccept = header(this.acceptHeader, WebContent.defaultRDFAcceptHeader);
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
-        HttpRDF.httpGetToStream(httpClient, StreamRDFLib.dataset(dsg), serviceEndpoint, acceptHeader);
+        HttpRDF.httpGetToStream(httpClient, serviceEndpoint, acceptHeader, StreamRDFLib.dataset(dsg));
         return dsg;
     }
 
@@ -263,8 +288,8 @@ public class GSP {
      */
     public void postDataset(String file) {
         validateDatasetOperation();
-        String requestContentType = contentType(file);
-        uploadQuads(httpClient, serviceEndpoint, file, requestContentType, Push.POST);
+        String fileExtContentType = contentTypeFromFilename(file);
+        uploadQuads(httpClient, serviceEndpoint, file, fileExtContentType, httpHeaders, Push.POST);
     }
 
     /** POST a dataset */
@@ -282,8 +307,8 @@ public class GSP {
      */
     public void putDataset(String file) {
         validateDatasetOperation();
-        String requestContentType = contentType(file);
-        uploadQuads(httpClient, serviceEndpoint, file, requestContentType, Push.PUT);
+        String fileExtContentType = contentTypeFromFilename(file);
+        uploadQuads(httpClient, serviceEndpoint, file, fileExtContentType, httpHeaders, Push.PUT);
     }
 
     /** PUT a dataset */
@@ -294,32 +319,26 @@ public class GSP {
     }
 
     /** Send a file of triples to a URL. */
-    private static void uploadTriples(HttpClient httpClient, String gspUrl, String file, String contentType, Push mode) {
-        Lang lang = RDFLanguages.contentTypeToLang(contentType);
+    private static void uploadTriples(HttpClient httpClient, String gspUrl, String file, String fileExtContentType, Map<String, String> headers, Push mode) {
+        Lang lang = RDFLanguages.contentTypeToLang(fileExtContentType);
         if ( lang == null )
-            throw new ARQException("Not a recognized as an RDF format: "+contentType);
+            throw new ARQException("Not a recognized as an RDF format: "+fileExtContentType);
         if ( RDFLanguages.isQuads(lang) && ! RDFLanguages.isTriples(lang) )
             throw new ARQException("Can't load quads into a graph");
         if ( ! RDFLanguages.isTriples(lang) )
             throw new ARQException("Not an RDF format: "+file+" (lang="+lang+")");
-        pushFile(httpClient, gspUrl, file, contentType, mode);
+        pushFile(httpClient, gspUrl, file, fileExtContentType, headers, mode);
     }
 
     /**
      * Send a file of quads to a URL. The Content-Type is inferred from the file
      * extension.
      */
-    private static void uploadQuads(HttpClient httpClient, String endpoint, String file, String contentType, Push mode) {
-        Lang lang = RDFLanguages.contentTypeToLang(contentType);
+    private static void uploadQuads(HttpClient httpClient, String endpoint, String file, String fileExtContentType, Map<String, String> headers, Push mode) {
+        Lang lang = RDFLanguages.contentTypeToLang(fileExtContentType);
         if ( !RDFLanguages.isQuads(lang) && !RDFLanguages.isTriples(lang) )
             throw new ARQException("Not an RDF format: " + file + " (lang=" + lang + ")");
-        pushFile(httpClient, endpoint, file, contentType, mode);
-    }
-
-    /** Send a file. The Content-Type is taken from the given {@code Lang}. */
-    private static void doPutPost(HttpClient httpClient, String url, String file, Lang lang, Push style) {
-        String contentType = lang.getContentType().getContentTypeStr();
-        pushFile(httpClient, url, file, contentType, style);
+        pushFile(httpClient, endpoint, file, fileExtContentType, headers, mode);
     }
 
     /** Header string or default value. */
@@ -349,19 +368,28 @@ public class GSP {
         return RDFWriterRegistry.defaultSerialization(lang);
     }
 
-    /** Choose the Content-Type header for sending a file. */
-    private String contentType(String filename) {
+    /** Choose the Content-Type header for sending a file unless overridden. */
+    private String contentTypeFromFilename(String filename) {
         if ( contentType != null )
             return contentType;
-        return RDFLanguages.guessContentType(filename).getContentTypeStr();
+        ContentType ct = RDFLanguages.guessContentType(filename);
+        return ct == null ? null : ct.getContentTypeStr();
     }
 
-    /** Send a file. */
-    protected static void pushFile(HttpClient httpClient, String endpoint, String file, String contentType, Push style) {
+    /** Send a file. fileContentType takes predecence over this.contentType.*/
+    protected static void pushFile(HttpClient httpClient, String endpoint, String file, String fileContentType,
+                                   Map<String, String> httpHeaders, Push style) {
         try {
             Path path = Paths.get(file);
             BodyPublisher body = BodyPublishers.ofFile(path);
-            HttpOp2.httpPushData(httpClient, style, endpoint, contentType, body);
+            Consumer<HttpRequest.Builder> modifier = x->{
+                if ( fileContentType != null )
+                    x.header(HttpNames.hContentType, fileContentType);
+                // Allow to rewrite Content-Type.
+                if ( httpHeaders != null )
+                    httpHeaders.forEach(x::header);
+            };
+            HttpOp2.httpPushData(httpClient, style, endpoint, modifier, body);
         } catch (FileNotFoundException ex) {
             throw new NotFoundException(file);
         }
