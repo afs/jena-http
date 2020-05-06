@@ -72,7 +72,7 @@ public class DevAuthHTTP {
             .securityHandler(sh)
             .serverAuthPolicy(Auth.policyAllowSpecific("u"))
             //.verbose(true)
-            .addServlet("/data", new StringHolderServlet())
+            //.addServlet("/data", new StringHolderServlet())
             .build();
         server.start();
         //server.start().join();

@@ -21,7 +21,6 @@ package org.seaborne.http;
 import static org.seaborne.http.HttpLib.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -95,13 +94,13 @@ public class QueryExecutionHTTP implements QueryExecution {
 
     // Content Types: these list the standard formats and also include */*.
     // XXX Merge WebContent2 into WebContent
-    private String selectContentType    = WebContent2.sparqlResultsHeader;
-    private String askContentType       = WebContent2.sparqlAskHeader;
-    private String describeContentType  = WebContent.defaultGraphAcceptHeader;
-    private String constructContentType = WebContent.defaultGraphAcceptHeader;
-    private String datasetContentType   = WebContent.defaultDatasetAcceptHeader;
+    private String selectAcceptheader    = WebContent2.sparqlResultsHeader;
+    private String askAcceptHeader       = WebContent2.sparqlAskHeader;
+    private String describeAcceptHeader  = WebContent.defaultGraphAcceptHeader;
+    private String constructAcceptHeader = WebContent.defaultGraphAcceptHeader;
+    private String datasetAcceptHeader   = WebContent.defaultDatasetAcceptHeader;
     // CONSTRUCT or DESCRIBE
-    private String modelContentType     = WebContent.defaultGraphAcceptHeader;
+    private String modelAcceptHeader     = WebContent.defaultGraphAcceptHeader;
 
     // If this is non-null, it overrides the use of any Content-Type above.
     private String acceptHeader         = null;
@@ -409,10 +408,10 @@ public class QueryExecutionHTTP implements QueryExecution {
     }
 
 	private ResultSet execResultSet() {
-        String thisAcceptHeader = dft(acceptHeader, selectContentType);
+        String thisAcceptHeader = dft(acceptHeader, selectAcceptheader);
 
         HttpResponse<InputStream> response = query(thisAcceptHeader);
-        InputStream in = HttpLib.getInputStream(response);
+        InputStream in = HttpLib.handleResponseInputStream(response);
         // Don't assume the endpoint actually gives back the content type we asked for
         String actualContentType = response.headers().firstValue(HttpNames.hContentType).orElse(null);
 
@@ -431,10 +430,8 @@ public class QueryExecutionHTTP implements QueryExecution {
 
         retainedConnection = in; // This will be closed on close()
 
-        // If the server fails to return a Content-Type then we will assume
-        // the server returned the type we asked for.
         if (actualContentType == null || actualContentType.equals(""))
-            actualContentType = selectContentType;
+            actualContentType = WebContent.contentTypeResultsXML;
 
         // Map to lang, with pragmatic alternatives.
         Lang lang = WebContent.contentTypeToLangResultSet(actualContentType);
@@ -446,6 +443,46 @@ public class QueryExecutionHTTP implements QueryExecution {
         // Do not close the InputStream at this point.
         ResultSet result = ResultSetMgr.read(in, lang);
         return result;
+    }
+
+    @Override
+    public boolean execAsk() {
+        checkNotClosed();
+        check(QueryType.ASK);
+        String thisAcceptHeader = dft(acceptHeader, askAcceptHeader);
+        HttpResponse<InputStream> response = query(thisAcceptHeader);
+        String actualContentType = response.headers().firstValue(HttpNames.hContentType).orElse(null);
+        httpResponseContentType = actualContentType;
+        actualContentType = removeCharset(actualContentType);
+
+        // If the server fails to return a Content-Type then we will assume
+        // the server returned the type we asked for
+        if (actualContentType == null || actualContentType.equals(""))
+            actualContentType = askAcceptHeader;
+
+        InputStream in = HttpLib.handleResponseInputStream(response);
+        try {
+            Lang lang = RDFLanguages.contentTypeToLang(actualContentType);
+            if ( lang == null ) {
+                // Any specials :
+                // application/xml for application/sparql-results+xml
+                // application/json for application/sparql-results+json
+                if (actualContentType.equals(WebContent.contentTypeXML))
+                    lang = ResultSetLang.SPARQLResultSetXML;
+                else if ( actualContentType.equals(WebContent.contentTypeJSON))
+                    lang = ResultSetLang.SPARQLResultSetJSON;
+            }
+            if ( lang == null )
+                throw new QueryException("Endpoint returned Content-Type: " + actualContentType + " which is not supported for ASK queries");
+            boolean result = ResultSetMgr.readBoolean(in, lang);
+            finish(response);
+            return result;
+        } catch (ResultSetException e) {
+            log.warn("Returned content is not a boolean result", e);
+            throw e;
+        } catch (QueryExceptionHTTP e) {
+            throw e;
+        }
     }
 
     private String removeCharset(String contentType) {
@@ -514,27 +551,33 @@ public class QueryExecutionHTTP implements QueryExecution {
     }
 
     private Model execModel(Model model) {
-        Pair<InputStream, Lang> p = execConstructWorker(modelContentType);
-        try(InputStream in = p.getLeft()) {
-            Lang lang = p.getRight();
+        Pair<InputStream, Lang> p = execRdfWorker(modelAcceptHeader, WebContent.contentTypeRDFXML);
+        InputStream in = p.getLeft();
+        Lang lang = p.getRight();
+        try {
             RDFDataMgr.read(model, in, lang);
-        } catch (IOException ex) { IO.exception(ex); }
-        finally { this.close(); }
+        } catch (RiotException ex) {
+            finish(in);
+            throw ex;
+        }
         return model;
     }
 
     private Dataset execDataset(Dataset dataset) {
-        Pair<InputStream, Lang> p = execConstructWorker(datasetContentType);
-        try(InputStream in = p.getLeft()) {
-            Lang lang = p.getRight();
+        Pair<InputStream, Lang> p = execRdfWorker(datasetAcceptHeader, WebContent.contentTypeNQuads);
+        InputStream in = p.getLeft();
+        Lang lang = p.getRight();
+        try {
             RDFDataMgr.read(dataset, in, lang);
-        } catch (IOException ex) { IO.exception(ex); }
-        finally { this.close(); }
+        } catch (RiotException ex) {
+            finish(in);
+            throw ex;
+        }
         return dataset;
     }
 
     private Iterator<Triple> execTriples() {
-        Pair<InputStream, Lang> p = execConstructWorker(modelContentType);
+        Pair<InputStream, Lang> p = execRdfWorker(modelAcceptHeader, WebContent.contentTypeRDFXML);
         InputStream in = p.getLeft();
         Lang lang = p.getRight();
         // Base URI?
@@ -543,20 +586,21 @@ public class QueryExecutionHTTP implements QueryExecution {
 
     private Iterator<Quad> execQuads() {
         checkNotClosed();
-        Pair<InputStream, Lang> p = execConstructWorker(datasetContentType);
+        Pair<InputStream, Lang> p = execRdfWorker(datasetAcceptHeader, WebContent.contentTypeNQuads);
         InputStream in = p.getLeft();
         Lang lang = p.getRight();
         // Base URI?
         return RDFDataMgr.createIteratorQuads(in, lang, null);
     }
 
-    private Pair<InputStream, Lang> execConstructWorker(String contentType) {
+    // Any RDF data back (CONSTRUCT, DESCRIBE, QUADS)
+    // ifNoContentType - some wild guess at the content type.
+    private Pair<InputStream, Lang> execRdfWorker(String contentType, String ifNoContentType) {
         checkNotClosed();
         String thisAcceptHeader = dft(acceptHeader, contentType);
         HttpResponse<InputStream> response = query(thisAcceptHeader);
-        InputStream in = HttpLib.getInputStream(response);
+        InputStream in = HttpLib.handleResponseInputStream(response);
 
-        // XXX DRY
         // Don't assume the endpoint actually gives back the content type we asked for
         String actualContentType = response.headers().firstValue(HttpNames.hContentType).orElse(null);
         httpResponseContentType = actualContentType;
@@ -564,9 +608,8 @@ public class QueryExecutionHTTP implements QueryExecution {
 
         // If the server fails to return a Content-Type then we will assume
         // the server returned the type we asked for
-        if (actualContentType == null || actualContentType.equals("")) {
-            actualContentType = WebContent.defaultDatasetAcceptHeader;
-        }
+        if (actualContentType == null || actualContentType.equals(""))
+            actualContentType = ifNoContentType;
 
         Lang lang = RDFLanguages.contentTypeToLang(actualContentType);
         if ( ! RDFLanguages.isQuads(lang) && ! RDFLanguages.isTriples(lang) )
@@ -577,59 +620,12 @@ public class QueryExecutionHTTP implements QueryExecution {
     }
 
     @Override
-    public boolean execAsk() {
-        checkNotClosed();
-        check(QueryType.ASK);
-        String thisAcceptHeader = dft(acceptHeader, askContentType);
-        HttpResponse<InputStream> response = query(thisAcceptHeader);
-        InputStream in = HttpLib.getInputStream(response);
-        // XXX DRY
-        String actualContentType = response.headers().firstValue(HttpNames.hContentType).orElse(null);
-        httpResponseContentType = actualContentType;
-        actualContentType = removeCharset(actualContentType);
-
-        // If the server fails to return a Content-Type then we will assume
-        // the server returned the type we asked for
-        if (actualContentType == null || actualContentType.equals("")) {
-            actualContentType = WebContent.defaultDatasetAcceptHeader;
-        }
-
-        try( in ) {
-
-            Lang lang = RDFLanguages.contentTypeToLang(actualContentType);
-            if ( lang == null ) {
-                // Any specials :
-                // application/xml for application/sparql-results+xml
-                // application/json for application/sparql-results+json
-                if (actualContentType.equals(WebContent.contentTypeXML))
-                    lang = ResultSetLang.SPARQLResultSetXML;
-                else if ( actualContentType.equals(WebContent.contentTypeJSON))
-                    lang = ResultSetLang.SPARQLResultSetJSON;
-            }
-            if ( lang == null )
-                throw new QueryException("Endpoint returned Content-Type: " + actualContentType + " which is not supported for ASK queries");
-            boolean result = ResultSetMgr.readBoolean(in, lang);
-            return result;
-        } catch (ResultSetException e) {
-            log.warn("Returned content is not a boolean result", e);
-            throw e;
-        } catch (QueryExceptionHTTP e) {
-            throw e;
-        }
-        catch (java.io.IOException e) {
-            log.warn("Failed to close connection", e);
-            return false;
-        }
-        finally { this.close(); }
-    }
-
-    @Override
     public JsonArray execJson() {
         checkNotClosed();
         check(QueryType.CONSTRUCT_JSON);
         String thisAcceptHeader = dft(acceptHeader, WebContent.contentTypeJSON);
         HttpResponse<InputStream> response = query(thisAcceptHeader);
-        InputStream in = HttpLib.getInputStream(response);
+        InputStream in = HttpLib.handleResponseInputStream(response);
         return JSON.parseAny(in).getAsArray();
     }
 
@@ -775,7 +771,7 @@ public class QueryExecutionHTTP implements QueryExecution {
 
         // Query string or HTML form.
         if ( sendMode == SendMode.asPostBody )
-            return queryPush(thisParams, acceptHeader);
+            return executeQueryPush(thisParams, acceptHeader);
         else
             return queryGetForm(thisParams, acceptHeader);
     }
@@ -798,7 +794,7 @@ public class QueryExecutionHTTP implements QueryExecution {
             default :
                 throw new HttpException("Send mode not recognized for query string based request: "+sendMode);
         }
-        return execRequestQS(service, httpClient, sendMode, thisLengthLimit,
+        return execQueryString(service, httpClient, sendMode, thisLengthLimit,
                             httpHeaders, thisParams, acceptHeader,
                             allowCompression, readTimeout, readTimeoutUnit);
     }
@@ -813,12 +809,11 @@ public class QueryExecutionHTTP implements QueryExecution {
      * @param timeoutTimeUnit
      * @return HttpResponse<InputStream>
      */
-    private static HttpResponse<InputStream> execRequestQS(String service, HttpClient httpClient,
-                                                           SendMode sendMode, int thisLengthLimit,
-                                                           Map<String, String> httpHeaders, Params params,
-                                                           String acceptHeader, boolean allowCompression,
-                                                           long readTimeout, TimeUnit readTimeoutUnit) {
-        // XXX Used once - merge methods?
+    private static HttpResponse<InputStream> execQueryString(String service, HttpClient httpClient,
+                                                             SendMode sendMode, int thisLengthLimit,
+                                                             Map<String, String> httpHeaders, Params params,
+                                                             String acceptHeader, boolean allowCompression,
+                                                             long readTimeout, TimeUnit readTimeoutUnit) {
         Objects.requireNonNull(service);
         Objects.requireNonNull(params);
         Objects.requireNonNull(httpClient);
@@ -854,7 +849,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     }
 
     // Use SPARQL query body and MIME type.
-    private HttpResponse<InputStream> queryPush(Params thisParams, String acceptHeader) {
+    private HttpResponse<InputStream> executeQueryPush(Params thisParams, String acceptHeader) {
         if (closed)
             throw new ARQException("HTTP execution already closed");
 
@@ -868,7 +863,6 @@ public class QueryExecutionHTTP implements QueryExecution {
         acceptHeader(builder, acceptHeader);
         HttpRequest request = builder.POST(BodyPublishers.ofString(queryString)).build();
         HttpResponse<InputStream> response = execute(httpClient, request);
-        handleHttpStatusCode(response);
         return response;
     }
 

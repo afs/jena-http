@@ -21,7 +21,6 @@ package org.seaborne.http;
 import static org.seaborne.http.HttpLib.*;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -97,22 +96,21 @@ public class HttpRDF {
         if ( acceptHeader == null )
             acceptHeader = "*/*";
         HttpResponse<InputStream> response = execGetToInput(client, url, HttpLib.setAcceptHeader(acceptHeader));
+        InputStream in = handleResponseInputStream(response);
         String base = determineBaseURI(url, response);
         Lang lang = determineSyntax(response, Lang.RDFXML);
-        try (InputStream in = getInputStream(response)) {
-            try {
-                RDFParser.create()
-                    .base(base)
-                    .source(in)
-                    .lang(lang)
-                    .parse(dest);
-            } catch (RiotParseException ex) {
-                // We only read part of the input stream.
-                finish(response);
-                throw ex;
-            }
-        } catch (IOException e) {
-            throw new HttpException(response.request().method() + " " + response.request().uri().toString(), e);
+        try {
+            RDFParser.create()
+                .base(base)
+                .source(in)
+                .lang(lang)
+                .parse(dest);
+            finish(response);
+        } catch (RiotParseException ex) {
+            // We only read part of the input stream.
+            throw ex;
+        } finally {
+            finish(response);
         }
     }
 

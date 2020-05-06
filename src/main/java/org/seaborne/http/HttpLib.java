@@ -63,32 +63,6 @@ public class HttpLib {
 
     public static BodyPublisher stringBody(String str) { return BodyPublishers.ofString(str); }
 
-    /**
-     * Get the InputStream from an HttpResponse, handling possible compression settings.
-     * The application mjst consume or close the InputStream.
-     * Closing the InputStream may close the HTTP connection.
-     */
-    static InputStream getInputStream(HttpResponse<InputStream> httpResponse) {
-        String encoding = httpResponse.headers().firstValue("Content-Encoding").orElse("");
-        InputStream responseInput = httpResponse.body();
-        try {
-            switch (encoding) {
-                case "" :
-                case "identity" : // Proper name for no compression.
-                    return responseInput;
-                case "gzip" :
-                    return new GZIPInputStream(responseInput, 2*1024);
-                case "inflate" :
-                    return new InflaterInputStream(responseInput);
-                case "br" : // RFC7932
-                default :
-                    throw new UnsupportedOperationException("Not supported: Content-Encoding: " + encoding);
-            }
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
-    }
-
     private static BodyHandler<InputStream> bodyHandlerInputStream = buildDftBodyHandlerInputStream();
 
     private static BodyHandler<InputStream> buildDftBodyHandlerInputStream() {
@@ -113,13 +87,39 @@ public class HttpLib {
         } catch (IOException e) { throw new HttpException(e); }
     };
 
-    /*package*/ static String asString(HttpResponse<InputStream> response) {
-        return bodyInputStreamToString.apply(response);
-    }
+//    /*package*/ static String asString(HttpResponse<InputStream> response) {
+//        return bodyInputStreamToString.apply(response);
+//    }
 
     /** Calculate basic auth header. */
     public static String basicAuth(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Get the InputStream from an HttpResponse, handling possible compression settings.
+     * The application must consume or close the {@code InputStream} (see {@link #finish(InputStream)}).
+     * Closing the InputStream may close the HTTP connection.
+     */
+    private static InputStream getInputStream(HttpResponse<InputStream> httpResponse) {
+        String encoding = httpResponse.headers().firstValue("Content-Encoding").orElse("");
+        InputStream responseInput = httpResponse.body();
+        try {
+            switch (encoding) {
+                case "" :
+                case "identity" : // Proper name for no compression.
+                    return responseInput;
+                case "gzip" :
+                    return new GZIPInputStream(responseInput, 2*1024);
+                case "inflate" :
+                    return new InflaterInputStream(responseInput);
+                case "br" : // RFC7932
+                default :
+                    throw new UnsupportedOperationException("Not supported: Content-Encoding: " + encoding);
+            }
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     /**
@@ -167,6 +167,17 @@ public class HttpLib {
     }
 
     /**
+     * Handle the HTTP response and return the body {@code InputStream} if a 200.
+     * Otherwise, throw an {@link HttpExpection}.
+     * @param response
+     * @return InputStream
+     */
+    static InputStream handleResponseInputStream(HttpResponse<InputStream> httpResponse) {
+        handleHttpStatusCode(httpResponse);
+        return getInputStream(httpResponse);
+    }
+
+    /**
      * Handle the HTTP response and consume the body if a 200.
      * Otherwise, throw an {@link HttpExpection}.
      * @param response
@@ -180,10 +191,21 @@ public class HttpLib {
      * Handle the HTTP response and read the body to produce a string if a 200.
      * Otherwise, throw an {@link HttpExpection}.
      * @param response
+     * @return String
      */
     static String handleResponseRtnString(HttpResponse<InputStream> response) {
-        handleHttpStatusCode(response);
-        return asString(response);
+        InputStream input = handleResponseInputStream(response);
+        try {
+            String string = IO.readWholeFileAsUTF8(input);
+            // Convert no body, no Content-Length to null.
+//            if ( msg.isEmpty() ) {
+//                if ( r.headers().firstValue(HttpNames.hContentLength).isEmpty() )
+//                    // No Content-Length -> null
+//                    return null;
+//            }
+            // Finished, don't close.
+            return string;
+        } catch (IOException e) { throw new HttpException(e); }
     }
 
     static HttpException exception(HttpResponse<InputStream> response, int httpStatusCode) {
@@ -334,8 +356,11 @@ public class HttpLib {
         return execute(httpClient, httpRequest, BodyHandlers.ofInputStream());
     }
 
-    /** Execute request and return a response - error messages as JSON in 4xx and 5xx can not be handled.
-     * See {@link #execute(HttpClient, HttpRequest)} because we need an {@code InputStream} response.
+    /**
+     * Execute request and return a response - error messages as JSON in 4xx and 5xx
+     * can not be handled if {@code <T>} is not {@code InputStream}. See
+     * {@link #execute(HttpClient, HttpRequest)} because we need an
+     * {@code InputStream} response.
      * @param httpClient
      * @param httpRequest
      * @param bodyHandler
@@ -344,8 +369,13 @@ public class HttpLib {
     static <T> HttpResponse<T> execute(HttpClient httpClient, HttpRequest httpRequest, BodyHandler<T> bodyHandler) {
         try {
             return httpClient.send(httpRequest, bodyHandler);
-        } catch (IOException | InterruptedException e) {
-            throw new HttpException(httpRequest.method()+" "+httpRequest.uri().toString(), e);
+        } catch (IOException | InterruptedException ex) {
+            // This is silly.
+            // Rather than an HTTP exception, a 403 becomes IOException("too many authentication attempts");
+            if ( ex.getMessage().contains("too many authentication attempts") ) {
+                throw new HttpException(403, HttpSC.getMessage(403), null);
+            }
+            throw new HttpException(httpRequest.method()+" "+httpRequest.uri().toString(), ex);
         }
     }
 
@@ -359,8 +389,6 @@ public class HttpLib {
                 mods.modify(params, httpHeaders);
         }
     }
-
-    // XXX IF modifiers
 
     /**
      * Return a modifier that will set the Accept header to the value.

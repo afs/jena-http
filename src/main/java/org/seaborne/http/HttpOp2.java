@@ -119,8 +119,7 @@ public class HttpOp2 {
     /** MUST read the whole InputStream or close it. */
     private static InputStream execGet(HttpClient httpClient, HttpRequest request) {
         HttpResponse<InputStream> response = execute(httpClient, request);
-        handleHttpStatusCode(response);
-        return getInputStream(response);
+        return handleResponseInputStream(response);
     }
 
     /** POST

@@ -18,18 +18,17 @@
 
 package dev;
 
+
 public class NotesHttp {
 
     // package.html or web page.
 
-    // Per endpoint modification.
-    //   ServiceRegistry and per endpoint tuning. Now outside? HttpClient per link.
-    //   QueryExecutionHTTP.applyServiceConfig
-    //   UpdateExecutionHTTP.modifyByService
-    // Need to influence choice of HttpClient.
-    //
     // All XXX and TODO
-    // Fuseki binary -- add dataset operations.
+
+    // WIP:
+    // **** Binding version of a ResultSet -> Add forEachBinding() to ResultSet interface?
+
+    //   QueryExecutionHTTP/SendMode.
 
     // Merge:
     //  [MERGE]
@@ -37,29 +36,20 @@ public class NotesHttp {
     //     Merge: G2, G to Glib (now?)
     //     getLink in RDFConnection.
     //     Remove RDFConnection(Others)
+    //     Fuseki tests isFuseki
 
-    // 2) QueryExecutionHTTP.setTimeout :: query timeout, not connection.
+    // 2)  Fuseki binary -- add dataset operations.
 
     // 3) QueryExecutionHTTP.modifyByService
     //    UpdateExecutionHTTP.modifyByService
-    //      Per destination setup / SERVICE
-    //
-    // 4) QueryExecutionHTTP DRY
+    //         modifyByService - choose HttpClient (security), headers?, rewrite URL?
+    //    Per destination setup / SERVICE
     //
     // 5) GSP
     //      HttpLib
     //      Javadoc
     //      Connection Timeouts
     // 6) Javadoc: HttpOp2, HttpRDF
-
-    // 9) RDFLink :
-    //    RDFLinkFactory and authentication (more tests)
-
-    // )) HTTP headers [DONE]
-    //    QueryExecutionHTTP [DONE]
-    //    UpdateExecutionHTTP [DONE]
-    //    GSP [DONE]
-    //    RDFLink [DONE - files use extension, not controllable. Use GSP or HttoOp2 directly]
 
     // ----------------------------------------
 
@@ -70,7 +60,6 @@ public class NotesHttp {
     //  * HttpRDF
     //  * HttpOp2
 
-    // Binding version of a ResultSet -> Add forEachBinding() to ResultSet interface?
 
     // ---- Review
     // Check read to end or close on input streams. try-resource? -> use HttpLib.finish

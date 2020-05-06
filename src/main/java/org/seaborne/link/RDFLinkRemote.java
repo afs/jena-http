@@ -18,8 +18,6 @@
 
 package org.seaborne.link;
 
-import static org.seaborne.link.LibRDFLink.name;
-
 import java.net.http.HttpClient;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -357,13 +355,13 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public Graph fetch(Node graphName) {
         checkGSP();
-        return GSP.request(svcGraphStore).graphName(graphName.getURI()).acceptHeader(acceptGraph).GET();
+        return gsp(graphName).acceptHeader(acceptGraph).GET();
     }
 
     @Override
     public Graph fetch() {
         checkGSP();
-        return GSP.request(svcGraphStore).defaultGraph().acceptHeader(acceptGraph).GET();
+        return gsp().acceptHeader(acceptGraph).GET();
     }
 
     // "load" => POST
@@ -430,11 +428,11 @@ public class RDFLinkRemote implements RDFLink {
         if ( LibRDFLink.isDefault(graphName) )
             return gspRequest().defaultGraph();
         else
-            return gspRequest().graphName(name(graphName));
+            return gspRequest().graphName(graphName);
     }
 
     private GSP gspRequest() {
-        return GSP.request(svcGraphStore);
+        return GSP.request(svcGraphStore).httpClient(httpClient);
     }
 
     @Override

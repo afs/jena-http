@@ -212,7 +212,7 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
             String qs = thisParams.httpString();
             requestURL = requestURL(requestURL, qs);
         }
-        execute(requestURL, BodyPublishers.ofString(str), WebContent.contentTypeSPARQLUpdate);
+        executeUpdate(requestURL, BodyPublishers.ofString(str), WebContent.contentTypeSPARQLUpdate);
     }
 
     private void executePostForm(Params thisParams) {
@@ -221,10 +221,10 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
         HttpLib.modifyByService(requestURL, context, thisParams, httpHeaders);
         String formString = thisParams.httpString();
         // Everything goes into the form body, no use of the request URI query string.
-        execute(requestURL, BodyPublishers.ofString(formString, StandardCharsets.US_ASCII), WebContent.contentTypeHTMLForm);
+        executeUpdate(requestURL, BodyPublishers.ofString(formString, StandardCharsets.US_ASCII), WebContent.contentTypeHTMLForm);
     }
 
-    private String execute(String requestURL, BodyPublisher body, String contentType) {
+    private String executeUpdate(String requestURL, BodyPublisher body, String contentType) {
         HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, false, -1L, null);
         builder = contentTypeHeader(builder, contentType);
         HttpRequest request = builder.POST(body).build();

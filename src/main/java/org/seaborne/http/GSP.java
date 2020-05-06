@@ -31,8 +31,11 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import org.apache.jena.atlas.web.ContentType;
+import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.riot.*;
+import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.riot.system.StreamRDFLib;
 import org.apache.jena.riot.system.StreamRDFWriter;
 import org.apache.jena.riot.web.HttpNames;
@@ -134,6 +137,11 @@ public class GSP {
         return this;
     }
 
+    public GSP httpClient(HttpClient httpClient) {
+        this.httpClient = httpClient;
+        return this;
+    }
+
     /**
      * Set an HTTP header that is added to the request.
      * See {@link #accept(Lang)}, {@link #accept(Lang)}, {@link #contentType(RDFFormat)} and {@link #contentTypeFromFilename(String)}
@@ -164,7 +172,18 @@ public class GSP {
 //    }
 
     public GSP graphName(String graphName) {
+        Objects.requireNonNull(graphName);
         this.graphName = graphName;
+        this.defaultGraph = false;
+        return this;
+    }
+
+    public GSP graphName(Node graphName) {
+        Objects.requireNonNull(graphName);
+        if ( ! graphName.isURI() && ! graphName.isBlank() )
+            throw exception("Not an acceptable graph name: "+this.graphName);
+        Node gn = RiotLib.blankNodeToIri(graphName);
+        this.graphName = gn.getURI();
         this.defaultGraph = false;
         return this;
     }
@@ -199,13 +218,20 @@ public class GSP {
     private void validateGraphOperation() {
         Objects.requireNonNull(serviceEndpoint);
         if ( ! defaultGraph && graphName == null )
-            throw new ARQException("Nedd either default graph or a graph name");
+            throw exception("Need either default graph or a graph name");
     }
 
     private void validateDatasetOperation() {
         Objects.requireNonNull(serviceEndpoint);
-        if ( defaultGraph || graphName != null )
-            throw new ARQException("Default graph or a graph name specified for dataset operation");
+        if ( defaultGraph )
+            throw exception("Default graph specified for dataset operation");
+        if ( graphName != null )
+            throw exception("A graph name specified for dataset operation");
+    }
+
+    // Setup problems.
+    private static RuntimeException exception(String msg) {
+        return new HttpException(msg);
     }
 
     /** Get a graph */
@@ -317,6 +343,14 @@ public class GSP {
         RDFFormat requestFmt = rdfFormat(HttpEnv.dftQuadsFormat);
         HttpRDF.httpPutDataset(httpClient, serviceEndpoint, dataset, requestFmt);
     }
+
+    // SPARQL "CLEAR ALL"
+//    /** Clear - delete named graphs, empty the default graph */
+//    public void clearDataset() {
+//        validateDatasetOperation();
+//        String url = serviceEndpoint;
+//        HttpOp2.httpDelete(url);
+//    }
 
     /** Send a file of triples to a URL. */
     private static void uploadTriples(HttpClient httpClient, String gspUrl, String file, String fileExtContentType, Map<String, String> headers, Push mode) {

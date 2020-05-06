@@ -74,10 +74,6 @@ import org.seaborne.http.HttpLib;
         return dataset.asDatasetGraph();
     }
 
-    /*package*/ static String name(Node graphName) {
-        return graphName.getURI();
-    }
-
     /*package*/ static Node name(String graphName) {
         if ( graphName == null || graphName.equals("default") )
             return Quad.defaultGraphIRI;
