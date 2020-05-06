@@ -34,7 +34,8 @@ import org.seaborne.http.TestBlankNodeBinary;
     TestRDFLinkLocalTDB.class,
     TestRDFLinkRemote.class,
     TestRDFLinkFuseki.class,
-    TestRDFLinkFusekiBinary.class
+    TestRDFLinkFusekiBinary.class,
+    TestAuthRemote.class
 })
 
 public class TS_RDFLinkIntegration {}

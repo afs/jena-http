@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.http;
+package org.seaborne.conn;
 
 import java.io.IOException;
 
@@ -32,9 +32,14 @@ import org.apache.jena.web.HttpSC;
  * A simple servlet for testing client-side code;
  * maintains a string manipulated by all HTTP operations.
  */
-class StringHolderServlet extends HttpServlet {
+public class StringHolderServlet extends HttpServlet {
 
     private String content = "";
+
+    // Direct calls.
+    public void clear() { set(""); }
+    public void set(String str) { content = str; }
+    public String get() { return content; }
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

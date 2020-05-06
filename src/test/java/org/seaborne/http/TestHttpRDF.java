@@ -18,42 +18,41 @@
 
 package org.seaborne.http;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.sparql.sse.SSE;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.seaborne.conn.EnvTest;
 
 public class TestHttpRDF {
-    private static FusekiServer server;
-
+    // The HttpRDF machinery (much of which is package visible) get tested by other
+    // subsystems built on top of HttpRDF. This test suite is for the public API.
     private static EnvTest env;
     @BeforeClass public static void beforeClass() {
-        env = new EnvTest("/ds");
+        env = EnvTest.create("/ds");
+    }
+
+    @Before public void before() {
+        env.clear();
     }
 
     @AfterClass public static void afterClass() {
         EnvTest.stop(env);
     }
 
-    private String url(String path) { return env.url(path); }
+    private String url(String path) { return env.datasetPath(path); }
 
     @Test public void httpRDF_01() {
         var graph = HttpRDF.httpGetGraph(url("/ds?default"));
         assertNotNull(graph);
         assertTrue("Graph is empty", graph.isEmpty());
     }
-
-    // Control conneg.
-//    @Test public void httpRDF_02() {
-//        Graph graph = HttpRDF.httpGetGraph(url("/data"), WebContent.contentTypeTurtle);
-//        assertNotNull(graph);
-//        assertTrue(graph.isEmpty());
-//    }
 
     @Test public void httpRDF_03() {
         Graph graph1 = SSE.parseGraph("(graph (:s :p 1) (:s :p 2))");
@@ -62,9 +61,27 @@ public class TestHttpRDF {
         assertTrue(graph1.isIsomorphicWith(graph2));
     }
 
-    // XXX TestHttpRDF : More tests
+    @Test public void httpRDF_04() {
+        Graph graph1 = SSE.parseGraph("(graph (_:b :p 1) (:s :p 2))");
+        HttpRDF.httpPutGraph(url("/ds?default"), graph1);
+        Graph graph2 = HttpRDF.httpGetGraph(url("/ds?default"));
+        assertTrue(graph1.isIsomorphicWith(graph2));
+        HttpRDF.httpPutGraph(url("/ds?default"), graph1);
+        Graph graph3 = HttpRDF.httpGetGraph(url("/ds?default"));
+        assertTrue(graph1.isIsomorphicWith(graph3));
 
-    // POST graph
+        // POST!
+        HttpRDF.httpPostGraph(url("/ds?default"), graph1);
+        Graph graph4 = HttpRDF.httpGetGraph(url("/ds?default"));
+        assertFalse(graph1.isIsomorphicWith(graph4));
+    }
 
-    // DELETE
+    @Test public void httpRDF_05() {
+        Graph graph1 = SSE.parseGraph("(graph (_:b :p 1) (:s :p 2))");
+        HttpRDF.httpPutGraph(url("/ds?default"), graph1);
+        HttpRDF.httpDeleteGraph(url("/ds?default"));
+
+        Graph graph2 = HttpRDF.httpGetGraph(url("/ds?default"));
+        assertTrue(graph2.isEmpty());
+    }
 }

@@ -44,6 +44,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class TestHttpQueryAuth {
+    // Superseded by TestAuthRemote
 
     private static FusekiServer server = null;
     private static String URL;
@@ -72,7 +73,7 @@ public class TestHttpQueryAuth {
         }
     }
 
-    @Test public void query_auth_01() {
+    @Test public void query_no_auth() {
         FusekiTest.expect401(()->{
             try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
                     .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
@@ -81,7 +82,7 @@ public class TestHttpQueryAuth {
         });
     }
 
-    @Test public void query_auth_02() {
+    @Test public void query_one_time_auth() {
         // One time use.
         Authenticator authenticator = new Authenticator() {
 
@@ -118,7 +119,7 @@ public class TestHttpQueryAuth {
         }
     }
 
-    @Test public void query_auth_03() {
+    @Test public void query_auth_httpClient() {
         // Configured HttpClient
         Authenticator authenticator = new Authenticator() {
             @Override
@@ -139,7 +140,7 @@ public class TestHttpQueryAuth {
         }
     }
 
-    @Test public void query_auth_04() {
+    @Test public void query_auth_by_header() {
         // Manual setting, good.
         String x = HttpLib.basicAuth("u", "p");
         try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
@@ -149,7 +150,7 @@ public class TestHttpQueryAuth {
         }
     }
 
-    @Test public void query_auth_05() {
+    @Test public void query_auth_by_header_bad() {
         // Manual setting, bad.
         FusekiTest.expect401(()->{
             String x = HttpLib.basicAuth("u", "wrong");
