@@ -43,10 +43,10 @@ import org.apache.jena.update.UpdateRequest;
 public class UpdateExecutionHTTP implements UpdateProcessor {
 
 
-    public enum SendMode { asPostForm, asPostBody }
+    private enum SendMode { asPostForm, asPostBody }
 
-    public static Builder newBuilder() { return new Builder(); }
-    public static class Builder {
+    public static UpdateExecutionHTTPBuilder newBuilder() { return new UpdateExecutionHTTPBuilder(); }
+    public static class UpdateExecutionHTTPBuilder {
 
         private String serviceURL;
         private UpdateRequest update;
@@ -61,24 +61,24 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
         private List<String> usingGraphURIs = null;
         private List<String> usingNamedGraphURIs = null;
 
-        public Builder service(String serviceURL) {
+        public UpdateExecutionHTTPBuilder service(String serviceURL) {
             this.serviceURL = serviceURL;
             return this;
         }
 
-        public Builder update(UpdateRequest updateRequest) {
+        public UpdateExecutionHTTPBuilder update(UpdateRequest updateRequest) {
             this.updateRequest = updateRequest;
             this.updateString = updateRequest.toString();
             return this;
         }
 
-        public Builder updateString(String updateRequestString) {
+        public UpdateExecutionHTTPBuilder updateString(String updateRequestString) {
             this.updateRequest = null;
             this.updateString = updateRequestString;
             return this;
         }
 
-        public Builder httpClient(HttpClient httpClient) {
+        public UpdateExecutionHTTPBuilder httpClient(HttpClient httpClient) {
             this.httpClient = Objects.requireNonNull(httpClient);
             return this;
         }
@@ -89,7 +89,7 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
          *
          * If false (the default), send as "application/sparql-query" (default).
          */
-        public Builder sendHtmlForm(boolean htmlForm) {
+        public UpdateExecutionHTTPBuilder sendHtmlForm(boolean htmlForm) {
             this.sendMode =  htmlForm ? SendMode.asPostForm : SendMode.asPostBody;
             return this;
         }
@@ -97,34 +97,34 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
         // The old code, UpdateProcessRemote, didn't support this so may be not
         // provide it as its not being used.
 
-        public Builder addUsingGraphURI(String uri) {
+        public UpdateExecutionHTTPBuilder addUsingGraphURI(String uri) {
             if (this.usingGraphURIs == null)
                 this.usingGraphURIs = new ArrayList<>();
             this.usingGraphURIs.add(uri);
             return this;
         }
 
-        public Builder addUsingNamedGraphURI(String uri) {
+        public UpdateExecutionHTTPBuilder addUsingNamedGraphURI(String uri) {
             if (this.usingNamedGraphURIs == null)
                 this.usingNamedGraphURIs = new ArrayList<>();
             this.usingNamedGraphURIs.add(uri);
             return this;
         }
 
-        public Builder param(String name) {
+        public UpdateExecutionHTTPBuilder param(String name) {
             Objects.requireNonNull(name);
             this.params.addParam(name);
             return this;
         }
 
-        public Builder param(String name, String value) {
+        public UpdateExecutionHTTPBuilder param(String name, String value) {
             Objects.requireNonNull(name);
             Objects.requireNonNull(value);
             this.params.addParam(name, value);
             return this;
         }
 
-        public Builder httpHeader(String headerName, String headerValue) {
+        public UpdateExecutionHTTPBuilder httpHeader(String headerName, String headerValue) {
             Objects.requireNonNull(headerName);
             Objects.requireNonNull(headerValue);
             this.httpHeaders.put(headerName, headerValue);

@@ -118,7 +118,7 @@ public class DevHTTP {
         };
 
         for ( var qs : x ) {
-            try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
+            try ( QueryExecution qexec = QueryExecutionHTTP.create()
                     .service("http://localhost:3030/ds/query")
                     .queryString(qs)
                     .build()) {

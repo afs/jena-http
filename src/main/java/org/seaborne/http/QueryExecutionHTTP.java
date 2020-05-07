@@ -65,6 +65,8 @@ import org.slf4j.LoggerFactory;
 public class QueryExecutionHTTP implements QueryExecution {
     private static Logger log = LoggerFactory.getLogger(QueryExecutionHTTP.class);
 
+    enum SendMode { asGetWithLimit, asGetAlways, asPostForm, asPostBody }
+
     public static final String QUERY_MIME_TYPE = WebContent.contentTypeSPARQLQuery;
     private final Query query;
     private final String queryString;
@@ -74,7 +76,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     // Params
     private Params params = null;
 
-    private SendMode sendMode;
+    private final SendMode sendMode;
     private int urlLimit = HttpEnv.urlLimit;
 
     // Protocol
@@ -89,7 +91,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     private long readTimeout = -1;
     private TimeUnit readTimeoutUnit = TimeUnit.MILLISECONDS;
 
-    // Compression Support
+    // Compression for response
     private boolean allowCompression = false;
 
     // Content Types: these list the standard formats and also include */*.
@@ -115,177 +117,12 @@ public class QueryExecutionHTTP implements QueryExecution {
 
     private Map<String, String> httpHeaders;
 
-    public enum SendMode { asGetWithLimit, asGetAlways, asPostForm, asPostBody }
-
-    public static Builder newBuilder() { return new Builder(); }
-    public static class Builder {
-        private String serviceURL = null;
-        private Query query = null;
-        private String queryString = null;
-        private HttpClient httpClient = HttpEnv.getDftHttpClient();
-        private Params params = new Params();
-        // Accept: Handled as special case because the defaults varies by query type.
-        private String acceptHeader;
-        private boolean allowCompression;
-        private Map<String, String> httpHeaders = new HashMap<>();
-        private long timeout = -1;
-        private TimeUnit timeoutUnit = null;
-
-        private int urlLimit = HttpEnv.urlLimit;
-        private SendMode sendMode = SendMode.asGetWithLimit;
-        private List<String> defaultGraphURIs = new ArrayList<>();
-        private List<String> namedGraphURIs = new ArrayList<>();
-
-        /** Set the URL of the query endpoint. */
-        public Builder service(String serviceURL) {
-            this.serviceURL = Objects.requireNonNull(serviceURL);
-            return this;
-        }
-
-        /** Set the query - this also sets the query string to agree with the query argument. */
-        public Builder query(Query query) {
-            this.query = query;
-            this.queryString = query.toString();
-            return this;
-        }
-
-        /** Set the query string - this also clears any Query already set. */
-        public Builder queryString(String queryString) {
-            this.query = null;
-            this.queryString = Objects.requireNonNull(queryString);
-            return this;
-        }
-
-        public Builder addDefaultGraphURI(String uri) {
-            if (this.defaultGraphURIs == null)
-                this.defaultGraphURIs = new ArrayList<>();
-            this.defaultGraphURIs.add(uri);
-            return this;
-        }
-
-        public Builder addNamedGraphURI(String uri) {
-            if (this.namedGraphURIs == null)
-                this.namedGraphURIs = new ArrayList<>();
-            this.namedGraphURIs.add(uri);
-            return this;
-        }
-
-        public Builder httpClient(HttpClient httpClient) {
-            this.httpClient = Objects.requireNonNull(httpClient);
-            return this;
-        }
-
-        /**
-         * Send the query using HTTP POST with HTML form-encoded data.
-         * If set false, the URL limit still applies.
-         */
-        public Builder sendHtmlForm(boolean htmlForm) {
-            this.sendMode =  htmlForm ? SendMode.asPostForm : SendMode.asGetWithLimit;
-            return this;
-        }
-
-        /**
-         * Send the query using HTTP GET and the HTTP URL query string regardless of length.
-         * By default, queries with a log URL are sent in an HTTP form with POST.
-         * @see #urlGetLimit
-         */
-
-        public Builder useGet(boolean postForm) {
-            this.sendMode = SendMode.asGetAlways;
-            return this;
-        }
-
-        /**
-         * Send the query request using POST with a Content-Type of as a
-         * "application/sparql-query"
-         */
-        public Builder postQuery(boolean post) {
-            this.sendMode = SendMode.asPostBody;
-            return this;
-        }
-
-        /**
-         * Maximum length for a GET request URL, this includes the length of the
-         * service endpoint URL - longer than this and the request will use
-         * POST/Form.
-         * <p>
-         * Long URLs can be silently truncated by intermediate systems and proxies.
-         * Use of the URL query string means that request are not cached.
-         * <p>
-         * See also {@link #postQuery} to send the request using HTTP POST with the
-         * query in the POST body using {@code Content-Type} "application/sparql-query"
-         * <p>
-         * See also {@link #sendHtmlForm(boolean)} to send a request as an HTML form.
-         */
-        public Builder urlGetLimit(int urlLimit) {
-            this.urlLimit = urlLimit;
-            return this;
-        }
-
-        public Builder param(String name) {
-            Objects.requireNonNull(name);
-            this.params.addParam(name);
-            return this;
-        }
-
-        public Builder param(String name, String value) {
-            Objects.requireNonNull(name);
-            Objects.requireNonNull(value);
-            this.params.addParam(name, value);
-            return this;
-        }
-
-        public Builder acceptHeader(String acceptHeader) {
-            Objects.requireNonNull(acceptHeader);
-            this.acceptHeader = acceptHeader;
-            return this;
-        }
-
-        public Builder httpHeader(String headerName, String headerValue) {
-            Objects.requireNonNull(headerName);
-            Objects.requireNonNull(headerValue);
-            this.httpHeaders.put(headerName, headerValue);
-            return this;
-        }
-
-        public Builder allowCompression(boolean allowCompression) {
-            this.allowCompression = allowCompression;
-            return this;
-        }
-
-        /**
-         * Set a timeout to the overall overall operation.
-         * Time-to-connect can be set with a custom {@link HttpClient} - see {@link java.net.http.HttpClient.Builder#connectTimeout(java.time.Duration)}.
-         */
-        public Builder timeout(long timeout, TimeUnit timeoutUnit) {
-            if ( timeout < 0 ) {
-                this.timeout = -1;
-                this.timeoutUnit = null;
-            } else {
-                this.timeout = timeout;
-                this.timeoutUnit = Objects.requireNonNull(timeoutUnit);
-            }
-            return this;
-        }
-
-        public QueryExecutionHTTP build() {
-            Objects.requireNonNull(serviceURL, "No service URL");
-            if ( queryString == null && query == null )
-                throw new QueryException("No query for QueryExecutionHTTP");
-            return new QueryExecutionHTTP(serviceURL, query, queryString, urlLimit,
-                                          httpClient, new HashMap<>(httpHeaders), new Params(params),
-                                          copyArray(defaultGraphURIs),
-                                          copyArray(namedGraphURIs),
-                                          sendMode, acceptHeader, allowCompression,
-                                          timeout, timeoutUnit);
-        }
-    }
-
-    private QueryExecutionHTTP(String serviceURL, Query query, String queryString, int urlLimit,
-                               HttpClient httpClient, Map<String, String> httpHeaders, Params params,
-                               List<String> defaultGraphURIs, List<String> namedGraphURIs,
-                               SendMode sendMode, String acceptHeader, boolean allowCompression,
-                               long timeout, TimeUnit timeoutUnit) {
+    public static QueryExecutionHTTPBuilder create() { return new QueryExecutionHTTPBuilder(); }
+    /*package*/ QueryExecutionHTTP(String serviceURL, Query query, String queryString, int urlLimit,
+                                   HttpClient httpClient, Map<String, String> httpHeaders, Params params,
+                                   List<String> defaultGraphURIs, List<String> namedGraphURIs,
+                                   SendMode sendMode, String acceptHeader, boolean allowCompression,
+                                   long timeout, TimeUnit timeoutUnit) {
         this.context = ARQ.getContext().copy();
         this.service = serviceURL;
         this.query = query;
@@ -451,6 +288,8 @@ public class QueryExecutionHTTP implements QueryExecution {
         check(QueryType.ASK);
         String thisAcceptHeader = dft(acceptHeader, askAcceptHeader);
         HttpResponse<InputStream> response = query(thisAcceptHeader);
+        InputStream in = HttpLib.handleResponseInputStream(response);
+
         String actualContentType = response.headers().firstValue(HttpNames.hContentType).orElse(null);
         httpResponseContentType = actualContentType;
         actualContentType = removeCharset(actualContentType);
@@ -460,7 +299,6 @@ public class QueryExecutionHTTP implements QueryExecution {
         if (actualContentType == null || actualContentType.equals(""))
             actualContentType = askAcceptHeader;
 
-        InputStream in = HttpLib.handleResponseInputStream(response);
         try {
             Lang lang = RDFLanguages.contentTypeToLang(actualContentType);
             if ( lang == null ) {
@@ -762,22 +600,21 @@ public class QueryExecutionHTTP implements QueryExecution {
                 thisParams.addParam( HttpParams.pNamedGraph, name );
         }
 
-        if ( httpHeaders != null ) {
-            if ( allowCompression )
-                httpHeaders.put(HttpNames.hAcceptEncoding, "gzip,inflate");
-        }
-
         HttpLib.modifyByService(service,  context,  thisParams,  httpHeaders);
 
         // Query string or HTML form.
+        // Status code has not been processed on the return from execute*
+        // We want to pass the full details (HttpResponse) for Content-Type.
         if ( sendMode == SendMode.asPostBody )
             return executeQueryPush(thisParams, acceptHeader);
         else
-            return queryGetForm(thisParams, acceptHeader);
+            return executeQueryGetForm(thisParams, acceptHeader);
     }
 
-    private HttpResponse<InputStream> queryGetForm(Params thisParams, String acceptHeader) {
-        thisParams.addParam(HttpParams.pQuery, queryString);
+    private HttpResponse<InputStream> executeQueryGetForm(Params thisParams, String acceptHeader) {
+        Objects.requireNonNull(service);
+        Objects.requireNonNull(params);
+        Objects.requireNonNull(httpClient);
 
         int thisLengthLimit = urlLimit;
         switch(sendMode) {
@@ -790,36 +627,15 @@ public class QueryExecutionHTTP implements QueryExecution {
                 // Force form use.
                 thisLengthLimit = 0;
                 break;
-            case asPostBody : // Already handled.
+            case asPostBody :
             default :
                 throw new HttpException("Send mode not recognized for query string based request: "+sendMode);
         }
-        return execQueryString(service, httpClient, sendMode, thisLengthLimit,
-                            httpHeaders, thisParams, acceptHeader,
-                            allowCompression, readTimeout, readTimeoutUnit);
-    }
-
-    /**
-     * Make request using a query string, or, if too long, an HTTP HTML form.
-     * @param service
-     * @param sendMode
-     * @param params -- The HTTP query string in the form of (name,value) pairs but not "query="
-     * @param httpClient
-     * @param timeout -- use -1 for no timeout.
-     * @param timeoutTimeUnit
-     * @return HttpResponse<InputStream>
-     */
-    private static HttpResponse<InputStream> execQueryString(String service, HttpClient httpClient,
-                                                             SendMode sendMode, int thisLengthLimit,
-                                                             Map<String, String> httpHeaders, Params params,
-                                                             String acceptHeader, boolean allowCompression,
-                                                             long readTimeout, TimeUnit readTimeoutUnit) {
-        Objects.requireNonNull(service);
-        Objects.requireNonNull(params);
-        Objects.requireNonNull(httpClient);
-        boolean useGET;
         String requestURL = service;
+        thisParams.addParam(HttpParams.pQuery, queryString);
         String qs = params.httpString();
+
+        boolean useGET;
         if ( params.count() > 0 ) {
             if ( service.length()+qs.length()+1 > thisLengthLimit ) {
                 useGET = false;
@@ -836,15 +652,14 @@ public class QueryExecutionHTTP implements QueryExecution {
         if ( useGET ) {
             builder = builder.GET();
         } else {
-            acceptHeader(builder, acceptHeader);
-            // Already UTF-8 encoded to ASCII.
             contentTypeHeader(builder, WebContent.contentTypeHTMLForm);
+            // Already UTF-8 encoded to ASCII.
             builder = builder.POST(BodyPublishers.ofString(qs, StandardCharsets.US_ASCII));
         }
-
+        if ( allowCompression )
+            acceptEncoding(builder);
         HttpRequest request = builder.build();
         HttpResponse<InputStream> response = execute(httpClient, request);
-        handleHttpStatusCode(response);
         return response;
     }
 
@@ -859,6 +674,8 @@ public class QueryExecutionHTTP implements QueryExecution {
             url = url + "&"+thisParams.httpString();
 
         HttpRequest.Builder builder = HttpLib.newBuilder(service, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
+        if ( allowCompression )
+            acceptEncoding(builder);
         contentTypeHeader(builder, WebContent.contentTypeSPARQLQuery);
         acceptHeader(builder, acceptHeader);
         HttpRequest request = builder.POST(BodyPublishers.ofString(queryString)).build();

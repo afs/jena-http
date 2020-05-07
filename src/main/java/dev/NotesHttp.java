@@ -25,10 +25,37 @@ public class NotesHttp {
 
     // All XXX and TODO
 
-    // WIP:
-    // **** Binding version of a ResultSet -> Add forEachBinding() to ResultSet interface?
+    // * Fuseki binary -- add dataset operations.
 
-    //   QueryExecutionHTTP/SendMode.
+
+
+    // GSP ----
+    // Accept-Encoding, Content-Encoding - do via headers in the builders.
+    // More tricky for Accept, Content-Type - but possible because headers are a local copy. Modify.
+
+    // Not urgent.
+    // Accept-Encoding [Query-DONE]
+    // Accept-Encoding [Update-None] [GSP - HttpRDF does not have the capability]
+    // Content-Encoding [Query-None] [Update- ] [GSP - ]
+
+    // The whole header thing in GSP is not working out.
+    // GET
+    // POST, PUT and dataset for graph/daatset
+    // POST, PUT and dataset for file - DONE
+    // ----
+
+    // QE.
+
+    // * QueryExecutionHTTP.modifyByService
+    //   UpdateExecutionHTTP.modifyByService
+    //         modifyByService - choose HttpClient (security), headers?, rewrite URL?
+    // * A SERVICE engine.
+    //   Per destination setup / SERVICE
+
+    // * GSP
+    //      Connection Timeouts
+    //      Compression.
+    // * Javadoc: HttpOp2, HttpRDF
 
     // Merge:
     //  [MERGE]
@@ -37,19 +64,6 @@ public class NotesHttp {
     //     getLink in RDFConnection.
     //     Remove RDFConnection(Others)
     //     Fuseki tests isFuseki
-
-    // 2)  Fuseki binary -- add dataset operations.
-
-    // 3) QueryExecutionHTTP.modifyByService
-    //    UpdateExecutionHTTP.modifyByService
-    //         modifyByService - choose HttpClient (security), headers?, rewrite URL?
-    //    Per destination setup / SERVICE
-    //
-    // 5) GSP
-    //      HttpLib
-    //      Javadoc
-    //      Connection Timeouts
-    // 6) Javadoc: HttpOp2, HttpRDF
 
     // ----------------------------------------
 
@@ -62,10 +76,7 @@ public class NotesHttp {
 
 
     // ---- Review
-    // Check read to end or close on input streams. try-resource? -> use HttpLib.finish
-
     // Set initial bindings: simple version
-    //   Local builder?
 
     /*
      * Local:

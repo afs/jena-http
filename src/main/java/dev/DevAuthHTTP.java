@@ -131,7 +131,7 @@ public class DevAuthHTTP {
         };
 
         for ( var qs : x ) {
-            try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
+            try ( QueryExecution qexec = QueryExecutionHTTP.create()
                     .httpClient(hc)
                     .service("http://localhost:3030/ds/query")
                     .queryString(qs)

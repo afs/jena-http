@@ -346,6 +346,15 @@ public class HttpLib {
         return builder;
     }
 
+    /**
+     * Set the "Accept-Encoding" header. Returns the builder.
+     * See {@link #getInputStream(HttpResponse)}.
+     */
+    static Builder acceptEncoding(Builder builder) {
+        builder.header(HttpNames.hAcceptEncoding, "gzip,inflate");
+        return builder;
+    }
+
     /** Execute a request, return a {@code HttpResponse<InputStream>} which can be passed to
      * {@link #handleHttpStatusCode(HttpResponse)}.
      * @param httpClient
@@ -371,9 +380,11 @@ public class HttpLib {
             return httpClient.send(httpRequest, bodyHandler);
         } catch (IOException | InterruptedException ex) {
             // This is silly.
-            // Rather than an HTTP exception, a 403 becomes IOException("too many authentication attempts");
-            if ( ex.getMessage().contains("too many authentication attempts") ) {
-                throw new HttpException(403, HttpSC.getMessage(403), null);
+            // Rather than an HTTP exception, bad authentication becomes IOException("too many authentication attempts");
+            // or IException("No credentials provided") is the authenticator decides to return null.
+            if ( ex.getMessage().contains("too many authentication attempts") ||
+                 ex.getMessage().contains("No credentials provided") ) {
+                throw new HttpException(401, HttpSC.getMessage(401), null);
             }
             throw new HttpException(httpRequest.method()+" "+httpRequest.uri().toString(), ex);
         }

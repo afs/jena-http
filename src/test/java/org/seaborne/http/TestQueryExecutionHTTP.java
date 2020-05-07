@@ -83,7 +83,7 @@ public class TestQueryExecutionHTTP {
 
     @Test
     public void query_select_01() {
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                     .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             ResultSet rs = qExec.execSelect();
             assertTrue(rs.hasNext());
@@ -95,7 +95,7 @@ public class TestQueryExecutionHTTP {
 
     @Test
     public void query_select_post_form_1() {
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder().sendHtmlForm(true)
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create().sendHtmlForm(true)
                     .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             ResultSet rs = qExec.execSelect();
             assertTrue(rs.hasNext());
@@ -107,7 +107,7 @@ public class TestQueryExecutionHTTP {
 
     @Test
     public void query_select_post_body() {
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder().postQuery(true)
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create().postQuery(true)
                     .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             ResultSet rs = qExec.execSelect();
             assertTrue(rs.hasNext());
@@ -119,8 +119,24 @@ public class TestQueryExecutionHTTP {
 
     @Test
     public void query_select_accept_1() {
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                     .service(dsURL)
+                    .queryString("SELECT * { ?s ?p ?o }")
+                    .acceptHeader("application/sparql-results+xml")
+                    .build() ) {
+            ResultSet rs = qExec.execSelect();
+            assertTrue(rs.hasNext());
+            rs.next();
+            assertFalse(rs.hasNext());
+            assertEquals("application/sparql-results+xml", qExec.getHttpResponseContentType());
+        }
+    }
+
+    @Test
+    public void query_select_compress_1() {
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
+                    .service(dsURL)
+                    .allowCompression(true)
                     .queryString("SELECT * { ?s ?p ?o }")
                     .acceptHeader("application/sparql-results+xml")
                     .build() ) {
@@ -137,7 +153,7 @@ public class TestQueryExecutionHTTP {
     @Test
     public void query_ask_01() {
         Query query = QueryFactory.create("ASK{}");
-        try ( QueryExecution qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecution qExec = QueryExecutionHTTP.create()
                     .service(dsURL).query(query).build() ) {
             boolean result = qExec.execAsk();
         }
@@ -152,7 +168,7 @@ public class TestQueryExecutionHTTP {
         // Check syntax
         Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
 
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
             .service(dsURL)
             .queryString(queryString)
             .build() ) {
@@ -168,7 +184,7 @@ public class TestQueryExecutionHTTP {
         // Check syntax
         Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
 
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
             .service(dsURL)
             .queryString(queryString)
             .build() ) {
@@ -184,7 +200,7 @@ public class TestQueryExecutionHTTP {
         // Check syntax
         Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
 
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                 .service(dsURL).queryString(queryString).build() ) {
             Dataset dataset = qExec.execConstructDataset();
             assertEquals(2, Iter.count(dataset.asDatasetGraph().find()));
@@ -198,7 +214,7 @@ public class TestQueryExecutionHTTP {
         // Check syntax
         Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
 
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                 .service(dsURL).queryString(queryString).build() ) {
             Iterator<Quad> iter= qExec.execConstructQuads();
             assertEquals(2, Iter.count(iter));
@@ -213,7 +229,7 @@ public class TestQueryExecutionHTTP {
         String queryString = "DESCRIBE <http://example/s> { }";
         // Check syntax
         Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                 .service(dsURL).queryString(queryString).build() ) {
             Model model = qExec.execDescribe();
             assertEquals(3, model.size());
@@ -226,7 +242,7 @@ public class TestQueryExecutionHTTP {
         String queryString = "DESCRIBE <http://example/s> { }";
         // Check syntax
         Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                 .service(dsURL).queryString(queryString).build() ) {
             Iterator<Triple> iter = qExec.execDescribeTriples();
             assertEquals(3, Iter.count(iter));
@@ -241,7 +257,7 @@ public class TestQueryExecutionHTTP {
         // Check syntax
         Query query = QueryFactory.create(queryString, Syntax.syntaxARQ);
 
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                 .service(dsURL).queryString(queryString).build() ) {
             JsonArray jsonArray = qExec.execJson();
             assertEquals(1,jsonArray.size());
@@ -251,7 +267,7 @@ public class TestQueryExecutionHTTP {
     @Test
     public void query_graph_uri_1() {
         String queryString = "SELECT * { ?s ?p ?o }";
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                     .service(dsURL)
                     .queryString(queryString)
                     .addDefaultGraphURI("http://example/g1")
@@ -264,7 +280,7 @@ public class TestQueryExecutionHTTP {
     @Test
     public void query_graph_uri_2() {
         String queryString = "SELECT * { ?s ?p ?o }";
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                     .service(dsURL)
                     .queryString(queryString)
                     .addDefaultGraphURI("http://example/g1")
@@ -279,7 +295,7 @@ public class TestQueryExecutionHTTP {
     @Test
     public void query_graph_uri_3() {
         String queryString = "SELECT * { ?s ?p ?o }";
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                     .service(dsURL)
                     .queryString(queryString)
                     .addNamedGraphURI("http://example/g1")
@@ -292,7 +308,7 @@ public class TestQueryExecutionHTTP {
     @Test
     public void query_graph_uri_4() {
         String queryString = "SELECT * { GRAPH <urn:x-arq:UnionGraph> { ?s ?p ?o } }";
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                     .service(dsURL)
                     .queryString(queryString)
                     .addNamedGraphURI("http://example/g1")
@@ -305,7 +321,7 @@ public class TestQueryExecutionHTTP {
     @Test
     public void query_graph_uri_5() {
         String queryString = "SELECT * { GRAPH <urn:x-arq:UnionGraph> { ?s ?p ?o } }";
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
                     .service(dsURL)
                     .queryString(queryString)
                     .addNamedGraphURI("http://example/g2")

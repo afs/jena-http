@@ -166,11 +166,13 @@ public class GSP {
         return this;
     }
 
+//    /** Enable a request for compress on the request */
 //    public GSP allowCompression(boolean allowCompression) {
 //        this.allowCompression = allowCompression;
 //        return this;
 //    }
 
+    /** Send request for a named graph (used in {@code ?graph=}) */
     public GSP graphName(String graphName) {
         Objects.requireNonNull(graphName);
         this.graphName = graphName;
@@ -178,6 +180,7 @@ public class GSP {
         return this;
     }
 
+    /** Send request for a named graph (used in {@code ?graph=}) */
     public GSP graphName(Node graphName) {
         Objects.requireNonNull(graphName);
         if ( ! graphName.isURI() && ! graphName.isBlank() )
@@ -188,27 +191,42 @@ public class GSP {
         return this;
     }
 
+    /** Send request for the degfault graph (that is, {@code ?default}) */
     public GSP defaultGraph() {
         this.graphName = null;
         this.defaultGraph = true;
         return this;
     }
 
+    /** Set the accept header on GET requests. Optional; if not set, a system default is used. */
     public GSP acceptHeader(String acceptHeader) {
         this.acceptHeader = acceptHeader;
         return this;
     }
 
+    /** Set the accept header on GET requests. Optional; if not set, a system default is used. */
     public GSP accept(Lang lang) {
         this.acceptHeader = (lang != null ) ? lang.getContentType().getContentTypeStr() : null;
         return this;
     }
 
+    /**
+     * Set the Content-type for a POST, PUT request of a file
+     * or serialization of a graph opf dataset is necessary.
+     * Optional; if not set, the file extension is used or the
+     * system default RDF syntax encoding.
+     */
     public GSP contentTypeHeader(String contentType) {
         this.contentType = contentType;
         return this;
     }
 
+    /**
+     * Set the Content-type for a POST, PUT request of a file
+     * or serialization of a graph opf dataset is necessary.
+     * Optional; if not set, the file extension is used or the
+     * system default RDF syntax encoding.
+     */
     public GSP contentType(RDFFormat rdfFormat) {
         this.rdfFormat = rdfFormat;
         this.contentType = rdfFormat.getLang().getContentType().getContentTypeStr();

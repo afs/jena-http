@@ -36,10 +36,7 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.system.Txn;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
-import org.seaborne.http.GSP;
-import org.seaborne.http.HttpEnv;
-import org.seaborne.http.QueryExecutionHTTP;
-import org.seaborne.http.UpdateExecutionHTTP;
+import org.seaborne.http.*;
 
 /**
  * Implementation of the {@link RDFLink} interface using remote SPARQL operations.
@@ -251,7 +248,7 @@ public class RDFLinkRemote implements RDFLink {
 
     // Create the QueryExecution
     private QueryExecution createQueryExecution(Query query, String queryStringToSend, QueryType queryType) {
-        QueryExecutionHTTP.Builder builder = QueryExecutionHTTP.newBuilder()
+        QueryExecutionHTTPBuilder builder = QueryExecutionHTTP.create()
             .service(svcQuery)
             .httpClient(httpClient)
             .queryString(queryStringToSend);
