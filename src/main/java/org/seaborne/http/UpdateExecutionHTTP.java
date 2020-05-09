@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import org.apache.jena.query.ARQ;
-import org.apache.jena.query.QueryException;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -42,107 +41,9 @@ import org.apache.jena.update.UpdateRequest;
 
 public class UpdateExecutionHTTP implements UpdateProcessor {
 
-
-    private enum SendMode { asPostForm, asPostBody }
+    enum SendMode { asPostForm, asPostBody }
 
     public static UpdateExecutionHTTPBuilder newBuilder() { return new UpdateExecutionHTTPBuilder(); }
-    public static class UpdateExecutionHTTPBuilder {
-
-        private String serviceURL;
-        private UpdateRequest update;
-        private String updateString;
-        private Params params = new Params();
-        private boolean allowCompression;
-        private Map<String, String> httpHeaders = new HashMap<>();
-        private HttpClient httpClient;
-        private SendMode sendMode = SendMode.asPostBody;
-        private UpdateRequest updateRequest;
-
-        private List<String> usingGraphURIs = null;
-        private List<String> usingNamedGraphURIs = null;
-
-        public UpdateExecutionHTTPBuilder service(String serviceURL) {
-            this.serviceURL = serviceURL;
-            return this;
-        }
-
-        public UpdateExecutionHTTPBuilder update(UpdateRequest updateRequest) {
-            this.updateRequest = updateRequest;
-            this.updateString = updateRequest.toString();
-            return this;
-        }
-
-        public UpdateExecutionHTTPBuilder updateString(String updateRequestString) {
-            this.updateRequest = null;
-            this.updateString = updateRequestString;
-            return this;
-        }
-
-        public UpdateExecutionHTTPBuilder httpClient(HttpClient httpClient) {
-            this.httpClient = Objects.requireNonNull(httpClient);
-            return this;
-        }
-
-        /**
-         * Whether to send the update request using POST and an HTML form, content type
-         * "application/x-www-form-urlencoded".
-         *
-         * If false (the default), send as "application/sparql-query" (default).
-         */
-        public UpdateExecutionHTTPBuilder sendHtmlForm(boolean htmlForm) {
-            this.sendMode =  htmlForm ? SendMode.asPostForm : SendMode.asPostBody;
-            return this;
-        }
-
-        // The old code, UpdateProcessRemote, didn't support this so may be not
-        // provide it as its not being used.
-
-        public UpdateExecutionHTTPBuilder addUsingGraphURI(String uri) {
-            if (this.usingGraphURIs == null)
-                this.usingGraphURIs = new ArrayList<>();
-            this.usingGraphURIs.add(uri);
-            return this;
-        }
-
-        public UpdateExecutionHTTPBuilder addUsingNamedGraphURI(String uri) {
-            if (this.usingNamedGraphURIs == null)
-                this.usingNamedGraphURIs = new ArrayList<>();
-            this.usingNamedGraphURIs.add(uri);
-            return this;
-        }
-
-        public UpdateExecutionHTTPBuilder param(String name) {
-            Objects.requireNonNull(name);
-            this.params.addParam(name);
-            return this;
-        }
-
-        public UpdateExecutionHTTPBuilder param(String name, String value) {
-            Objects.requireNonNull(name);
-            Objects.requireNonNull(value);
-            this.params.addParam(name, value);
-            return this;
-        }
-
-        public UpdateExecutionHTTPBuilder httpHeader(String headerName, String headerValue) {
-            Objects.requireNonNull(headerName);
-            Objects.requireNonNull(headerValue);
-            this.httpHeaders.put(headerName, headerValue);
-            return this;
-        }
-
-        public UpdateExecutionHTTP build() {
-            Objects.requireNonNull(serviceURL, "No service URL");
-            if ( update == null && updateString == null )
-                throw new QueryException("No update for UpdateExecutionHTTP");
-            return new UpdateExecutionHTTP(serviceURL, update, updateString, httpClient, params,
-                                           copyArray(usingGraphURIs),
-                                           copyArray(usingNamedGraphURIs),
-                                           new HashMap<>(httpHeaders),
-                                           sendMode);
-        }
-    }
-
     private final Context context;
     private final String service;
     private final UpdateRequest update;
@@ -154,11 +55,11 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
     private final List<String> usingGraphURIs;
     private final List<String> usingNamedGraphURIs;
 
-    private UpdateExecutionHTTP(String serviceURL, UpdateRequest update, String updateString,
-                                HttpClient httpClient, Params params,
-                                List<String> usingGraphURIs,
-                                List<String> usingNamedGraphURIs,
-                                Map<String, String> httpHeaders, SendMode sendMode) {
+    /*package*/ UpdateExecutionHTTP(String serviceURL, UpdateRequest update, String updateString,
+                                    HttpClient httpClient, Params params,
+                                    List<String> usingGraphURIs,
+                                    List<String> usingNamedGraphURIs,
+                                    Map<String, String> httpHeaders, SendMode sendMode) {
         this.context = ARQ.getContext().copy();
         this.service = serviceURL;
         this.update = update;

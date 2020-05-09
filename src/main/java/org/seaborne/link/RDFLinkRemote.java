@@ -447,31 +447,31 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public DatasetGraph fetchDataset() {
         checkDataset();
-        return gspRequest().acceptHeader(acceptDataset).getDataset();
+        return gspRequest().dataset().acceptHeader(acceptDataset).getDataset();
     }
 
     @Override
     public void loadDataset(String file) {
         checkDataset();
-        gspRequest().postDataset(file);
+        gspRequest().dataset().postDataset(file);
     }
 
     @Override
     public void loadDataset(DatasetGraph dataset) {
         checkDataset();
-        gspRequest().postDataset(dataset);
+        gspRequest().dataset().postDataset(dataset);
     }
 
     @Override
     public void putDataset(String file) {
         checkDataset();
-        gspRequest().putDataset(file);
+        gspRequest().dataset().putDataset(file);
     }
 
     @Override
     public void putDataset(DatasetGraph dataset) {
         checkDataset();
-        gspRequest().putDataset(dataset);
+        gspRequest().dataset().putDataset(dataset);
     }
 
     // -- Internal.

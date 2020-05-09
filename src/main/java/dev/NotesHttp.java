@@ -18,7 +18,6 @@
 
 package dev;
 
-
 public class NotesHttp {
 
     // package.html or web page.
@@ -27,68 +26,50 @@ public class NotesHttp {
 
     // * Fuseki binary -- add dataset operations.
 
+    // QueryExecutionLocal syntax (if string)
 
+    // Package improvements tests
 
-    // GSP ----
-    // Accept-Encoding, Content-Encoding - do via headers in the builders.
-    // More tricky for Accept, Content-Type - but possible because headers are a local copy. Modify.
-
-    // Not urgent.
-    // Accept-Encoding [Query-DONE]
-    // Accept-Encoding [Update-None] [GSP - HttpRDF does not have the capability]
-    // Content-Encoding [Query-None] [Update- ] [GSP - ]
-
-    // The whole header thing in GSP is not working out.
-    // GET
-    // POST, PUT and dataset for graph/daatset
-    // POST, PUT and dataset for file - DONE
-    // ----
+    // GSP [Done!]
 
     // QE.
 
     // * QueryExecutionHTTP.modifyByService
-    //   UpdateExecutionHTTP.modifyByService
-    //         modifyByService - choose HttpClient (security), headers?, rewrite URL?
+    // UpdateExecutionHTTP.modifyByService
+    // modifyByService - choose HttpClient (security), headers?, rewrite URL?
     // * A SERVICE engine.
-    //   Per destination setup / SERVICE
+    // Per destination setup / SERVICE
 
     // * GSP
-    //      Connection Timeouts
-    //      Compression.
+    // Connection Timeouts
+    // Compression.
     // * Javadoc: HttpOp2, HttpRDF
 
     // Merge:
-    //  [MERGE]
-    //     Merge WebContent2 into WebContent (now?)
-    //     Merge: G2, G to Glib (now?)
-    //     getLink in RDFConnection.
-    //     Remove RDFConnection(Others)
-    //     Fuseki tests isFuseki
+    // [MERGE]
+    // Merge WebContent2 into WebContent (now?)
+    // Merge: G2, G to Glib (now?)
+    // getLink in RDFConnection.
+    // Remove RDFConnection(Others)
+    // Fuseki tests isFuseki
 
     // ----------------------------------------
 
     // Jena networking markdown
-    //  * RDFConnection
-    //  * RDFLink
-    //  * SPARQL : GSP | QueryExecutionHTTP | UpdateExecutionHTTP
-    //  * HttpRDF
-    //  * HttpOp2
-
+    // * RDFConnection
+    // * RDFLink
+    // * SPARQL : GSP | QueryExecutionHTTP | UpdateExecutionHTTP
+    // * HttpRDF
+    // * HttpOp2
 
     // ---- Review
     // Set initial bindings: simple version
 
-    /*
-     * Local:
+    /* Local:
      *
      * ResultSet rs = QE.query(Query).source(Dataset).setTimeout().execSelect();
      *
-     * Avoid the try-resource:
-     * QE....select(Consumer<Binding> rowHandler)
-     * QE....construct() -> Model
-     * QE....describe()
-     * QE....ask() -> boolean
-     * Query
-     */
+     * Avoid the try-resource: QE....select(Consumer<Binding> rowHandler)
+     * QE....construct() -> Model QE....describe() QE....ask() -> boolean Query */
     // https://openjdk.java.net/groups/net/httpclient/recipes.html
 }

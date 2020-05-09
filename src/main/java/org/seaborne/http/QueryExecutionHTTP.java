@@ -583,7 +583,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     }
 
     // Make a query.
-    private HttpResponse<InputStream> query(String acceptHeader) {
+    private HttpResponse<InputStream> query(String reqAcceptHeader) {
         if (closed)
             throw new ARQException("HTTP execution already closed");
 
@@ -606,9 +606,9 @@ public class QueryExecutionHTTP implements QueryExecution {
         // Status code has not been processed on the return from execute*
         // We want to pass the full details (HttpResponse) for Content-Type.
         if ( sendMode == SendMode.asPostBody )
-            return executeQueryPush(thisParams, acceptHeader);
+            return executeQueryPush(thisParams, reqAcceptHeader);
         else
-            return executeQueryGetForm(thisParams, acceptHeader);
+            return executeQueryGetForm(thisParams, reqAcceptHeader);
     }
 
     private HttpResponse<InputStream> executeQueryGetForm(Params thisParams, String acceptHeader) {

@@ -320,7 +320,7 @@ public class HttpLib {
         if ( readTimeout >= 0 )
             builder.timeout(Duration.ofMillis(readTimeoutUnit.toMillis(readTimeout)));
         if ( allowCompression )
-            builder.header(HttpNames.hAcceptEncoding, "gzip,inflate");
+            builder.header(HttpNames.hAcceptEncoding, WebContent2.acceptEncoding);
         return builder;
     }
 

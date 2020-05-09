@@ -28,6 +28,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -87,15 +89,30 @@ public class HttpRDF {
     public static void httpGetToStream(String url, String acceptHeader, StreamRDF dest) {
         httpGetToStream(HttpEnv.getDftHttpClient(), url, acceptHeader, dest);
     }
+
     /**
-     * Send the RDF data from the resource at the URL to the StreamRDF.
+     * Read the RDF data from the resource at the URL and send to the StreamRDF.
+     * <p>
      * Beware of parse errors!
      * @throws HttpException
+     * @throws RiotException
      */
     public static void httpGetToStream(HttpClient client, String url, String acceptHeader, StreamRDF dest) {
         if ( acceptHeader == null )
             acceptHeader = "*/*";
-        HttpResponse<InputStream> response = execGetToInput(client, url, HttpLib.setAcceptHeader(acceptHeader));
+        Map<String, String> headers = Collections.singletonMap(HttpNames.hAccept, acceptHeader);
+        httpGetToStream(client, url, headers, dest);
+    }
+
+    /**
+     * Read the RDF data from the resource at the URL and send to the StreamRDF.
+     * <p>
+     * Beware of parse errors!
+     * @throws HttpException
+     * @throws RiotException
+     */
+    public static void httpGetToStream(HttpClient client, String url, Map<String, String> headers, StreamRDF dest) {
+        HttpResponse<InputStream> response = execGetToInput(client, url, HttpLib.setHeaders(headers));
         InputStream in = handleResponseInputStream(response);
         String base = determineBaseURI(url, response);
         Lang lang = determineSyntax(response, Lang.RDFXML);
@@ -110,11 +127,15 @@ public class HttpRDF {
             // We only read part of the input stream.
             throw ex;
         } finally {
+            // Even if parsing finished, it is possible we only read part of the input stream (e.g. RDF/XML).
             finish(response);
         }
     }
 
-    // MUST close the input stream
+    /**
+     * MUST consume or close the input stream
+     * @see HttpLib#finish(HttpResponse)
+     */
     private static HttpResponse<InputStream> execGetToInput(HttpClient client, String url, Consumer<HttpRequest.Builder> modifier) {
         Objects.requireNonNull(client);
         Objects.requireNonNull(url);
@@ -124,32 +145,28 @@ public class HttpRDF {
         return response;
     }
 
-
     public static void httpPostGraph(String url, Graph graph) {
         httpPostGraph(HttpEnv.getDftHttpClient(), url, graph, HttpEnv.dftTriplesFormat);
     }
 
     public static void httpPostGraph(HttpClient httpClient, String url, Graph graph, RDFFormat format) {
-        postGraph(httpClient, url, graph, format);
+        postGraph(httpClient, url, graph, format, null);
     }
 
     public static void httpPostDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
-        postDataset(httpClient, url, dataset, format);
+        postDataset(httpClient, url, dataset, format, null);
     }
 
-    private static void postGraph(HttpClient httpClient, String url, Graph graph, RDFFormat format) {
-        BodyPublisher x = graphToHttpBody(graph, format);
-        postBody(httpClient, url, x, format);
+    /*package*/ static void postGraph(HttpClient httpClient, String url, Graph graph,
+                                      RDFFormat format, Map<String, String> httpHeaders) {
+        BodyPublisher bodyPublisher = graphToHttpBody(graph, format);
+        pushBody(httpClient, url, Push.POST, bodyPublisher, format, httpHeaders);
     }
 
-    private static void postDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
-        BodyPublisher x = datasetToHttpBody(dataset, format);
-        postBody(httpClient, url, x, format);
-    }
-
-    private static void postBody(HttpClient httpClient, String url, BodyPublisher x, RDFFormat format) {
-        String contentType = format.getLang().getHeaderString();
-        HttpOp2.httpPost(url, contentType, x);
+    /*package*/ static void postDataset(HttpClient httpClient, String url, DatasetGraph dataset,
+                                        RDFFormat format, Map<String, String> httpHeaders) {
+        BodyPublisher bodyPublisher = datasetToHttpBody(dataset, format);
+        pushBody(httpClient, url, Push.POST, bodyPublisher, format, httpHeaders);
     }
 
     public static void httpPutGraph(String url, Graph graph) {
@@ -157,26 +174,34 @@ public class HttpRDF {
     }
 
     public static void httpPutGraph(HttpClient httpClient, String url, Graph graph, RDFFormat fmt) {
-        putGraph(httpClient, url, graph, fmt);
+        putGraph(httpClient, url, graph, fmt, null);
     }
 
     public static void httpPutDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
-        putDataset(httpClient, url, dataset, format);
+        putDataset(httpClient, url, dataset, format, null);
     }
 
-    private static void putGraph(HttpClient httpClient, String url, Graph graph, RDFFormat format) {
-        BodyPublisher x = graphToHttpBody(graph, format);
-        putBody(httpClient, url, x, format);
+    /*package*/ static void putGraph(HttpClient httpClient, String url, Graph graph,
+                                 RDFFormat format, Map<String, String> httpHeaders) {
+        BodyPublisher bodyPublisher = graphToHttpBody(graph, format);
+        pushBody(httpClient, url, Push.PUT, bodyPublisher, format, httpHeaders);
     }
 
-    private static void putDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
-        BodyPublisher x = datasetToHttpBody(dataset, format);
-        putBody(httpClient, url, x, format);
+    /*package*/ static void putDataset(HttpClient httpClient, String url, DatasetGraph dataset,
+                                   RDFFormat format, Map<String, String> httpHeaders) {
+        BodyPublisher bodyPublisher = datasetToHttpBody(dataset, format);
+        pushBody(httpClient, url, Push.PUT, bodyPublisher, format, httpHeaders);
     }
 
-    private static void putBody(HttpClient httpClient, String url, BodyPublisher x, RDFFormat format) {
+    // Shared betyween Push* and put*
+    private static void pushBody(HttpClient httpClient, String url, Push style, BodyPublisher bodyPublisher,
+                                 RDFFormat format, Map<String, String> httpHeaders) {
         String contentType = format.getLang().getHeaderString();
-        HttpOp2.httpPut(url, contentType, x);
+        if ( httpHeaders == null )
+            httpHeaders = Collections.singletonMap(HttpNames.hContentType, contentType);
+        else
+            httpHeaders.put(HttpNames.hContentType, contentType);
+        HttpOp2.httpPushData(httpClient, style, url, HttpLib.setHeaders(httpHeaders), bodyPublisher);
     }
 
     public static void httpDeleteGraph(String url) {

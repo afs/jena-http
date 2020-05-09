@@ -20,7 +20,6 @@ package org.seaborne.http;
 
 import java.io.FileNotFoundException;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.nio.file.Path;
@@ -28,7 +27,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.atlas.web.HttpException;
@@ -43,6 +41,7 @@ import org.apache.jena.shared.NotFoundException;
 import org.apache.jena.sparql.ARQException;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.graph.GraphFactory;
 
 /**
  * Client for the
@@ -108,16 +107,18 @@ public class GSP {
     }
 
     private String              serviceEndpoint = null;
-    private String              graphName       = null;
-    private String              acceptHeader    = null;
-    private String              contentType     = null;
     // Need to keep this separately from contentType because
     // it affects the choice of writer.
     private RDFFormat           rdfFormat       = null;
     private HttpClient          httpClient      = HttpEnv.getDftHttpClient();
-    private Map<String, String> httpHeaders     = null;
+    private Map<String, String> httpHeaders     = new HashMap<>();
     private boolean             allowCompression = false;
-    private boolean             defaultGraph = false;
+
+    // One, and only one of these, must eb set at the point the terminating operation is called.
+    private boolean             datasetGraph    = false;
+    private boolean             defaultGraph    = false;
+    private String              graphName       = null;
+
     /** Create a request to the remote service (without GSP naming).
      *  Call {@link #defaultGraph()} or {@link #graphName(String)} to select the target graph.
      * @param service
@@ -150,27 +151,24 @@ public class GSP {
     public GSP httpHeader(String headerName, String headerValue) {
         Objects.requireNonNull(headerName);
         Objects.requireNonNull(headerValue);
-        // Manage "Accept", and "Content-Type" separately - these are not always
-        // needed (e.g. GET does not have an ContentType) and they have a system default.
-        if ( Objects.equals(headerName, HttpNames.hAccept)) {
-            this.acceptHeader = headerValue;
-            return this;
-        }
-        if ( Objects.equals(headerName, HttpNames.hContentType)) {
-            this.contentType = headerValue;
-            return this;
-        }
         if ( httpHeaders == null )
             httpHeaders = new HashMap<>();
         httpHeaders.put(headerName, headerValue);
         return this;
     }
 
-//    /** Enable a request for compress on the request */
+//    /** Enable a request for compression on the request */
 //    public GSP allowCompression(boolean allowCompression) {
 //        this.allowCompression = allowCompression;
 //        return this;
 //    }
+
+    private String httpHeader(String header) {
+        Objects.requireNonNull(header);
+        if ( httpHeaders == null )
+            return null;
+        return httpHeaders.get(header);
+    }
 
     /** Send request for a named graph (used in {@code ?graph=}) */
     public GSP graphName(String graphName) {
@@ -188,25 +186,40 @@ public class GSP {
         Node gn = RiotLib.blankNodeToIri(graphName);
         this.graphName = gn.getURI();
         this.defaultGraph = false;
+        this.datasetGraph = false;
         return this;
     }
 
-    /** Send request for the degfault graph (that is, {@code ?default}) */
+    /** Send request for the default graph (that is, {@code ?default}) */
     public GSP defaultGraph() {
         this.graphName = null;
         this.defaultGraph = true;
+        this.datasetGraph = false;
+        return this;
+    }
+
+    /** Send request for the dataset. */
+    public GSP dataset() {
+        this.graphName = null;
+        this.defaultGraph = false;
+        this.datasetGraph = true;
         return this;
     }
 
     /** Set the accept header on GET requests. Optional; if not set, a system default is used. */
     public GSP acceptHeader(String acceptHeader) {
-        this.acceptHeader = acceptHeader;
+        httpHeader(HttpNames.hAccept, acceptHeader);
         return this;
+    }
+
+    private String acceptHeader() {
+        return httpHeader(HttpNames.hAccept);
     }
 
     /** Set the accept header on GET requests. Optional; if not set, a system default is used. */
     public GSP accept(Lang lang) {
-        this.acceptHeader = (lang != null ) ? lang.getContentType().getContentTypeStr() : null;
+        String acceptHeader = (lang != null ) ? lang.getContentType().getContentTypeStr() : null;
+        httpHeader(HttpNames.hAccept, acceptHeader);
         return this;
     }
 
@@ -217,8 +230,12 @@ public class GSP {
      * system default RDF syntax encoding.
      */
     public GSP contentTypeHeader(String contentType) {
-        this.contentType = contentType;
+        httpHeader(HttpNames.hContentType, contentType);
         return this;
+    }
+
+    private String contentType() {
+        return httpHeader(HttpNames.hContentType);
     }
 
     /**
@@ -229,7 +246,8 @@ public class GSP {
      */
     public GSP contentType(RDFFormat rdfFormat) {
         this.rdfFormat = rdfFormat;
-        this.contentType = rdfFormat.getLang().getContentType().getContentTypeStr();
+        String contentType = rdfFormat.getLang().getContentType().getContentTypeStr();
+        httpHeader(HttpNames.hContentType, contentType);
         return this;
     }
 
@@ -237,6 +255,18 @@ public class GSP {
         Objects.requireNonNull(serviceEndpoint);
         if ( ! defaultGraph && graphName == null )
             throw exception("Need either default graph or a graph name");
+        if ( datasetGraph )
+            throw exception("Dataset request specified for graph operation");
+    }
+
+    private void internalDataset() {
+        // Set dataset request.
+        // Checking is done by validateDatasetOperation.
+        // The dataset operations have "Dataset" in the name, so less point having
+        // required dataset(). We can't use GET() because the return type
+        // would be "Graph or DatasetGraph"
+        // Reconsider if graph synonyms provided.
+        this.datasetGraph = true;
     }
 
     private void validateDatasetOperation() {
@@ -245,6 +275,8 @@ public class GSP {
             throw exception("Default graph specified for dataset operation");
         if ( graphName != null )
             throw exception("A graph name specified for dataset operation");
+        if ( ! datasetGraph )
+            throw exception("Dataset request not specified for dataset operation");
     }
 
     // Setup problems.
@@ -252,14 +284,28 @@ public class GSP {
         return new HttpException(msg);
     }
 
+    // Synonyms mirror the dataset names, so getGraph/getDataset
+
     /** Get a graph */
     public Graph GET() {
         validateGraphOperation();
-        String requestAccept = header(this.acceptHeader, WebContent.defaultGraphAcceptHeader);
+        ensureAcceptHeader(WebContent.defaultGraphAcceptHeader);
+        requestCompression();
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
-        Graph graph = HttpRDF.httpGetGraph(httpClient, url, requestAccept);
+        Graph graph = GraphFactory.createDefaultGraph();
+        HttpRDF.httpGetToStream(httpClient, url, httpHeaders, StreamRDFLib.graph(graph));
         return graph;
     }
+
+//    /**
+//     * Get a graph.
+//     * <p>
+//     * Synonym for {@link #GET()}.
+//     */
+//    public Graph getGraph() {
+//        // Synonym
+//        return GET();
+//    }
 
     /**
      * POST the contents of a file using the filename extension to determine the
@@ -274,12 +320,37 @@ public class GSP {
         uploadTriples(httpClient, url, file, fileExtContentType, httpHeaders, Push.POST);
     }
 
+//    /**
+//     * Load the contents of a file into the target graph using the filename extension to determine the
+//     * Content-Type to use if it is not already set.
+//     * <p>
+//     * Synonym for {@link #POST(String)}.
+//     * <p>
+//     * This operation does not parse the file.
+//     * <p>
+//     * If the data may have quads (named graphs), use {@link #postDataset(String)}.
+//     *
+//     */
+//    public void postGraph(String file) {
+//        POST(file);
+//    }
+
     /** POST a graph. */
     public void POST(Graph graph) {
         validateGraphOperation();
         RDFFormat requestFmt = rdfFormat(HttpEnv.dftTriplesFormat);
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
-        HttpRDF.httpPostGraph(httpClient, url, graph, requestFmt);
+        HttpRDF.postGraph(httpClient, url, graph, requestFmt, httpHeaders);
+    }
+
+    /**
+     * POST a graph.
+     * <p>
+     * Synonym for {@link #POST(Graph)}.
+     */
+    public void postGraph(Graph graph) {
+        // Synonym
+        POST(graph);
     }
 
     /**
@@ -287,6 +358,8 @@ public class GSP {
      * Content-Type to use if it is not already set.
      * <p>
      * This operation does not parse the file.
+     * <p>
+     * If the data may have quads (named graphs), use {@link #putDataset(String)}.
      */
     public void PUT(String file) {
         validateGraphOperation();
@@ -295,13 +368,40 @@ public class GSP {
         uploadTriples(httpClient, url, file, fileExtContentType, httpHeaders, Push.PUT);
     }
 
-    /** PUT a graph. */
+//    /**
+//     * PUT the contents of a file using the filename extension to determine the
+//     * Content-Type to use if it is not already set.
+//     * <p>
+//     * Synonym for {@link #PUT(String)}.
+//     * <p>
+//     * This operation does not parse the file.
+//     * <p>
+//     * If the data may have quads (named graphs), use {@link #putDataset(String)}.
+//     */
+//    public void putGraph(String file) {
+//        // Synonym
+//        PUT(file);
+//    }
+
+    /**
+     * PUT a graph.
+     */
     public void PUT(Graph graph) {
         validateGraphOperation();
         RDFFormat requestFmt = rdfFormat(HttpEnv.dftTriplesFormat);
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
-        HttpRDF.httpPutGraph(httpClient, url, graph, requestFmt);
+        HttpRDF.putGraph(httpClient, url, graph, requestFmt, httpHeaders);
     }
+
+//    /**
+//     * Put a graph - replace the previous contents.
+//     * <p>
+//     * Synonym for {@link #PUT(Graph)}.
+//     */
+//    public void putGraph(Graph graph) {
+//        // Synonym
+//        PUT(graph);
+//    }
 
     /** Delete a graph. */
     public void DELETE() {
@@ -310,6 +410,16 @@ public class GSP {
         HttpRDF.httpDeleteGraph(url);
     }
 
+//    /**
+//     * Delete a graph.
+//     * <p>
+//     * Synonym for {@link #DELETE()}.
+//     */
+//    public void deleteGraph() {
+//        // Synonym
+//        DELETE();
+//    }
+
     /**
      * GET dataset.
      * <p>
@@ -317,11 +427,23 @@ public class GSP {
      * graph data in the default graph of the dataset.
      */
     public DatasetGraph getDataset() {
+        internalDataset();
         validateDatasetOperation();
-        String requestAccept = header(this.acceptHeader, WebContent.defaultRDFAcceptHeader);
+        ensureAcceptHeader(WebContent.defaultRDFAcceptHeader);
+        requestCompression();
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
-        HttpRDF.httpGetToStream(httpClient, serviceEndpoint, acceptHeader, StreamRDFLib.dataset(dsg));
+        HttpRDF.httpGetToStream(httpClient, serviceEndpoint, httpHeaders, StreamRDFLib.dataset(dsg));
         return dsg;
+    }
+
+    private void ensureAcceptHeader(String dftAcceptheader) {
+        String requestAccept = header(acceptHeader(), WebContent.defaultRDFAcceptHeader);
+        acceptHeader(requestAccept);
+    }
+
+    private void requestCompression() {
+        if ( allowCompression )
+            httpHeader(HttpNames.hAcceptEncoding, WebContent2.acceptEncoding);
     }
 
     /**
@@ -331,6 +453,7 @@ public class GSP {
      * This operation does not parse the file.
      */
     public void postDataset(String file) {
+        internalDataset();
         validateDatasetOperation();
         String fileExtContentType = contentTypeFromFilename(file);
         uploadQuads(httpClient, serviceEndpoint, file, fileExtContentType, httpHeaders, Push.POST);
@@ -338,6 +461,7 @@ public class GSP {
 
     /** POST a dataset */
     public void postDataset(DatasetGraph dataset) {
+        internalDataset();
         validateDatasetOperation();
         RDFFormat requestFmt = rdfFormat(HttpEnv.dftQuadsFormat);
         HttpRDF.httpPostDataset(httpClient, serviceEndpoint, dataset, requestFmt);
@@ -350,6 +474,7 @@ public class GSP {
      * This operation does not parse the file.
      */
     public void putDataset(String file) {
+        internalDataset();
         validateDatasetOperation();
         String fileExtContentType = contentTypeFromFilename(file);
         uploadQuads(httpClient, serviceEndpoint, file, fileExtContentType, httpHeaders, Push.PUT);
@@ -357,6 +482,7 @@ public class GSP {
 
     /** PUT a dataset */
     public void putDataset(DatasetGraph dataset) {
+        internalDataset();
         validateDatasetOperation();
         RDFFormat requestFmt = rdfFormat(HttpEnv.dftQuadsFormat);
         HttpRDF.httpPutDataset(httpClient, serviceEndpoint, dataset, requestFmt);
@@ -410,10 +536,10 @@ public class GSP {
         if ( rdfFormat != null )
             return rdfFormat;
 
-        if ( contentType == null )
+        if ( contentType() == null )
             return dftFormat;
 
-        Lang lang = RDFLanguages.contentTypeToLang(contentType);
+        Lang lang = RDFLanguages.contentTypeToLang(contentType());
         RDFFormat streamFormat = StreamRDFWriter.defaultSerialization(null);
         if ( streamFormat != null )
             return streamFormat;
@@ -422,26 +548,23 @@ public class GSP {
 
     /** Choose the Content-Type header for sending a file unless overridden. */
     private String contentTypeFromFilename(String filename) {
-        if ( contentType != null )
-            return contentType;
+        String ctx = contentType();
+        if ( ctx != null )
+            return ctx;
         ContentType ct = RDFLanguages.guessContentType(filename);
         return ct == null ? null : ct.getContentTypeStr();
     }
 
-    /** Send a file. fileContentType takes predecence over this.contentType.*/
+    /** Send a file. fileContentType takes precedence over this.contentType.*/
     protected static void pushFile(HttpClient httpClient, String endpoint, String file, String fileContentType,
                                    Map<String, String> httpHeaders, Push style) {
         try {
             Path path = Paths.get(file);
+            if ( fileContentType != null )
+            //if ( ! httpHeaders.containsKey(HttpNames.hContentType) )
+                httpHeaders.put(HttpNames.hContentType, fileContentType);
             BodyPublisher body = BodyPublishers.ofFile(path);
-            Consumer<HttpRequest.Builder> modifier = x->{
-                if ( fileContentType != null )
-                    x.header(HttpNames.hContentType, fileContentType);
-                // Allow to rewrite Content-Type.
-                if ( httpHeaders != null )
-                    httpHeaders.forEach(x::header);
-            };
-            HttpOp2.httpPushData(httpClient, style, endpoint, modifier, body);
+            HttpOp2.httpPushData(httpClient, style, endpoint, HttpLib.setHeaders(httpHeaders), body);
         } catch (FileNotFoundException ex) {
             throw new NotFoundException(file);
         }

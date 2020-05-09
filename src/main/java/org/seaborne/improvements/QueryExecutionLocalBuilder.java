@@ -22,9 +22,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.atlas.logging.Log;
-import org.apache.jena.query.ARQ;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.*;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.engine.QueryEngineFactory;
 import org.apache.jena.sparql.engine.QueryEngineRegistry;
@@ -33,10 +31,10 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
 
 /**
- * Query Execution - builder style.
+ * Query Execution for local datasets - builder style.
  */
 public class QueryExecutionLocalBuilder {
-    // Improvement over QueryExecutionBuilder
+    // Improvements to QueryExecutionBuilder
 
     public static QueryExecutionLocalBuilder create() {
         QueryExecutionLocalBuilder builder = new QueryExecutionLocalBuilder();
@@ -54,6 +52,11 @@ public class QueryExecutionLocalBuilder {
 
     public QueryExecutionLocalBuilder query(Query query) {
         this.query = query;
+        return this;
+    }
+
+    public QueryExecutionLocalBuilder query(String query) {
+        this.query = QueryFactory.create(query, Syntax.syntaxARQ);
         return this;
     }
 

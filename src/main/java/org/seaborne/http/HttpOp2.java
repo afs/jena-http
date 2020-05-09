@@ -172,7 +172,7 @@ public class HttpOp2 {
         httpPushData(httpClient, PATCH, url, contentType, body);
     }
 
-    /*package*/ static void httpPushData(HttpClient httpClient, Push style, String url, String contentType, BodyPublisher body) {
+    private static void httpPushData(HttpClient httpClient, Push style, String url, String contentType, BodyPublisher body) {
         httpPushData(httpClient, style, url, setContentTypeHeader(contentType), body);
     }
 
@@ -192,11 +192,11 @@ public class HttpOp2 {
     // POST form - probably not needed in this convenience class.
     // Retain for reference.
 
-    /*package*/ static HttpResponse<InputStream> httpPostForm(String url, Params params, String acceptString) {
+    static HttpResponse<InputStream> httpPostForm(String url, Params params, String acceptString) {
         return httpPostForm(HttpEnv.getDftHttpClient(), url, params, acceptString);
     }
 
-    /*package*/ static HttpResponse<InputStream> httpPostForm(HttpClient httpClient, String url, Params params, String acceptString) {
+    private static HttpResponse<InputStream> httpPostForm(HttpClient httpClient, String url, Params params, String acceptString) {
         Objects.requireNonNull(url);
         acceptString = HttpLib.dft(acceptString, "*/*");
         URI uri = toRequestURI(url);

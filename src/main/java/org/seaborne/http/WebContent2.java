@@ -22,14 +22,16 @@ import org.apache.jena.riot.WebContent;
 
 public class WebContent2 {
 
-    public static String sparqlResults = initSelectContentTypes();
-    public static String sparqlResultsHeader = sparqlResults+
+    public static final String acceptEncoding        = "gzip, deflate" ;
+
+    public static final String sparqlResults = initSelectContentTypes();
+    public static final String sparqlResultsHeader = sparqlResults+
         ","+WebContent.contentTypeJSON+";q=0.2"+
         ","+WebContent.contentTypeXML+";q=0.2"+
         ",*/*;q=0.1";
 
-    public static String sparqlAsk = "application/sparql-results+json,application/sparql-results++xml;q=0.9";
-    public static String sparqlAskHeader = sparqlAsk+
+    public static final String sparqlAsk = "application/sparql-results+json,application/sparql-results++xml;q=0.9";
+    public static final String sparqlAskHeader = sparqlAsk+
         ","+WebContent.contentTypeJSON+";q=0.2"+
         ","+WebContent.contentTypeXML+";q=0.2"+
         ",*/*;q=0.1";
