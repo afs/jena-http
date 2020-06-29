@@ -97,6 +97,8 @@ public class EnvTest {
         server = startServer(dsName, dsg, holder, user, password);
     }
 
+    //static { FusekiLogging.setLogging(); }
+
     private static FusekiServer startServer(String dsName, DatasetGraph dsg, StringHolderServlet holder, String user, String password) {
         if ( user != null && password == null )
             throw new IllegalArgumentException("User, not null, but  password null");

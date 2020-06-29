@@ -46,6 +46,7 @@ public class DevLink {
         }
 
     public static void main(String...args) {
+        //QE.local().query("ASK{}").dataset(DatasetGraphFactory.create()).ask();
 
         Lang[] langs = { Lang.RDFTHRIFT, Lang.TTL, Lang.NQ };
         for ( Lang lang : langs ) {

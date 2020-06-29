@@ -18,16 +18,24 @@
 
 package org.seaborne.improvements;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.apache.jena.atlas.logging.Log;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.query.*;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.QueryEngineFactory;
 import org.apache.jena.sparql.engine.QueryEngineRegistry;
 import org.apache.jena.sparql.engine.QueryExecutionBase;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.apache.jena.sparql.util.Context;
 
 /**
@@ -55,8 +63,13 @@ public class QueryExecutionLocalBuilder {
         return this;
     }
 
-    public QueryExecutionLocalBuilder query(String query) {
-        this.query = QueryFactory.create(query, Syntax.syntaxARQ);
+    public QueryExecutionLocalBuilder query(String queryString) {
+        query(queryString, Syntax.syntaxARQ);
+        return this;
+    }
+
+    public QueryExecutionLocalBuilder query(String queryString, Syntax syntax) {
+        this.query = QueryFactory.create(queryString, syntax);
         return this;
     }
 
@@ -118,20 +131,82 @@ public class QueryExecutionLocalBuilder {
             return null;
         }
 
+        Query queryActual = query;
+        if ( initialBinding != null ) {
+            // XXX Syntax transform, not setInitialBinding.
+            Map<Var, Node> substitutions = bindingToMap(initialBinding);
+            queryActual = QueryTransformOps.transform(query, substitutions);
+        }
+
         // QueryExecutionBase set up the final context, merging in the dataset context and setting the current time.
-        QueryExecution qExec = new QueryExecutionBase(query, dataset, cxt, f);
-        if ( initialBinding != null )
-            qExec.setInitialBinding(initialBinding);
+        QueryExecution qExec = new QueryExecutionBase(queryActual, dataset, cxt, f);
+        if ( false ) {
+            if ( initialBinding != null )
+                qExec.setInitialBinding(initialBinding);
+        }
         if ( timeoutTimeUnit1 != null && timeout1 > 0 ) {
             if ( timeoutTimeUnit2 != null  && timeout2 > 0 )
                 qExec.setTimeout(timeout1, timeoutTimeUnit1, timeout2, timeoutTimeUnit2);
             else
-                // XXX CHECK
                 qExec.setTimeout(timeout1, timeoutTimeUnit1);
         }
         return qExec;
     }
 
+    // ==> BindingUtils
+    /** Binding as a Map */
+    public static Map<Var, Node> bindingToMap(Binding binding) {
+        Map<Var, Node> substitutions = new HashMap<>();
+        Iterator<Var> iter = binding.vars();
+        while(iter.hasNext()) {
+            Var v = iter.next();
+            Node n = binding.get(v);
+            substitutions.put(v, n);
+        }
+        return substitutions;
+    }
 
+
+
+    // (Slightly shorter) abbreviated forms - build-execute now.
+
+    public void select(Consumer<Binding> rowAction) {
+        if ( !query.isSelectType() )
+            throw new QueryExecException("Attempt to execute SELECT for a "+query.queryType()+" query");
+        try ( QueryExecution qExec = build() ) {
+            forEachRow(qExec.execSelect(), rowAction);
+        }
+    }
+
+    // Also in RDFLink
+    private static void forEachRow(ResultSet resultSet, Consumer<Binding> rowAction) {
+        while(resultSet.hasNext()) {
+            rowAction.accept(resultSet.nextBinding());
+        }
+    }
+
+    public Graph construct() {
+        if ( !query.isConstructType() )
+            throw new QueryExecException("Attempt to execute CONSTRUCT for a "+query.queryType()+" query");
+        try ( QueryExecution qExec = build() ) {
+            return qExec.execConstruct().getGraph();
+        }
+    }
+
+    public Graph describe() {
+        if ( !query.isDescribeType() )
+            throw new QueryExecException("Attempt to execute DESCRIBE for a "+query.queryType()+" query");
+        try ( QueryExecution qExec = build() ) {
+            return qExec.execDescribe().getGraph();
+        }
+    }
+
+    public boolean ask() {
+        if ( !query.isAskType() )
+            throw new QueryExecException("Attempt to execute ASK for a "+query.queryType()+" query");
+        try ( QueryExecution qExec = build() ) {
+            return qExec.execAsk();
+        }
+    }
 }
 

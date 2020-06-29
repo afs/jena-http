@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.apache.jena</groupId>
     <artifactId>jena</artifactId>
-    <version>3.15.0-SNAPSHOT</version>
+    <version>3.16.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.seaborne</groupId>
@@ -35,7 +35,7 @@
   <name>Http code (${project.artifactId})</name>
   
   <properties>
-    <ver.jena>3.15.0-SNAPSHOT</ver.jena>
+    <ver.jena>3.16.0-SNAPSHOT</ver.jena>
   </properties>
 
   <dependencies>
@@ -45,7 +45,7 @@
       <groupId>org.apache.jena</groupId>
       <artifactId>apache-jena-libs</artifactId>
       <version>${ver.jena}</version>
-      <classifier>pom</classifier>
+      <type>pom</type>
     </dependency>
     -->
 

@@ -26,29 +26,26 @@ public class NotesHttp {
 
     // * Fuseki binary -- add dataset operations.
 
-    // QueryExecutionLocal syntax (if string)
+    // Package "improvements" tests
 
-    // Package improvements tests
-
-    // GSP [Done!]
-
-    // QE.
-
+    // [1]
     // * QueryExecutionHTTP.modifyByService
     // UpdateExecutionHTTP.modifyByService
     // modifyByService - choose HttpClient (security), headers?, rewrite URL?
     // * A SERVICE engine.
     // Per destination setup / SERVICE
 
-    // * GSP
-    // Connection Timeouts
-    // Compression.
+    // [2]
     // * Javadoc: HttpOp2, HttpRDF
 
-    // Merge:
-    // [MERGE]
+    // [3]
     // Merge WebContent2 into WebContent (now?)
     // Merge: G2, G to Glib (now?)
+
+    // [4]
+    // QueryTransformOps.transform - see buildiers and XXX
+
+    // [MERGE]
     // getLink in RDFConnection.
     // Remove RDFConnection(Others)
     // Fuseki tests isFuseki
@@ -62,14 +59,12 @@ public class NotesHttp {
     // * HttpRDF
     // * HttpOp2
 
-    // ---- Review
-    // Set initial bindings: simple version
+    // HttpClient responsibilities
+    //   Auth
+    //   Connection timeout
+    //   SSL
+    //   Proxy
 
-    /* Local:
-     *
-     * ResultSet rs = QE.query(Query).source(Dataset).setTimeout().execSelect();
-     *
-     * Avoid the try-resource: QE....select(Consumer<Binding> rowHandler)
-     * QE....construct() -> Model QE....describe() QE....ask() -> boolean Query */
+    // ---- Review
     // https://openjdk.java.net/groups/net/httpclient/recipes.html
 }
