@@ -70,9 +70,9 @@ public class GSP {
      * Return the URL for a graph named using the
      * <a href="https://www.w3.org/TR/sparql11-http-rdf-update/">SPARQL 1.1 Graph Store Protocol</a>.
      * The {@code graphStoreProtocolService} is the network location of the graph store.
-     * The {@code graphName} be a valid, absolute URI (i.e. includes the scheme) or
-     * the words "default" (or null) for the defaul graph of the store.
-     *
+     * The {@code graphName} be a valid, absolute URI (i.e. includes the scheme)
+     * or the word "default" (or null) for the default graph of the store
+     * or the word "union" for the union graph of the store (this is a Jena extension).
      * @param graphStore
      * @param graphName
      * @return String
@@ -83,27 +83,26 @@ public class GSP {
         if ( graphStore.contains("?") )
             // Already has a query string, append with "&"
             ch = "&";
-        return graphStore + queryStringForGraph(ch, graphName) ;
+        return graphStore + ch + queryStringForGraph(graphName) ;
     }
 
     private static String dftName =  "default" ;
 
-    /*package*/ static boolean isDefault(String name) {
-        return name == null || name.equals(dftName) ;
-    }
-
-    private static String queryStringForGraph(String initialSepChar, String graphName) {
-        return
-            initialSepChar + (isDefault(graphName)
-                ? "default"
-                : "graph="+graphName) ;
-    }
+//    /*package*/ static boolean isDefault(String name) {
+//        return name == null || name.equals(dftName) ;
+//    }
 
     private static String queryStringForGraph(String graphName) {
-        return
-            isDefault(graphName)
-                ? "default"
-                : "graph="+HttpLib.urlEncodeQueryString(graphName);
+        if ( graphName== null )
+            return HttpNames.paramGraphDefault;
+        switch (graphName) {
+            case HttpNames.graphTargetDefault:
+                return HttpNames.paramGraphDefault;
+            case HttpNames.graphTargetUnion:
+                return HttpNames.paramGraph+"=union";
+            default:
+                return HttpNames.paramGraph+"="+HttpLib.urlEncodeQueryString(graphName);
+        }
     }
 
     private String              serviceEndpoint = null;

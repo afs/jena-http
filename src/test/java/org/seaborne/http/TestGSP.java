@@ -18,7 +18,9 @@
 
 package org.seaborne.http;
 
+import static org.apache.jena.fuseki.test.FusekiTest.expect400;
 import static org.apache.jena.fuseki.test.FusekiTest.expect404;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -66,7 +68,6 @@ public class TestGSP {
 
     private String url(String path) { return env.datasetPath(path); }
 
-
     // -- rewrite for GSP
 
     static String gspServiceURL()   { return env.datasetPath("/data"); }
@@ -88,7 +89,6 @@ public class TestGSP {
         return dataset;
     }
 
-    // GSP written equivs of tests in TestOp2.
     @Test public void gsp_put_get_01() {
         GSP.request(gspServiceURL())
             .defaultGraph()
@@ -196,6 +196,29 @@ public class TestGSP {
 //        assertTrue(dsg.isEmpty());
 //    }
 
+    @Test public void gsp_union_get() {
+        Node gn1 = NodeFactory.createURI("http://example/graph1");
+        Node gn2 = NodeFactory.createURI("http://example/graph2");
+        GSP.request(gspServiceURL())
+           .graphName(gn1)
+           .PUT(graph1);
+        GSP.request(gspServiceURL())
+           .graphName(gn2)
+            .PUT(graph2);
+        // get union
+
+        Graph g = GSP.request(gspServiceURL()).graphName("union").GET();
+        assertEquals(3, g.size());
+    }
+
+    @Test public void gsp_union_post() {
+        expect400(()->{
+            GSP.request(gspServiceURL()).graphName("union").POST(graph1);
+        });
+    }
+
+    // 404
+
     @Test public void gsp_404_01() {
         String graphName = "http://example/graph2";
         Node gn = NodeFactory.createURI("http://example/graph2");
@@ -216,8 +239,6 @@ public class TestGSP {
                 .GET()
         );
     }
-
-    // 404
 
     @Test public void gsp_404_1() {
         String graphName = "http://example/graph404";
