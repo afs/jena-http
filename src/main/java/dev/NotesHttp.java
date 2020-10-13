@@ -20,6 +20,15 @@ package dev;
 
 public class NotesHttp {
 
+    // Check concurrent use of RDFLinkRemote.
+
+    // Documentation.
+
+
+
+
+    // ----------------------------
+
     // package.html or web page.
 
     // All XXX and TODO
@@ -44,6 +53,8 @@ public class NotesHttp {
 
     // [4]
     // QueryTransformOps.transform - see buildiers and XXX
+
+    // [5] Service.java
 
     // [MERGE]
     // getLink in RDFConnection.

@@ -25,8 +25,10 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Transactional;
 
 /**
- * SPARQL Graph Store Protocol (read operations) and whole dataset access.
- * {@link RDFLink} adds the write operations.
+ * <a href="http://www.w3.org/TR/sparql11-http-rdf-update/">SPARQL 1.1 Graph Store HTTP Protocol</a>
+ * (read operations) and whole dataset access.
+ *
+ * {@link LinkDatasetGraph} extends this interface, and adds the write operations.
  *
  * @see RDFLink
  */

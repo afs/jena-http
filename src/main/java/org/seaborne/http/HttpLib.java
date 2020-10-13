@@ -43,6 +43,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
+import org.apache.jena.atlas.RuntimeIOException;
 
 import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.lib.IRILib;
@@ -84,7 +85,7 @@ public class HttpLib {
 //                    return null;
 //            }
             return msg;
-        } catch (IOException e) { throw new HttpException(e); }
+        } catch (RuntimeIOException e) { throw new HttpException(e); }
     };
 
 //    /*package*/ static String asString(HttpResponse<InputStream> response) {
@@ -205,7 +206,7 @@ public class HttpLib {
 //            }
             // Finished, don't close.
             return string;
-        } catch (IOException e) { throw new HttpException(e); }
+        } catch (RuntimeIOException e) { throw new HttpException(e); }
     }
 
     static HttpException exception(HttpResponse<InputStream> response, int httpStatusCode) {
@@ -213,7 +214,7 @@ public class HttpLib {
         String msg = null;
         try {
             msg = IO.readWholeFileAsUTF8(in);
-        } catch (IOException e) {
+        } catch (RuntimeIOException e) {
             e.printStackTrace();
         }
         return new HttpException(httpStatusCode, HttpSC.getMessage(httpStatusCode), msg);

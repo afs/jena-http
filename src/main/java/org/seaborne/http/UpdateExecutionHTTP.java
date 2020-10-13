@@ -108,7 +108,6 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
     private void executePostBody(Params thisParams) {
         String str = (updateString != null) ? updateString : update.toString();
         String requestURL = service;
-        HttpLib.modifyByService(requestURL, context, thisParams, httpHeaders);
         if ( thisParams.count() > 0 ) {
             String qs = thisParams.httpString();
             requestURL = requestURL(requestURL, qs);
@@ -119,7 +118,6 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
     private void executePostForm(Params thisParams) {
         String requestURL = service;
         thisParams.addParam(HttpParams.pUpdate, updateString);
-        HttpLib.modifyByService(requestURL, context, thisParams, httpHeaders);
         String formString = thisParams.httpString();
         // Everything goes into the form body, no use of the request URI query string.
         executeUpdate(requestURL, BodyPublishers.ofString(formString, StandardCharsets.US_ASCII), WebContent.contentTypeHTMLForm);
