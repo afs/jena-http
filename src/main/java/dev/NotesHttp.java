@@ -18,51 +18,19 @@
 
 package dev;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+
+import org.seaborne.http.HttpEnv;
+
 public class NotesHttp {
 
-    // Check concurrent use of RDFLinkRemote.
+    // ToDo
 
-    // Documentation.
-
-
-
-
-    // ----------------------------
-
-    // package.html or web page.
-
-    // All XXX and TODO
-
-    // * Fuseki binary -- add dataset operations.
-
-    // Package "improvements" tests
-
-    // [1]
-    // * QueryExecutionHTTP.modifyByService
-    // UpdateExecutionHTTP.modifyByService
-    // modifyByService - choose HttpClient (security), headers?, rewrite URL?
-    // * A SERVICE engine.
-    // Per destination setup / SERVICE
-
-    // [2]
-    // * Javadoc: HttpOp2, HttpRDF
-
-    // [3]
-    // Merge WebContent2 into WebContent (now?)
-    // Merge: G2, G to Glib (now?)
-
-    // [4]
-    // QueryTransformOps.transform - see buildiers and XXX
-
-    // [5] Service.java
-
-    // [MERGE]
-    // getLink in RDFConnection.
-    // Remove RDFConnection(Others)
-    // Fuseki tests isFuseki
-
-    // ----------------------------------------
-
+    // Documentation
+    //   updates for RDFConnction
+    //   Details view
     // Jena networking markdown
     // * RDFConnection
     // * RDFLink
@@ -70,11 +38,110 @@ public class NotesHttp {
     // * HttpRDF
     // * HttpOp2
 
-    // HttpClient responsibilities
-    //   Auth
-    //   Connection timeout
-    //   SSL
-    //   Proxy
+    // Check for javadoc
+    // Examples!
+    // Tests : More auth:
+    // TestAuthRemote - check early. Two variants for each test, with registry and explicit .httpClient(hc)
+    //   GSP delete
+
+    // Do we need ServiceTuning? Minor feature. Exact match.
+    //   Same Mechanism for finding as RegistryHttpClient
+    //   Change tests - not auth - where?
+    // SERVICE: Per-endpoint HttpClient: Global registry.
+    //   Tests needed
+    // ** HttpEnv.getDftHttpClient() ==> HttpEnv.getHttpClient(url);
+    //
+    // @@ RegistryHttpClient Bug - dataset with a shorter name.
+    // Exact match URL, or per server
+
+    // ** HttpEnv.getHttpClient(url, httpClient);
+    //
+    // [x] GSP : GSP.service sets the URL.
+    // [x] Query : QueryExecutionHTTPBuilder.service
+    // [x] Update : UpdateExecutionHTTPBuilder.service (ditto)
+    // Tests of HttpEnv.getHttpClient
+
+
+    static class HttpEnv2 {
+
+        //HttpRequest httpRequest
+
+        public static HttpClient getHttpClient(HttpRequest httpRequest) {
+            URI uri = httpRequest.uri();
+
+            // lookup by scheme, host+port, path.
+
+            // System default.
+            return HttpEnv.getDftHttpClient();
+        }
+
+        private static String server(URI uri) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(uri.getScheme());
+            sb.append("://");
+            sb.append(uri.getHost());
+            // authority   = [ userinfo "@" ] host [ ":" port ]
+            if ( uri.getPort() > 0 ) {
+                sb.append(':');
+                sb.append(Integer.toString(uri.getPort()));
+            }
+            sb.append("/");
+            return sb.toString();
+        }
+
+
+    }
+
+
+    //   Add a URL->HttpClient mapping.
+    // [ ]    UpdateExecutionHTTP - modifyRequest, altHttpClient mapping
+    //        QueryExecutionHTTP- modifyRequest, altHttpClient mapping
+    //        TestAuthRemote.auth_link_local_context_1
+
+    // [ ] RequestLogging
+    //     Query, Update, GSP. -> all through HttpLib.execute!
+    //     Higher level:
+    //          QueryExecutionHTTP.executeQueryPush, executeQueryGetForm
+    //          UpdateExecutionHTTP.executeUpdate
+    //          GSP.(GET,POST,PUT,DELETE), + dataset versions.
+
+    // [ ] Integration
+    //     ARQ: Service.java
+
+    // QExec->QueryExec
+    // [ ] Getting builders for UpdateExecution, QueryExecution; local and remote.
+    //       Factory,library for getting one + QueryExecution : SparqlLib?
+    // Service Registry ->
+    //   Per dest HttpClient.
+    //   Tuning
+    // ServiceTuning returns an HttpClient? Ugly!
+
+    // Logging - log every request! Sparql request Log.
+    //
+    // [] .service vs .destination (check)
+    // [] RDFLinkFactory == RDFLinkRemoteBuilder.create().destination(destination)
+    // Better builder access (RDFLinkFactory? RDFLink.createRemote()?)
+
+
+    // Check for javadoc
+    // ----------------------------
+
+    // package.html or web page.
+
+    // * Fuseki binary -- add dataset operations.
+
+    // [3]
+    // Merge WebContent2 into WebContent (now?)
+
+    // [4]
+    // QueryTransformOps.transform - see builders and XXX
+
+    // [5] Service.java
+
+    // [MERGE]
+    // getLink in RDFConnection.
+    // Remove RDFConnection(Others)
+    // Fuseki tests isFuseki
 
     // ---- Review
     // https://openjdk.java.net/groups/net/httpclient/recipes.html

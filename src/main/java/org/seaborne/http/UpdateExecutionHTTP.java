@@ -27,23 +27,31 @@ import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
-import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.engine.http.HttpParams;
 import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sparql.util.Context;
-import org.apache.jena.update.UpdateProcessor;
 import org.apache.jena.update.UpdateRequest;
+import org.seaborne.improvements.UpdateExecution;
 
-public class UpdateExecutionHTTP implements UpdateProcessor {
+public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ UpdateExecution {
 
-    enum SendMode { asPostForm, asPostBody }
+    enum SendMode {
+        // POST HTML forms (update=...)
+        asPostForm,
+        // POST application/sparql-update
+        asPostBody
+        }
+
+    /*package*/static SendMode defaultSendMode = SendMode.asPostBody;
 
     public static UpdateExecutionHTTPBuilder newBuilder() { return new UpdateExecutionHTTPBuilder(); }
+
     private final Context context;
     private final String service;
     private final UpdateRequest update;
@@ -72,15 +80,15 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
         this.sendMode = sendMode;
     }
 
-    @Override
-    public Context getContext() {
-        return null;
-    }
-
-    @Override
-    public DatasetGraph getDatasetGraph() {
-        return null;
-    }
+//    @Override
+//    public Context getContext() {
+//        return null;
+//    }
+//
+//    @Override
+//    public DatasetGraph getDatasetGraph() {
+//        return null;
+//    }
 
     @Override
     public void execute() {
@@ -95,7 +103,8 @@ public class UpdateExecutionHTTP implements UpdateProcessor {
                 thisParams.addParam(HttpNames.paramUsingNamedGraphURI, uri);
         }
 
-        modifyByService(service, context, params, httpHeaders);
+        // Same as QueryExecutionHTTP
+        modifyByService(service, context, thisParams, httpHeaders);
 
         switch(sendMode) {
             case asPostBody :

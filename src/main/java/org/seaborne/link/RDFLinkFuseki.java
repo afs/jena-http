@@ -39,8 +39,8 @@ public class RDFLinkFuseki extends RDFLinkRemote {
      * dataset.
      * @return RDFLinkRemoteBuilder
      */
-    public static RDFLinkRemoteBuilder create() {
-        return setupForFuseki(RDFLinkRemote.create());
+    public static RDFLinkRemoteBuilder newBuilder() {
+        return setupForFuseki(RDFLinkRemote.newBuilder());
     }
 
     /**
@@ -48,8 +48,8 @@ public class RDFLinkFuseki extends RDFLinkRemote {
      * @param other The RDFLinkFuseki to clone.
      * @return RDFLinkRemoteBuilder
      */
-    public static RDFLinkRemoteBuilder create(RDFLinkFuseki other) {
-        return setupCreator(RDFLinkRemote.create(other));
+    public static RDFLinkRemoteBuilder from(RDFLinkFuseki other) {
+        return setupCreator(RDFLinkRemote.from(other));
     }
 
     /** Fuseki settings */

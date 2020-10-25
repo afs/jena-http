@@ -47,7 +47,7 @@ public class RDFLinkFactory {
      * @see #connect(String, String, String, String)
      */
     public static RDFLink connect(String destination) {
-        return RDFLinkRemote.create().destination(destination).build();
+        return RDFLinkRemote.newBuilder().destination(destination).build();
     }
 
     /** Create a connection specifying the URLs of the service.
@@ -60,11 +60,22 @@ public class RDFLinkFactory {
     public static RDFLink connect(String queryServiceEndpoint,
                                   String updateServiceEndpoint,
                                   String graphStoreProtocolEndpoint) {
-        return RDFLinkRemote.create()
+        return RDFLinkRemote.newBuilder()
             .queryEndpoint(queryServiceEndpoint)
             .updateEndpoint(updateServiceEndpoint)
             .gspEndpoint(graphStoreProtocolEndpoint)
             .build();
+    }
+
+    /** Create a builder for a connection to a remote location by URL.
+     * This is the URL for the dataset.
+     *
+     * @param destination
+     * @return RDFLink
+     * @see RDFLinkRemoteBuilder
+     */
+    public static RDFLinkRemoteBuilder newBuilder(String destination) {
+        return RDFLinkRemote.newBuilder().destination(destination);
     }
 
     /** Create a connection to a remote location by URL.
@@ -81,7 +92,7 @@ public class RDFLinkFactory {
                                   String queryServiceEndpoint,
                                   String updateServiceEndpoint,
                                   String graphStoreProtocolEndpoint) {
-        return RDFLinkRemote.create()
+        return RDFLinkRemote.newBuilder()
             .destination(datasetURL)
             .queryEndpoint(queryServiceEndpoint)
             .updateEndpoint(updateServiceEndpoint)
@@ -106,7 +117,7 @@ public class RDFLinkFactory {
             .connectTimeout(Duration.ofSeconds(10))
            .authenticator(authenticator)
             .build();
-        return RDFLinkRemote.create()
+        return RDFLinkRemote.newBuilder()
             .destination(URL)
             .httpClient(httpClientAuth)
             .build();
@@ -178,7 +189,7 @@ public class RDFLinkFactory {
      * @return RDFLinkFuseki
      */
     public static RDFLinkFuseki connectFuseki(String destination) {
-        return (RDFLinkFuseki)RDFLinkFuseki.create().destination(destination).build();
+        return (RDFLinkFuseki)RDFLinkFuseki.newBuilder().destination(destination).build();
     }
 
     /** Create a connection to a remote Fuseki server by URL.
@@ -196,7 +207,7 @@ public class RDFLinkFactory {
                                                     String queryServiceEndpoint,
                                                     String updateServiceEndpoint,
                                                     String graphStoreProtocolEndpoint) {
-        return (RDFLinkFuseki)RDFLinkFuseki.create()
+        return (RDFLinkFuseki)RDFLinkFuseki.newBuilder()
                 .destination(datasetURL)
                 .queryEndpoint(queryServiceEndpoint)
                 .updateEndpoint(updateServiceEndpoint)

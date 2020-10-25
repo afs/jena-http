@@ -44,7 +44,8 @@ import org.apache.jena.sparql.util.Context;
 public class QueryExecutionLocalBuilder {
     // Improvements to QueryExecutionBuilder
 
-    public static QueryExecutionLocalBuilder create() {
+    /** Create a new builder of {@link QueryExecution} for a local dataset. */
+    public static QueryExecutionLocalBuilder newBuilder() {
         QueryExecutionLocalBuilder builder = new QueryExecutionLocalBuilder();
         return builder;
     }
@@ -133,7 +134,6 @@ public class QueryExecutionLocalBuilder {
 
         Query queryActual = query;
         if ( initialBinding != null ) {
-            // XXX Syntax transform, not setInitialBinding.
             Map<Var, Node> substitutions = bindingToMap(initialBinding);
             queryActual = QueryTransformOps.transform(query, substitutions);
         }
@@ -165,8 +165,6 @@ public class QueryExecutionLocalBuilder {
         }
         return substitutions;
     }
-
-
 
     // (Slightly shorter) abbreviated forms - build-execute now.
 

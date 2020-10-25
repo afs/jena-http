@@ -16,17 +16,26 @@
  * limitations under the License.
  */
 
-package dev;
+package org.seaborne.http;
 
-import org.apache.jena.atlas.logging.Log;
-import org.apache.jena.atlas.logging.LogCtl;
+import java.util.Map;
 
-public class ReportHTTP {
-    static { LogCtl.setLog4j2(); }
-    //static { LogCtl.setCmdLogging(); }
+import org.apache.jena.sparql.engine.http.Params;
 
-    public static void main(String...a) {
-        Log.info(ReportHTTP.class, "A log message");
-        System.exit(0);
-    }
+/**
+ * A service registry is a set of actions to take to modify an HTTP request before
+ * sending it to a specific endpoint.
+ *
+ * The key can be a prefix which must end in "/"
+ */
+public class RegistryServiceModifier extends RegistryByServiceURL<RegistryServiceModifier.RequestModifer> {
+
+    /** Query string parameters and HTTP headers for inspection and modification. */
+    @FunctionalInterface
+    public interface RequestModifer { void modify(Params params, Map<String, String> httpHeaders) ; }
+
+    private static RegistryServiceModifier singleton = new RegistryServiceModifier();
+    public static RegistryServiceModifier get() { return singleton; }
+
+    public RegistryServiceModifier() { }
 }

@@ -37,11 +37,14 @@ public class UpdateExecutionHTTPBuilder {
     private boolean allowCompression;
     private Map<String, String> httpHeaders = new HashMap<>();
     private HttpClient httpClient;
-    private SendMode sendMode = SendMode.asPostBody;
+    private SendMode sendMode = UpdateExecutionHTTP.defaultSendMode;
     private UpdateRequest updateRequest;
 
     private List<String> usingGraphURIs = null;
     private List<String> usingNamedGraphURIs = null;
+
+    public UpdateExecutionHTTPBuilder() {}
+
 
     public UpdateExecutionHTTPBuilder service(String serviceURL) {
         this.serviceURL = serviceURL;
@@ -117,7 +120,8 @@ public class UpdateExecutionHTTPBuilder {
         Objects.requireNonNull(serviceURL, "No service URL");
         if ( update == null && updateString == null )
             throw new QueryException("No update for UpdateExecutionHTTP");
-        return new UpdateExecutionHTTP(serviceURL, update, updateString, httpClient, params,
+        HttpClient hClient = HttpEnv.getHttpClient(serviceURL, httpClient);
+        return new UpdateExecutionHTTP(serviceURL, update, updateString, hClient, params,
                                        copyArray(usingGraphURIs),
                                        copyArray(usingNamedGraphURIs),
                                        new HashMap<>(httpHeaders),

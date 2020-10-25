@@ -18,18 +18,8 @@
 
 package org.seaborne.improvements;
 
-import org.seaborne.http.QueryExecutionHTTP;
-import org.seaborne.http.QueryExecutionHTTPBuilder;
-
-/** QueryExecutionFactory improvements */
-public class QE {
-
-    public static QueryExecutionHTTPBuilder remote() {
-        return QueryExecutionHTTP.newBuilder();
-    }
-
-    public static QueryExecutionLocalBuilder local() {
-        return QueryExecutionLocalBuilder.newBuilder();
-    }
+public interface UpdateExecution {
+    /** Execute */
+    public void execute() ;
 }
 

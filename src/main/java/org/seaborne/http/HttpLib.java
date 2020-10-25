@@ -43,8 +43,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
-import org.apache.jena.atlas.RuntimeIOException;
 
+import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.lib.IRILib;
 import org.apache.jena.atlas.web.HttpException;
@@ -53,10 +53,10 @@ import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.web.HttpSC;
-import org.seaborne.http.ServiceRegistry.ServiceTuning;
+import org.seaborne.http.RegistryServiceModifier.RequestModifer;
 
 /**
- * Operations related to SPARQL HTTP request - Query, Update and Graph Store protocols.
+ * Operations related to SPARQL HTTP requests - Query, Update and Graph Store protocols.
  */
 public class HttpLib {
 
@@ -74,25 +74,17 @@ public class HttpLib {
 
     /** Read the body of a response as a string in UTF-8. */
     private static Function<HttpResponse<InputStream>, String> bodyInputStreamToString = r-> {
-        InputStream in = r.body();
-        String msg;
         try {
-            msg = IO.readWholeFileAsUTF8(in);
-            // Convert no body, no Content-Length to null.
-//            if ( msg.isEmpty() ) {
-//                if ( r.headers().firstValue(HttpNames.hContentLength).isEmpty() )
-//                    // No Content-Length -> null
-//                    return null;
-//            }
+            InputStream in = r.body();
+            String msg = IO.readWholeFileAsUTF8(in);
             return msg;
-        } catch (RuntimeIOException e) { throw new HttpException(e); }
+        } catch (Throwable ex) { throw new HttpException(ex); }
     };
 
-//    /*package*/ static String asString(HttpResponse<InputStream> response) {
-//        return bodyInputStreamToString.apply(response);
-//    }
-
-    /** Calculate basic auth header. */
+    /**
+     * Calculate basic auth header value. Use with header "Authorization" (constant
+     * {@link HttpNames#hAuthorization}). Best used over https.
+     */
     public static String basicAuth(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
     }
@@ -376,9 +368,13 @@ public class HttpLib {
      * @param bodyHandler
      * @return
      */
-    static <T> HttpResponse<T> execute(HttpClient httpClient, HttpRequest httpRequest, BodyHandler<T> bodyHandler) {
+    private static <T> HttpResponse<T> execute(HttpClient httpClient, HttpRequest httpRequest, BodyHandler<T> bodyHandler) {
         try {
-            return httpClient.send(httpRequest, bodyHandler);
+            // This is the one place all HTTP requests go through.
+            logRequest(httpRequest);
+            HttpResponse<T> httpResponse = httpClient.send(httpRequest, bodyHandler);
+            logResponse(httpResponse);
+            return httpResponse;
         } catch (IOException | InterruptedException ex) {
             // This is silly.
             // Rather than an HTTP exception, bad authentication becomes IOException("too many authentication attempts");
@@ -391,12 +387,27 @@ public class HttpLib {
         }
     }
 
+    /** Request */
+    private static void logRequest(HttpRequest httpRequest) {
+//        httpRequest.uri();
+//        httpRequest.method();
+//        httpRequest.headers();
+    }
+
+    /** Response (do not touch the body!)  */
+    private static void logResponse(HttpResponse<?> httpResponse) {
+//        httpResponse.uri();
+//        httpResponse.statusCode();
+//        httpResponse.headers();
+//        httpResponse.previousResponse();
+    }
+
     // This is to allow setting additional/optional query parameters on a per remote service (including for SERVICE).
-    protected static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
+    /*package*/ static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
         // Old Constant.
-        ServiceRegistry srvReg = context.get(ARQ.serviceParams);
+        RegistryServiceModifier srvReg = context.get(ARQ.serviceParams);
         if ( srvReg != null ) {
-            ServiceTuning mods = srvReg.find(serviceURI);
+            RequestModifer mods = srvReg.find(serviceURI);
             if ( mods != null )
                 mods.modify(params, httpHeaders);
         }

@@ -43,7 +43,9 @@ import org.apache.jena.sparql.util.QueryExecUtils;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.security.UserStore;
 import org.seaborne.http.*;
-import org.seaborne.http.ServiceRegistry.ServiceTuning;
+import org.seaborne.http.RegistryServiceModifier.RequestModifer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DevAuthHTTP {
     static { LogCtl.setLog4j2(); }
@@ -88,9 +90,9 @@ public class DevAuthHTTP {
     }
 
 
+    static Logger LOG = LoggerFactory.getLogger("APP");
 
     private static void clientQueryExec() {
-
         Authenticator authenticator = new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -99,46 +101,70 @@ public class DevAuthHTTP {
             }
         };
 
-        HttpClient hc = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            //.authenticator(authenticator)
-            .build();
+        // -- --
+        LOG.info("-- Update with service tuning");
+        auth(()->{
+            RequestModifer mods = (params, headers) ->
+                headers.put(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"));
 
+            // Need to do that for update.
+            RegistryServiceModifier svcReg = new RegistryServiceModifier();
+            svcReg.add("http://localhost:3030/ds", mods);
+            ARQ.getContext().put(ARQ.serviceParams, svcReg);
 
-        // Query
-        ServiceTuning mods = (params, headers) ->
-             headers.put(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"));
+            UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
+                .service("http://localhost:3030/ds")
+                .updateString("INSERT DATA { <x:s> <x:q> 123}")
+                //.httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
+                //.httpClient(hc)
+                .build();
+            uExec.execute();
+        });
+        ARQ.getContext().remove(ARQ.serviceParams);
 
-        // Need to do that for update.
-        ServiceRegistry svcReg = new ServiceRegistry();
-        svcReg.add("http://localhost:3030/ds", mods);
-        ARQ.getContext().put(ARQ.serviceParams, svcReg);
-
-
-        UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
-            .service("http://localhost:3030/ds")
-            .updateString("INSERT DATA { <x:s> <x:q> 123}")
-            .httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
-            //.httpClient(hc)
-            .build();
-        uExec.execute();
-
+        //LOG.info("-- query with global modification");
 
         String[] x = {
             "SELECT * { ?s ?p ?o }"
-            , "ASK  {}"
-            , "CONSTRUCT WHERE { ?s ?p ?o }"
+//            , "ASK  {}"
+//            , "CONSTRUCT WHERE { ?s ?p ?o }"
         };
 
-        for ( var qs : x ) {
-            try ( QueryExecution qexec = QueryExecutionHTTP.create()
+        // -- --
+        LOG.info("-- Query with custom HttpClient");
+
+        auth(()->{
+            HttpClient hc = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .authenticator(authenticator)
+                .build();
+            for ( var qs : x ) {
+                try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
                     .httpClient(hc)
                     .service("http://localhost:3030/ds/query")
                     .queryString(qs)
                     .build()) {
-                QueryExecUtils.executeQuery(qexec);
+                    QueryExecUtils.executeQuery(qexec);
+                }
             }
-        }
+        });
+
+        // -- --
+        LOG.info("-- Query with HTTP header");
+        auth(()->{
+            for ( var qs : x ) {
+                try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
+                    .service("http://localhost:3030/ds/query")
+                    .httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
+                    .queryString(qs)
+                    .build()) {
+                    QueryExecUtils.executeQuery(qexec);
+                }
+            }
+        });
+
+        //.httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
+
 
 //        if ( true ) return;
 //        try ( QueryExecution qexec = new QueryExecutionHTTP("http://localhost:3030/ds/query", "SELECT * { BIND(1 AS ?X) }") ) {
@@ -153,6 +179,14 @@ public class DevAuthHTTP {
 //            RDFDataMgr.write(System.out,  m, Lang.RDFXML);
 //        }
 
+    }
+
+    static void auth(Runnable action) {
+        try {
+            action.run();
+        } catch (Throwable th) {
+            LOG.warn("** "+th.getMessage());
+        }
     }
 
     private static void clientBasic() {

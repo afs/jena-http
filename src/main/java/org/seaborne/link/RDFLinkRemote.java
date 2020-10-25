@@ -73,7 +73,7 @@ public class RDFLinkRemote implements RDFLink {
     protected final boolean parseCheckUpdates;
 
     /** Create a {@link RDFLinkRemoteBuilder}. */
-    public static RDFLinkRemoteBuilder create() {
+    public static RDFLinkRemoteBuilder newBuilder() {
         return new RDFLinkRemoteBuilder();
     }
 
@@ -81,7 +81,7 @@ public class RDFLinkRemote implements RDFLink {
      * Create a {@link RDFLinkRemoteBuilder} initialized with the
      * settings of another {@code RDFLinkRemote}.
      */
-    public static RDFLinkRemoteBuilder create(RDFLinkRemote base) {
+    public static RDFLinkRemoteBuilder from(RDFLinkRemote base) {
         return new RDFLinkRemoteBuilder(base);
     }
 
@@ -248,7 +248,7 @@ public class RDFLinkRemote implements RDFLink {
 
     // Create the QueryExecution
     private QueryExecution createQueryExecution(Query query, String queryStringToSend, QueryType queryType) {
-        QueryExecutionHTTPBuilder builder = QueryExecutionHTTP.create()
+        QueryExecutionHTTPBuilder builder = QueryExecutionHTTP.newBuilder()
             .service(svcQuery)
             .httpClient(httpClient)
             .queryString(queryStringToSend);

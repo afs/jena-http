@@ -29,42 +29,42 @@ import org.apache.jena.update.*;
 /**
  * Build a {@link UpdateProcessor}.
  */
-public class UpdateExecutionBuilder {
+public class UpdateExecutionLocalBuilder {
 
     private UpdateRequest updateRequest = new UpdateRequest();
     private DatasetGraph dataset;
     private Binding initialBinding;
     private Context context = null;
 
-    public static UpdateExecutionBuilder create() {
-        return new UpdateExecutionBuilder();
+    public static UpdateExecutionLocalBuilder newBuilder() {
+        return new UpdateExecutionLocalBuilder();
     }
 
-    public UpdateExecutionBuilder() {}
+    public UpdateExecutionLocalBuilder() {}
 
-    public UpdateExecutionBuilder add(UpdateRequest update) {
+    public UpdateExecutionLocalBuilder add(UpdateRequest update) {
         this.updateRequest = update;
         update.forEach(updateRequest::add);
         return this;
     }
 
-    public UpdateExecutionBuilder add(Update update) {
+    public UpdateExecutionLocalBuilder add(Update update) {
         this.updateRequest.add(update);
         return this;
     }
 
-    public UpdateExecutionBuilder set(String updateStr) {
+    public UpdateExecutionLocalBuilder set(String updateStr) {
         UpdateRequest req = UpdateFactory.create(updateStr, Syntax.syntaxARQ);
         add(req);
         return this;
     }
 
-    public UpdateExecutionBuilder dataset(DatasetGraph dataset) {
+    public UpdateExecutionLocalBuilder dataset(DatasetGraph dataset) {
         this.dataset = dataset;
         return this;
     }
 
-    public UpdateExecutionBuilder context(Context context) {
+    public UpdateExecutionLocalBuilder context(Context context) {
         this.context = context;
         return this;
     }

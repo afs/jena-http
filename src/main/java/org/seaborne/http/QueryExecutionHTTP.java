@@ -36,6 +36,7 @@ import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.atlas.lib.Pair;
+import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
@@ -50,22 +51,34 @@ import org.apache.jena.sparql.engine.ResultSetCheckCondition;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.http.HttpParams;
 import org.apache.jena.sparql.engine.http.Params;
-import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
-import org.apache.jena.sparql.engine.http.Service;
 import org.apache.jena.sparql.graph.GraphFactory;
-import org.apache.jena.sparql.resultset.ResultSetException;
 import org.apache.jena.sparql.util.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A query execution implementation where queries are executed against a remote
  * service over HTTP.
  */
 public class QueryExecutionHTTP implements QueryExecution {
-    private static Logger log = LoggerFactory.getLogger(QueryExecutionHTTP.class);
 
-    enum SendMode { asGetWithLimit, asGetAlways, asPostForm, asPostBody }
+    /** @deprecated Use {@link #newBuilder} */
+    @Deprecated
+    public static QueryExecutionHTTPBuilder create() { return newBuilder() ; }
+
+    public static QueryExecutionHTTPBuilder newBuilder() { return new QueryExecutionHTTPBuilder(); }
+
+    enum SendMode {
+        // Switched to POST HTML Form encoding if the query is very long (HttpEnv.urlLimit).
+        asGetWithLimit,
+        // Use GET regardless
+        asGetAlways,
+        // Use POST HTML Form regardless
+        asPostForm,
+        // POST and application/sparql-query
+        asPostBody
+    }
+
+    // System default.
+    /*package*/ static SendMode defaultSendMode = SendMode.asGetWithLimit;
 
     public static final String QUERY_MIME_TYPE = WebContent.contentTypeSPARQLQuery;
     private final Query query;
@@ -95,7 +108,6 @@ public class QueryExecutionHTTP implements QueryExecution {
     private boolean allowCompression = false;
 
     // Content Types: these list the standard formats and also include */*.
-    // XXX Merge WebContent2 into WebContent
     private String selectAcceptheader    = WebContent2.sparqlResultsHeader;
     private String askAcceptHeader       = WebContent2.sparqlAskHeader;
     private String describeAcceptHeader  = WebContent.defaultGraphAcceptHeader;
@@ -109,15 +121,14 @@ public class QueryExecutionHTTP implements QueryExecution {
 
     // Received content type
     private String httpResponseContentType = null;
-    // Releasing HTTP input streams is important. We remember this for SELECT,
-    // and will close when the execution is closed
+    // Releasing HTTP input streams is important. We remember this for SELECT result
+    // set streaming, and will close it when the execution is closed
     private InputStream retainedConnection = null;
 
     private HttpClient httpClient = HttpEnv.getDftHttpClient();
 
     private Map<String, String> httpHeaders;
 
-    public static QueryExecutionHTTPBuilder create() { return new QueryExecutionHTTPBuilder(); }
     /*package*/ QueryExecutionHTTP(String serviceURL, Query query, String queryString, int urlLimit,
                                    HttpClient httpClient, Map<String, String> httpHeaders, Params params,
                                    List<String> defaultGraphURIs, List<String> namedGraphURIs,
@@ -145,77 +156,6 @@ public class QueryExecutionHTTP implements QueryExecution {
         this.readTimeoutUnit = timeoutUnit;
         this.httpClient = dft(httpClient, HttpEnv.getDftHttpClient());
     }
-
-    /**
-     * <p>
-     * Helper method which applies configuration from the Context to the query
-     * engine if a service context exists for the given URI
-     * </p>
-     * <p>
-     * Based off proposed patch for JENA-405 but modified to apply all relevant
-     * configuration, this is in part also based off of the private
-     * {@code configureQuery()} method of the {@link Service} class though it
-     * omits parameter merging since that will be done automatically whenever
-     * the {@link QueryExecutionHTTP} instance makes a query for remote submission.
-     * </p>
-     *
-     * @param serviceURI   Service URI
-     */
-    private static void applyServiceConfig(String serviceURI, QueryExecutionHTTP engine) {
-        if (engine.context == null)
-            return;
-
-        @SuppressWarnings("unchecked")
-        Map<String, Context> serviceContextMap = (Map<String, Context>) engine.context.get(Service.serviceContext);
-        if (serviceContextMap != null && serviceContextMap.containsKey(serviceURI)) {
-            Context serviceContext = serviceContextMap.get(serviceURI);
-            if (log.isDebugEnabled())
-                log.debug("Endpoint URI {} has SERVICE Context: {} ", serviceURI, serviceContext);
-
-            // Apply behavioural options
-            //engine.setAllowCompression(serviceContext.isTrueOrUndef(Service.queryCompression));
-            applyServiceTimeouts(engine, serviceContext);
-            // Apply context-supplied client settings
-            HttpClient client = serviceContext.get(Service.queryClient);
-        }
-    }
-
-    /**
-     * Applies context provided timeouts to the given engine
-     *
-     * @param engine    Engine
-     * @param context   Context
-     */
-    private static void applyServiceTimeouts(QueryExecutionHTTP engine, Context context) {
-        if (context.isDefined(Service.queryTimeout)) {
-            Object obj = context.get(Service.queryTimeout);
-            if (obj instanceof Number) {
-                int x = ((Number) obj).intValue();
-                engine.setTimeout(-1, x);
-            } else if (obj instanceof String) {
-                try {
-                    String str = obj.toString();
-                    if (str.contains(",")) {
-
-                        String[] a = str.split(",");
-                        int connect = Integer.parseInt(a[0]);
-                        int read = Integer.parseInt(a[1]);
-                        engine.setTimeout(read, connect);
-                    } else {
-                        int x = Integer.parseInt(str);
-                        engine.setTimeout(-1, x);
-                    }
-                } catch (NumberFormatException ex) {
-                    throw new QueryExecException("Can't interpret string for timeout: " + obj);
-                }
-            } else {
-                throw new QueryExecException("Can't interpret timeout: " + obj);
-            }
-        }
-    }
-
-    // public void setParams(Params params)
-    // { this.params = params; }
 
     @Override
     public void setInitialBinding(QuerySolution binding) {
@@ -299,28 +239,21 @@ public class QueryExecutionHTTP implements QueryExecution {
         if (actualContentType == null || actualContentType.equals(""))
             actualContentType = askAcceptHeader;
 
-        try {
-            Lang lang = RDFLanguages.contentTypeToLang(actualContentType);
-            if ( lang == null ) {
-                // Any specials :
-                // application/xml for application/sparql-results+xml
-                // application/json for application/sparql-results+json
-                if (actualContentType.equals(WebContent.contentTypeXML))
-                    lang = ResultSetLang.SPARQLResultSetXML;
-                else if ( actualContentType.equals(WebContent.contentTypeJSON))
-                    lang = ResultSetLang.SPARQLResultSetJSON;
-            }
-            if ( lang == null )
-                throw new QueryException("Endpoint returned Content-Type: " + actualContentType + " which is not supported for ASK queries");
-            boolean result = ResultSetMgr.readBoolean(in, lang);
-            finish(response);
-            return result;
-        } catch (ResultSetException e) {
-            log.warn("Returned content is not a boolean result", e);
-            throw e;
-        } catch (QueryExceptionHTTP e) {
-            throw e;
+        Lang lang = RDFLanguages.contentTypeToLang(actualContentType);
+        if ( lang == null ) {
+            // Any specials :
+            // application/xml for application/sparql-results+xml
+            // application/json for application/sparql-results+json
+            if (actualContentType.equals(WebContent.contentTypeXML))
+                lang = ResultSetLang.SPARQLResultSetXML;
+            else if ( actualContentType.equals(WebContent.contentTypeJSON))
+                lang = ResultSetLang.SPARQLResultSetJSON;
         }
+        if ( lang == null )
+            throw new QueryException("Endpoint returned Content-Type: " + actualContentType + " which is not supported for ASK queries");
+        boolean result = ResultSetMgr.readBoolean(in, lang);
+        finish(response);
+        return result;
     }
 
     private String removeCharset(String contentType) {
@@ -600,18 +533,21 @@ public class QueryExecutionHTTP implements QueryExecution {
                 thisParams.addParam( HttpParams.pNamedGraph, name );
         }
 
+        // Same as UpdateExecutionHTTP
         HttpLib.modifyByService(service,  context,  thisParams,  httpHeaders);
 
         // Query string or HTML form.
         // Status code has not been processed on the return from execute*
         // We want to pass the full details (HttpResponse) for Content-Type.
         if ( sendMode == SendMode.asPostBody )
-            return executeQueryPush(thisParams, reqAcceptHeader);
+            return executeQueryPostBody(thisParams, reqAcceptHeader);
         else
-            return executeQueryGetForm(thisParams, reqAcceptHeader);
+            return executeQueryGet(thisParams, reqAcceptHeader);
     }
 
-    private HttpResponse<InputStream> executeQueryGetForm(Params thisParams, String acceptHeader) {
+
+    private HttpResponse<InputStream> executeQueryGet(Params thisParams, String acceptHeader) {
+        // This may still be  POST and an HTML form
         Objects.requireNonNull(service);
         Objects.requireNonNull(params);
         Objects.requireNonNull(httpClient);
@@ -664,7 +600,7 @@ public class QueryExecutionHTTP implements QueryExecution {
     }
 
     // Use SPARQL query body and MIME type.
-    private HttpResponse<InputStream> executeQueryPush(Params thisParams, String acceptHeader) {
+    private HttpResponse<InputStream> executeQueryPostBody(Params thisParams, String acceptHeader) {
         if (closed)
             throw new ARQException("HTTP execution already closed");
 
@@ -695,7 +631,7 @@ public class QueryExecutionHTTP implements QueryExecution {
         try {
             close();
         } catch (Exception ex) {
-            log.warn("Error during abort", ex);
+            Log.warn(this, "Error during abort", ex);
         }
     }
 
@@ -709,16 +645,12 @@ public class QueryExecutionHTTP implements QueryExecution {
                 // connection. If we're closing when we're not at the end of the stream then
                 // issue a warning to the logs
                 if (retainedConnection.read() != -1)
-                    log.warn("HTTP response not fully consumed, if HTTP Client is reusing connections (its default behaviour) then it will consume the remaining response data which may take a long time and cause this application to become unresponsive");
+                    Log.warn(this, "HTTP response not fully consumed, if HTTP Client is reusing connections (its default behaviour) then it will consume the remaining response data which may take a long time and cause this application to become unresponsive");
                 retainedConnection.close();
-            } catch (RuntimeIOException e) {
+            } catch (RuntimeIOException | java.io.IOException e) {
                 // If we are closing early and the underlying stream is chunk encoded
-                // the close() can result in a IOException.  Unfortunately our TypedInputStream
-                // catches and re-wraps that and we want to suppress it when we are cleaning up
-                // and so we catch the wrapped exception and log it instead
-                log.debug("Failed to close connection", e);
-            } catch (java.io.IOException e) {
-                log.debug("Failed to close connection", e);
+                // the close() can result in a IOException. TypedInputStream catches
+                // and re-wraps that and we want to suppress both forms.
             } finally {
                 retainedConnection = null;
             }

@@ -55,7 +55,7 @@ public class TestRDFLinkFusekiBinary {
             String dsURL = "http://localhost:"+PORT+"/ds" ;
             assertTrue(Fuseki.isFuseki(dsURL));
 
-            RDFLinkRemoteBuilder builder = RDFLinkFuseki.create().destination(dsURL);
+            RDFLinkRemoteBuilder builder = RDFLinkFuseki.newBuilder().destination(dsURL);
 
             try (RDFLinkFuseki link = (RDFLinkFuseki)builder.build()) {
                 // XXX On merge, fix up.

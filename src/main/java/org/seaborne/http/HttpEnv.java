@@ -43,6 +43,16 @@ public class HttpEnv {
     public static HttpClient getDftHttpClient() { return httpClient; }
     public static void setDftHttpClient(HttpClient dftHttpClient) { httpClient = dftHttpClient; }
 
+    /** Return the {@link HttpClient} based on URL and a possible pre-selected {@link HttpClient}. */
+    public static HttpClient getHttpClient(String url, HttpClient specificHttpClient) {
+        if ( specificHttpClient != null )
+             return specificHttpClient;
+        HttpClient requestHttpClient = RegistryHttpClient.get().find(url);
+        if ( requestHttpClient == null )
+            requestHttpClient = getDftHttpClient();
+        return requestHttpClient;
+    }
+
     private static HttpClient httpClient = buildDftHttpClient();
 
     private static HttpClient buildDftHttpClient() {

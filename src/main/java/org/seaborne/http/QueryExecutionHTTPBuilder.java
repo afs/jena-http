@@ -33,7 +33,7 @@ public class QueryExecutionHTTPBuilder {
     private String serviceURL = null;
     private Query query = null;
     private String queryString = null;
-    private HttpClient httpClient = HttpEnv.getDftHttpClient();
+    private HttpClient httpClient = null;
     private Params params = new Params();
     // Accept: Handled as special case because the defaults varies by query type.
     private String acceptHeader;
@@ -43,7 +43,7 @@ public class QueryExecutionHTTPBuilder {
     private TimeUnit timeoutUnit = null;
 
     private int urlLimit = HttpEnv.urlLimit;
-    private SendMode sendMode = SendMode.asGetWithLimit;
+    private SendMode sendMode = QueryExecutionHTTP.defaultSendMode;
     private List<String> defaultGraphURIs = new ArrayList<>();
     private List<String> namedGraphURIs = new ArrayList<>();
 
@@ -96,12 +96,29 @@ public class QueryExecutionHTTPBuilder {
     }
 
     /**
+     * Send the query using HTTP GET and the HTTP URL query string,
+     * unless the request exceeds the {@link #urlGetLimit}
+     * (system default {@link HttpEnv#urlLimit}).
+     * <p>
+     * If it exceeds the limit, switch to using a HTML form and POST request.
+     * By default, queries with a log URL are sent in an HTTP form with POST.
+     * <p>
+     * This is the default setting.
+     *
+     * @see #urlGetLimit
+     * @see #useGet
+     * @see #postQuery
+     */
+    public QueryExecutionHTTPBuilder useGetWithLimit() {
+        this.sendMode = SendMode.asGetWithLimit;
+        return this;
+    }
+
+    /**
      * Send the query using HTTP GET and the HTTP URL query string regardless of length.
      * By default, queries with a log URL are sent in an HTTP form with POST.
-     * @see #urlGetLimit
      */
-
-    public QueryExecutionHTTPBuilder useGet(boolean postForm) {
+    public QueryExecutionHTTPBuilder useGet() {
         this.sendMode = SendMode.asGetAlways;
         return this;
     }
@@ -110,7 +127,7 @@ public class QueryExecutionHTTPBuilder {
      * Send the query request using POST with a Content-Type of as a
      * "application/sparql-query"
      */
-    public QueryExecutionHTTPBuilder postQuery(boolean post) {
+    public QueryExecutionHTTPBuilder postQuery() {
         this.sendMode = SendMode.asPostBody;
         return this;
     }
@@ -183,8 +200,9 @@ public class QueryExecutionHTTPBuilder {
         Objects.requireNonNull(serviceURL, "No service URL");
         if ( queryString == null && query == null )
             throw new QueryException("No query for QueryExecutionHTTP");
+        HttpClient hClient = HttpEnv.getHttpClient(serviceURL, httpClient);
         return new QueryExecutionHTTP(serviceURL, query, queryString, urlLimit,
-                                      httpClient, new HashMap<>(httpHeaders), new Params(params),
+                                      hClient, new HashMap<>(httpHeaders), new Params(params),
                                       copyArray(defaultGraphURIs),
                                       copyArray(namedGraphURIs),
                                       sendMode, acceptHeader, allowCompression,

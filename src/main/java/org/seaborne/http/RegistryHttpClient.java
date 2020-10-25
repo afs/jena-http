@@ -18,32 +18,24 @@
 
 package org.seaborne.http;
 
-import java.util.Map;
-
-import org.apache.jena.atlas.lib.Trie;
-import org.apache.jena.sparql.engine.http.Params;
+import java.net.http.HttpClient;
 
 /**
- * A service registry is a set of actions to take to modify an HTTP request before
- * sending it to a specific endpoint.
- * The key can be a prefix.
+ * A service registry is a collection of {@link HttpClient HttpClients} to use for
+ * specific URLs.
+ * <p>
+ * The lookup ({@link #find}) is by longest prefix. e.g. a registration of
+ * "http://someHost/" or "http://someHost/dataset" will apply to
+ * "http://someHost/dataset/sparql" and "http://someHost/dataset/update" but not to
+ * https://someHost/... which uses "https".
+ * <p>
+ * This is one way of managing authentication for particular remote services -
+ * register a {@link HttpClient} with authentication credentials.
  */
-public class ServiceRegistry {
-    public interface ServiceTuning { void modify(Params params, Map<String, String> httpHeaders) ; }
+public class RegistryHttpClient extends RegistryByServiceURL<HttpClient> {
 
-    public ServiceRegistry() { super(); }
+    private static RegistryHttpClient singleton = new RegistryHttpClient();
+    public static RegistryHttpClient get() { return singleton; }
 
-    Trie<ServiceTuning> trie = new Trie<>();
-
-    public void add(String key, ServiceTuning action) {
-        trie.add(key, action);
-    }
-
-    public ServiceTuning find(String key) {
-        return trie.longestMatch(key);
-    }
-
-    public void remove(String key) {
-        trie.remove(key);
-    }
+    private RegistryHttpClient() { }
 }

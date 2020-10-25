@@ -106,14 +106,13 @@ public class GSP {
     }
 
     private String              serviceEndpoint = null;
-    // Need to keep this separately from contentType because
-    // it affects the choice of writer.
+    // Need to keep this separately from contentType because it affects the choice of writer.
     private RDFFormat           rdfFormat       = null;
-    private HttpClient          httpClient      = HttpEnv.getDftHttpClient();
+    private HttpClient          httpClient      = null;
     private Map<String, String> httpHeaders     = new HashMap<>();
     private boolean             allowCompression = false;
 
-    // One, and only one of these, must eb set at the point the terminating operation is called.
+    // One, and only one of these, must be set at the point the terminating operation is called.
     private boolean             datasetGraph    = false;
     private boolean             defaultGraph    = false;
     private String              graphName       = null;
@@ -138,6 +137,7 @@ public class GSP {
     }
 
     public GSP httpClient(HttpClient httpClient) {
+        Objects.requireNonNull(httpClient, "HttpClient");
         this.httpClient = httpClient;
         return this;
     }
@@ -278,6 +278,19 @@ public class GSP {
             throw exception("Dataset request not specified for dataset operation");
     }
 
+    /**
+     * Choose the HttpClient to use.
+     * The requestURL includes the query string (for graph GSP operations).
+     * If explicit set with {@link #httpClient(HttpClient)}, use that;
+     * other use the system registry and default {@code HttpClient} settings
+     * in {@link HttpEnv}.
+     */
+    private HttpClient requestHttpClient(String serviceURL, String requestURL) {
+        if ( httpClient != null )
+            return httpClient;
+        return HttpEnv.getHttpClient(serviceURL, httpClient);
+    }
+
     // Setup problems.
     private static RuntimeException exception(String msg) {
         return new HttpException(msg);
@@ -292,7 +305,8 @@ public class GSP {
         requestCompression();
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
         Graph graph = GraphFactory.createDefaultGraph();
-        HttpRDF.httpGetToStream(httpClient, url, httpHeaders, StreamRDFLib.graph(graph));
+        HttpClient hc = requestHttpClient(serviceEndpoint, url);
+        HttpRDF.httpGetToStream(hc, url, httpHeaders, StreamRDFLib.graph(graph));
         return graph;
     }
 
@@ -316,7 +330,8 @@ public class GSP {
         validateGraphOperation();
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
         String fileExtContentType = contentTypeFromFilename(file);
-        uploadTriples(httpClient, url, file, fileExtContentType, httpHeaders, Push.POST);
+        HttpClient hc = requestHttpClient(serviceEndpoint, url);
+        uploadTriples(hc, url, file, fileExtContentType, httpHeaders, Push.POST);
     }
 
 //    /**
@@ -339,18 +354,19 @@ public class GSP {
         validateGraphOperation();
         RDFFormat requestFmt = rdfFormat(HttpEnv.dftTriplesFormat);
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
-        HttpRDF.postGraph(httpClient, url, graph, requestFmt, httpHeaders);
+        HttpClient hc = requestHttpClient(serviceEndpoint, url);
+        HttpRDF.postGraph(hc, url, graph, requestFmt, httpHeaders);
     }
 
-    /**
-     * POST a graph.
-     * <p>
-     * Synonym for {@link #POST(Graph)}.
-     */
-    public void postGraph(Graph graph) {
-        // Synonym
-        POST(graph);
-    }
+//    /**
+//     * POST a graph.
+//     * <p>
+//     * Synonym for {@link #POST(Graph)}.
+//     */
+//    public void postGraph(Graph graph) {
+//        // Synonym
+//        POST(graph);
+//    }
 
     /**
      * PUT the contents of a file using the filename extension to determine the
@@ -364,7 +380,8 @@ public class GSP {
         validateGraphOperation();
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
         String fileExtContentType = contentTypeFromFilename(file);
-        uploadTriples(httpClient, url, file, fileExtContentType, httpHeaders, Push.PUT);
+        HttpClient hc = requestHttpClient(serviceEndpoint, url);
+        uploadTriples(hc, url, file, fileExtContentType, httpHeaders, Push.PUT);
     }
 
 //    /**
@@ -389,7 +406,8 @@ public class GSP {
         validateGraphOperation();
         RDFFormat requestFmt = rdfFormat(HttpEnv.dftTriplesFormat);
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
-        HttpRDF.putGraph(httpClient, url, graph, requestFmt, httpHeaders);
+        HttpClient hc = requestHttpClient(serviceEndpoint, url);
+        HttpRDF.putGraph(hc, url, graph, requestFmt, httpHeaders);
     }
 
 //    /**
@@ -406,7 +424,8 @@ public class GSP {
     public void DELETE() {
         validateGraphOperation();
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
-        HttpRDF.httpDeleteGraph(url);
+        HttpClient hc = requestHttpClient(serviceEndpoint, url);
+        HttpRDF.httpDeleteGraph(hc, url);
     }
 
 //    /**
@@ -431,7 +450,8 @@ public class GSP {
         ensureAcceptHeader(WebContent.defaultRDFAcceptHeader);
         requestCompression();
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
-        HttpRDF.httpGetToStream(httpClient, serviceEndpoint, httpHeaders, StreamRDFLib.dataset(dsg));
+        HttpClient hc = requestHttpClient(serviceEndpoint, serviceEndpoint);
+        HttpRDF.httpGetToStream(hc, serviceEndpoint, httpHeaders, StreamRDFLib.dataset(dsg));
         return dsg;
     }
 
@@ -455,7 +475,8 @@ public class GSP {
         internalDataset();
         validateDatasetOperation();
         String fileExtContentType = contentTypeFromFilename(file);
-        uploadQuads(httpClient, serviceEndpoint, file, fileExtContentType, httpHeaders, Push.POST);
+        HttpClient hc = requestHttpClient(serviceEndpoint, serviceEndpoint);
+        uploadQuads(hc, serviceEndpoint, file, fileExtContentType, httpHeaders, Push.POST);
     }
 
     /** POST a dataset */
@@ -463,7 +484,8 @@ public class GSP {
         internalDataset();
         validateDatasetOperation();
         RDFFormat requestFmt = rdfFormat(HttpEnv.dftQuadsFormat);
-        HttpRDF.httpPostDataset(httpClient, serviceEndpoint, dataset, requestFmt);
+        HttpClient hc = requestHttpClient(serviceEndpoint, serviceEndpoint);
+        HttpRDF.httpPostDataset(hc, serviceEndpoint, dataset, requestFmt);
     }
 
     /**
@@ -476,7 +498,8 @@ public class GSP {
         internalDataset();
         validateDatasetOperation();
         String fileExtContentType = contentTypeFromFilename(file);
-        uploadQuads(httpClient, serviceEndpoint, file, fileExtContentType, httpHeaders, Push.PUT);
+        HttpClient hc = requestHttpClient(serviceEndpoint, serviceEndpoint);
+        uploadQuads(hc, serviceEndpoint, file, fileExtContentType, httpHeaders, Push.PUT);
     }
 
     /** PUT a dataset */
@@ -484,7 +507,8 @@ public class GSP {
         internalDataset();
         validateDatasetOperation();
         RDFFormat requestFmt = rdfFormat(HttpEnv.dftQuadsFormat);
-        HttpRDF.httpPutDataset(httpClient, serviceEndpoint, dataset, requestFmt);
+        HttpClient hc = requestHttpClient(serviceEndpoint, serviceEndpoint);
+        HttpRDF.httpPutDataset(hc, serviceEndpoint, dataset, requestFmt);
     }
 
     // SPARQL "CLEAR ALL"
@@ -496,7 +520,8 @@ public class GSP {
 //    }
 
     /** Send a file of triples to a URL. */
-    private static void uploadTriples(HttpClient httpClient, String gspUrl, String file, String fileExtContentType, Map<String, String> headers, Push mode) {
+    private static void uploadTriples(HttpClient httpClient, String gspUrl, String file, String fileExtContentType,
+                                      Map<String, String> headers, Push mode) {
         Lang lang = RDFLanguages.contentTypeToLang(fileExtContentType);
         if ( lang == null )
             throw new ARQException("Not a recognized as an RDF format: "+fileExtContentType);

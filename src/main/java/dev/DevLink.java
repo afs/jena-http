@@ -18,10 +18,6 @@
 
 package dev;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
-import org.apache.jena.atlas.lib.IRILib;
 import org.apache.jena.atlas.web.WebLib;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.fuseki.system.FusekiLogging;
@@ -30,7 +26,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.riot.RIOT;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -46,21 +41,6 @@ public class DevLink {
         }
 
     public static void main(String...args) {
-        //QE.local().query("ASK{}").dataset(DatasetGraphFactory.create()).ask();
-
-        Lang[] langs = { Lang.RDFTHRIFT, Lang.TTL, Lang.NQ };
-        for ( Lang lang : langs ) {
-            System.out.println(lang);
-            System.out.println("  "+RDFLanguages.isTriples(lang)+" " +RDFLanguages.isQuads(lang));
-        }
-        System.exit(0);
-
-
-        mainDev();
-        //mainEncode();
-    }
-
-    public static void mainDev(String...args) {
         FusekiLogging.setLogging();
 
         int port = WebLib.choosePort();
@@ -88,31 +68,5 @@ public class DevLink {
                 QueryExecUtils.executeQuery(qExec);
             }
         } finally { server.stop(); }
-    }
-
-    public static void mainEncode() {
-        String[] x = {
-            "http://example/graph",
-            "http://example/graph/-àá-/foo#bar",
-            "http://example/graph/::/foo#bar/baz",
-            "http://example/graph?name=value#zzzz"
-        } ;
-        for ( String s : x ) {
-            String e = URLEncoder.encode(s, StandardCharsets.UTF_8);
-            System.out.printf("%s  ==>  %s\n", s, e);
-            String e2 = IRILib.encodeUriQueryFrag(s);
-            System.out.printf("%s  ==>  %s\n", s, e2);
-//
-//            URI uri = null;
-//            try {
-//                uri = new URI(s);
-//            } catch (URISyntaxException e1) {
-//                e1.printStackTrace();
-//            }
-//            System.out.println(uri);
-//            System.out.println(uri.toASCIIString());
-        }
-
-
     }
 }

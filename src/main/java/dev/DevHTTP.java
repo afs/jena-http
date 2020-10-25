@@ -21,7 +21,6 @@ package dev;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.jena.atlas.lib.Trie;
 import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
@@ -41,23 +40,6 @@ import org.seaborne.http.QueryExecutionHTTP;
 
 public class DevHTTP {
     static { LogCtl.setLog4j2(); }
-
-    public static void mainDev(String...args) {
-        Trie<String> trie = new Trie<>();
-        trie.add("ABC", "ABC");
-        trie.add("ABCD", "ABCD");
-        trie.add("ABCX", "ABCX");
-        String x = trie.longestMatch("AB");
-
-        System.out.println(trie.partialSearch("AB"));
-        System.out.println(trie.prefixSearch("ABC"));
-
-        System.out.println(trie.longestMatch("AB"));
-        System.out.println(trie.shortestMatch("AB"));
-
-        System.out.println(x);
-
-    }
 
     public static void main(String...args) {
         FusekiServer server = FusekiServer.create()
@@ -118,7 +100,7 @@ public class DevHTTP {
         };
 
         for ( var qs : x ) {
-            try ( QueryExecution qexec = QueryExecutionHTTP.create()
+            try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
                     .service("http://localhost:3030/ds/query")
                     .queryString(qs)
                     .build()) {

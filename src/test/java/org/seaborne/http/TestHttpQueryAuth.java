@@ -75,7 +75,7 @@ public class TestHttpQueryAuth {
 
     @Test public void query_no_auth() {
         FusekiTest.expect401(()->{
-            try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
+            try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
                     .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
                 qExec.execSelect();
             }
@@ -109,7 +109,7 @@ public class TestHttpQueryAuth {
             .connectTimeout(Duration.ofSeconds(10))
             .authenticator(authenticator)
             .build();
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
             .httpClient(httpClientAuth)
             .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             try {
@@ -133,7 +133,7 @@ public class TestHttpQueryAuth {
             .authenticator(authenticator)
             .build();
 
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
                 .httpClient(httpClientAuth)
                 .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             qExec.execSelect();
@@ -143,7 +143,7 @@ public class TestHttpQueryAuth {
     @Test public void query_auth_by_header() {
         // Manual setting, good.
         String x = HttpLib.basicAuth("u", "p");
-        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
+        try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
                 .httpHeader(HttpNames.hAuthorization, x)
                 .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             qExec.execSelect();
@@ -154,7 +154,7 @@ public class TestHttpQueryAuth {
         // Manual setting, bad.
         FusekiTest.expect401(()->{
             String x = HttpLib.basicAuth("u", "wrong");
-            try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.create()
+            try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
                 .httpHeader(HttpNames.hAuthorization, x)
                 .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
                 qExec.execSelect();
