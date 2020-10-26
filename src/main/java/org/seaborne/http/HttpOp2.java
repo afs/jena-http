@@ -233,12 +233,12 @@ public class HttpOp2 {
     }
 
 
-    /** OPTIONS. Returns the HTTP reponse "Allow" field string. */
+    /** OPTIONS. Returns the HTTP response "Allow" field string. */
     public static String httpOptions(String url) {
         return httpOptions(HttpEnv.getDftHttpClient(), url);
     }
 
-    /** OPTIONS. Returns the HTTP reponse "Allow" field string. */
+    /** OPTIONS. Returns the HTTP response "Allow" field string. */
     public static String httpOptions(HttpClient httpClient, String url) {
         // Need to access the response headers
         HttpRequest.Builder builder =
@@ -250,16 +250,16 @@ public class HttpOp2 {
         return allowValue;
     }
 
-    /**
-     * General HTTP request, String only version. Processes the HTTP status response.
-     */
-    public static String httpRequest(HttpClient httpClient, String method, String url) {
-        HttpRequest.Builder builder =
-            HttpRequest.newBuilder().uri(toRequestURI(url)).method(method, BodyPublishers.noBody());
-        HttpRequest request = builder.build();
-        HttpResponse<InputStream> response = execute(httpClient, request);
-        return handleResponseRtnString(response);
-    }
+//    /**
+//     * General HTTP request, String only version. Processes the HTTP status response.
+//     */
+//    public static String httpRequest(HttpClient httpClient, String method, String url) {
+//        HttpRequest.Builder builder =
+//            HttpRequest.newBuilder().uri(toRequestURI(url)).method(method, BodyPublishers.noBody());
+//        HttpRequest request = builder.build();
+//        HttpResponse<InputStream> response = execute(httpClient, request);
+//        return handleResponseRtnString(response);
+//    }
 
     /**
      * Content-Type, without charset.

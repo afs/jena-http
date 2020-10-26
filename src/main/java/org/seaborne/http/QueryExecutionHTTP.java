@@ -444,7 +444,7 @@ public class QueryExecutionHTTP implements QueryExecution {
         if ( query != null )
             return query;
         if ( queryString != null ) {
-            // Object not created with a Query object, may be because there is forgein
+            // Object not created with a Query object, may be because there is foreign
             // syntax in the query or may be because the query string was available and the app
             // didn't want the overhead of parsing it every time.
             // Try to parse it else return null;
@@ -594,9 +594,9 @@ public class QueryExecutionHTTP implements QueryExecution {
         }
         if ( allowCompression )
             acceptEncoding(builder);
+
         HttpRequest request = builder.build();
-        HttpResponse<InputStream> response = execute(httpClient, request);
-        return response;
+        return executeQuery(request);
     }
 
     // Use SPARQL query body and MIME type.
@@ -615,9 +615,15 @@ public class QueryExecutionHTTP implements QueryExecution {
         contentTypeHeader(builder, WebContent.contentTypeSPARQLQuery);
         acceptHeader(builder, acceptHeader);
         HttpRequest request = builder.POST(BodyPublishers.ofString(queryString)).build();
-        HttpResponse<InputStream> response = execute(httpClient, request);
-        return response;
+        return executeQuery(request);
     }
+
+    private HttpResponse<InputStream> executeQuery(HttpRequest request) {
+        logQuery(queryString, request);
+        return execute(httpClient, request);
+    }
+
+    private static void logQuery(String queryString, HttpRequest request) {}
 
     /**
      * Cancel query evaluation

@@ -389,6 +389,9 @@ public class HttpLib {
 
     /** Request */
     private static void logRequest(HttpRequest httpRequest) {
+        // Uses the SystemLogger which defaults to JUL.
+        // Add org.apache.jena.logging:log4j-jpl
+        // (java11 : 11.0.9, if using log4j-jpl, logging prints the request as {0} but response OK)
 //        httpRequest.uri();
 //        httpRequest.method();
 //        httpRequest.headers();

@@ -48,11 +48,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DevAuthHTTP {
-    static { LogCtl.setLog4j2(); }
+    static {
+        LogCtl.setLog4j2();
+    }
 
     public static void main(String...args) throws IOException, InterruptedException {
-//        System.setProperty("jdk.internal.httpclient.debug", "true");
-//        System.setProperty("jdk.httpclient.HttpClient.log", "requests");
+        // Use dependency  "org.apache.logging:log4j-jpl"
+
 
 //        -Djdk.httpclient.HttpClient.log=
 //            errors,requests,headers,

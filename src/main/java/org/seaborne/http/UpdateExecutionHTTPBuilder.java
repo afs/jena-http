@@ -51,15 +51,16 @@ public class UpdateExecutionHTTPBuilder {
         return this;
     }
 
+    /** Set the update - this also sets the update string to agree with the setting. */
     public UpdateExecutionHTTPBuilder update(UpdateRequest updateRequest) {
-        this.updateRequest = updateRequest;
+        this.updateRequest = Objects.requireNonNull(updateRequest);
         this.updateString = updateRequest.toString();
         return this;
     }
 
     public UpdateExecutionHTTPBuilder updateString(String updateRequestString) {
         this.updateRequest = null;
-        this.updateString = updateRequestString;
+        this.updateString = Objects.requireNonNull(updateRequestString);
         return this;
     }
 

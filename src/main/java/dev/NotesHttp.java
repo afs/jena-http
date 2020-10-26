@@ -18,15 +18,10 @@
 
 package dev;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-
-import org.seaborne.http.HttpEnv;
-
 public class NotesHttp {
 
     // ToDo
+    // travis-ci - does not work with Jena snapshots
 
     // Documentation
     //   updates for RDFConnction
@@ -37,73 +32,25 @@ public class NotesHttp {
     // * SPARQL : GSP | QueryExecutionHTTP | UpdateExecutionHTTP
     // * HttpRDF
     // * HttpOp2
+    // Client lib e.g. user+password setup
 
     // Check for javadoc
     // Examples!
     // Tests : More auth:
-    // TestAuthRemote - check early. Two variants for each test, with registry and explicit .httpClient(hc)
-    //   GSP delete
 
-    // Do we need ServiceTuning? Minor feature. Exact match.
-    //   Same Mechanism for finding as RegistryHttpClient
-    //   Change tests - not auth - where?
-    // SERVICE: Per-endpoint HttpClient: Global registry.
-    //   Tests needed
-    // ** HttpEnv.getDftHttpClient() ==> HttpEnv.getHttpClient(url);
-    //
-    // @@ RegistryHttpClient Bug - dataset with a shorter name.
-    // Exact match URL, or per server
-
-    // ** HttpEnv.getHttpClient(url, httpClient);
-    //
-    // [x] GSP : GSP.service sets the URL.
-    // [x] Query : QueryExecutionHTTPBuilder.service
-    // [x] Update : UpdateExecutionHTTPBuilder.service (ditto)
     // Tests of HttpEnv.getHttpClient
 
 
-    static class HttpEnv2 {
-
-        //HttpRequest httpRequest
-
-        public static HttpClient getHttpClient(HttpRequest httpRequest) {
-            URI uri = httpRequest.uri();
-
-            // lookup by scheme, host+port, path.
-
-            // System default.
-            return HttpEnv.getDftHttpClient();
-        }
-
-        private static String server(URI uri) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(uri.getScheme());
-            sb.append("://");
-            sb.append(uri.getHost());
-            // authority   = [ userinfo "@" ] host [ ":" port ]
-            if ( uri.getPort() > 0 ) {
-                sb.append(':');
-                sb.append(Integer.toString(uri.getPort()));
-            }
-            sb.append("/");
-            return sb.toString();
-        }
-
-
-    }
-
-
-    //   Add a URL->HttpClient mapping.
-    // [ ]    UpdateExecutionHTTP - modifyRequest, altHttpClient mapping
-    //        QueryExecutionHTTP- modifyRequest, altHttpClient mapping
-    //        TestAuthRemote.auth_link_local_context_1
 
     // [ ] RequestLogging
     //     Query, Update, GSP. -> all through HttpLib.execute!
     //     Higher level:
+    //          GSP: ??
+    //            GSP.(GET,POST,PUT,DELETE), + dataset versions.
     //          QueryExecutionHTTP.executeQueryPush, executeQueryGetForm
+    //            --> QueryExecutionHTTP.logQuery
     //          UpdateExecutionHTTP.executeUpdate
-    //          GSP.(GET,POST,PUT,DELETE), + dataset versions.
+    //            --> UpdateExecutionHTTP.logUpdate
 
     // [ ] Integration
     //     ARQ: Service.java
@@ -111,19 +58,11 @@ public class NotesHttp {
     // QExec->QueryExec
     // [ ] Getting builders for UpdateExecution, QueryExecution; local and remote.
     //       Factory,library for getting one + QueryExecution : SparqlLib?
-    // Service Registry ->
-    //   Per dest HttpClient.
-    //   Tuning
-    // ServiceTuning returns an HttpClient? Ugly!
 
-    // Logging - log every request! Sparql request Log.
-    //
-    // [] .service vs .destination (check)
-    // [] RDFLinkFactory == RDFLinkRemoteBuilder.create().destination(destination)
+    // [ ] RDFLinkFactory == RDFLinkRemoteBuilder.create().destination(destination)
     // Better builder access (RDFLinkFactory? RDFLink.createRemote()?)
 
 
-    // Check for javadoc
     // ----------------------------
 
     // package.html or web page.

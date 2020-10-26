@@ -95,11 +95,11 @@ public class TestQueryExecutionCleanServer {
                 ,"}");
 
         try ( QueryExecutionHTTP qExec = QueryExecutionHTTP.newBuilder()
-            .service(dsURL)
-            .queryString(queryString)
-            // Short!
-            .timeout(10, TimeUnit.MILLISECONDS)
-            .build() ) {
+                                            .service(dsURL)
+                                            .queryString(queryString)
+                                            // Short!
+                                            .timeout(10, TimeUnit.MILLISECONDS)
+                                            .build() ) {
             long x = Iter.count(qExec.execSelect());
             assertEquals(2, x);
         }

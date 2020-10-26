@@ -55,7 +55,7 @@ public class QueryExecutionHTTPBuilder {
 
     /** Set the query - this also sets the query string to agree with the query argument. */
     public QueryExecutionHTTPBuilder query(Query query) {
-        this.query = query;
+        this.query = Objects.requireNonNull(query);
         this.queryString = query.toString();
         return this;
     }

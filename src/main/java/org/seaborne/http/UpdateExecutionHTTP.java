@@ -115,7 +115,9 @@ public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ Upd
     }
 
     private void executePostBody(Params thisParams) {
-        String str = (updateString != null) ? updateString : update.toString();
+        //String str = (updateString != null) ? updateString : update.toString();
+        // Can't be null.
+        String str = updateString;
         String requestURL = service;
         if ( thisParams.count() > 0 ) {
             String qs = thisParams.httpString();
@@ -136,7 +138,10 @@ public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ Upd
         HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, false, -1L, null);
         builder = contentTypeHeader(builder, contentType);
         HttpRequest request = builder.POST(body).build();
+        logUpdate(updateString, request);
         HttpResponse<InputStream> response = HttpLib.execute(httpClient, request);
         return handleResponseRtnString(response);
     }
+
+    private static void logUpdate(String updateString, HttpRequest request) {}
 }
