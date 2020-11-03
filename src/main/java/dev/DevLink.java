@@ -37,59 +37,14 @@ import org.seaborne.link.RDFLinkFactory;
 public class DevLink {
     static {
         //System.setProperty("jdk.internal.httpclient.debug", "true");
-        System.setProperty("jdk.httpclient.HttpClient.log", "requests,headers");
+        //System.setProperty("jdk.httpclient.HttpClient.log", "requests,headers");
 
         RIOT.getContext().set(RIOT.symTurtleDirectiveStyle, "sparql");
         FusekiLogging.setLogging();
         }
 
-//    Oct 26, 2020 3:50:52 PM jdk.internal.net.http.Http1Request headers
-//    INFO: REQUEST: http://localhost:34809/ds POST
-//    Oct 26, 2020 3:50:52 PM jdk.internal.net.http.Http1Request logHeaders
-//    INFO: HEADERS: REQUEST HEADERS:
-//    POST /ds HTTP/1.1
-//    Connection: Upgrade, HTTP2-Settings
-//    Content-Length: 30
-//    Host: localhost:34809
-//    HTTP2-Settings: AAEAAEAAAAIAAAABAAMAAABkAAQBAAAAAAUAAEAA
-//    Upgrade: h2c
-//    User-Agent: Java-http-client/11.0.9
-//    Content-Type: application/sparql-update
 
-//    Oct 26, 2020 3:53:37 PM jdk.internal.net.http.Http1Response lambda$readHeadersAsync$0
-//    INFO: HEADERS: RESPONSE HEADERS:
-//        date: Mon, 26 Oct 2020 15:53:37 GMT
-//        fuseki-request-id: 1
-//        server: Apache Jena Fuseki (3.17.0-SNAPSHOT)
-//
-//    Oct 26, 2020 3:53:37 PM jdk.internal.net.http.Exchange lambda$wrapForLog$11
-//    INFO: RESPONSE: (POST http://localhost:38267/ds) 204 HTTP_1_1 Local port:  37310
-//    Oct 26, 2020 3:53:37 PM jdk.internal.net.http.Http1Request headers
-//    INFO: REQUEST: http://localhost:38267/ds?default GET
-//    Oct 26, 2020 3:53:37 PM jdk.internal.net.http.Http1Request logHeaders
-//    INFO: HEADERS: REQUEST HEADERS:
-//    GET /ds?default HTTP/1.1
-//    Connection: Upgrade, HTTP2-Settings
-//    Content-Length: 0
-//    Host: localhost:38267
-//    HTTP2-Settings: AAEAAEAAAAIAAAABAAMAAABkAAQBAAAAAAUAAEAA
-//    Upgrade: h2c
-//    User-Agent: Java-http-client/11.0.9
-//    Accept: text/turtle,application/n-triples;q=0.9,application/ld+json;q=0.8,application/rdf+xml;q=0.7,*/*;q=0.3
-
-
-// vs
-
-//    15:51:50 INFO  HttpClient :: REQUEST: http://localhost:41567/ds POST
-//    15:51:50 INFO  HttpClient :: HEADERS: REQUEST HEADERS:
-//    {0}
-
-//    15:51:50 INFO  HttpClient :: HEADERS: RESPONSE HEADERS:
-//        date: Mon, 26 Oct 2020 15:51:50 GMT
-//        fuseki-request-id: 1
-//        server: Apache Jena Fuseki (3.17.0-SNAPSHOT)
-
-// BUG? JDK11 - it print using {0} but that is specific to JUL
+// Problem JDK11 - it print using {0} but that is specific to JUL
 
 
     public static void main(String...args) {

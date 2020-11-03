@@ -20,15 +20,10 @@ package dev;
 
 public class NotesHttp {
 
-    // ToDo
-    // travis-ci - does not work with Jena snapshots
-
-
-
     // Try log4j-jul (JUL adapter)
 
     // Documentation
-    //   updates for RDFConnction
+    //   updates for RDFConnection
     //   Details view
     // Jena networking markdown
     // * RDFConnection
@@ -75,7 +70,6 @@ public class NotesHttp {
 
     // [3]
     // Merge WebContent2 into WebContent (now?)
-
     // [4]
     // QueryTransformOps.transform - see builders and XXX
 

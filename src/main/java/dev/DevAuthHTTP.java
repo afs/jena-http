@@ -54,8 +54,6 @@ public class DevAuthHTTP {
 
     public static void main(String...args) throws IOException, InterruptedException {
         // Use dependency  "org.apache.logging:log4j-jpl"
-
-
 //        -Djdk.httpclient.HttpClient.log=
 //            errors,requests,headers,
 //            frames[:control:data:window:all],content,ssl,trace,channel
