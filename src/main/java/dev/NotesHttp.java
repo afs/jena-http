@@ -23,6 +23,10 @@ public class NotesHttp {
     // ToDo
     // travis-ci - does not work with Jena snapshots
 
+
+
+    // Try log4j-jul (JUL adapter)
+
     // Documentation
     //   updates for RDFConnction
     //   Details view
