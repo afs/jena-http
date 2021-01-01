@@ -47,6 +47,8 @@ public class QueryExecutionHTTPBuilder {
     private List<String> defaultGraphURIs = new ArrayList<>();
     private List<String> namedGraphURIs = new ArrayList<>();
 
+    public QueryExecutionHTTPBuilder() {}
+
     /** Set the URL of the query endpoint. */
     public QueryExecutionHTTPBuilder service(String serviceURL) {
         this.serviceURL = Objects.requireNonNull(serviceURL);

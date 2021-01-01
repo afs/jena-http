@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.link;
+package org.seaborne.wip;
 
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +40,41 @@ import org.apache.jena.sparql.util.Context;
  */
 public interface QExec extends AutoCloseable
 {
+    // Fundamental building blocks.
+    /*
+     * Basics: builder.
+     *
+     *      QueryExecutionLocalBuilder
+     *      QueryExecutionHTTPBuilder
+     *   Setup part
+     *     setInitialBinding -> Parameterized by syntax transform
+     *     setTimeout
+     *     + query
+     *
+     *     + target: [L]dataset or [R] URL
+     *     + lots of HTTP features.
+     *
+     * Result part:
+     *   ResultSet
+     *     Iterator<Binding>
+     *     vars: Project bindings
+     *   Stream<Triple>
+     *   Stream<Quad>
+     *   Stream<JsonObject
+     *   Boolean
+     *
+     *   abort
+     *
+     * Setup:
+     *   getQuery
+     *   getDataset
+     *   getContext
+     *
+     *   isOpen
+     *   isclosed
+     */
+
+
     //public static QueryExecBuilder create() { return QueryExecBuilder.create(); }
 
     /** Set the initial association of variables and values.
@@ -164,7 +199,7 @@ public interface QExec extends AutoCloseable
     /** Execute a JSON query and return a json array */
     public JsonArray execJson() ;
 
-    /** Execute a JSON query and return an interator */
+    /** Execute a JSON query and return an iterator */
     public Iterator<JsonObject> execJsonItems() ;
 
     /** Stop in mid execution.
@@ -230,11 +265,11 @@ public interface QExec extends AutoCloseable
     /** Return the second timeout (overall query execution after first result), in milliseconds: negative if unset */
     public long getTimeout2() ;
 
-    //  /** Say whether this QueryExecution is useable or not.
+//  /** Say whether this QueryExecution is usable or not.
 //   * An active execution is one that has not been closed, ended or aborted yet.
-//     * May not be supported or meaningful for all QueryExecution implementations.
-//     * aborted queries may not immediate show as no longer active.
-//     * This should not be called in parallel with other QueryExecution methods.
-//     */
-//    public boolean isActive() ;
+//   * May not be supported or meaningful for all QueryExecution implementations.
+//   * aborted queries may not immediate show as no longer active.
+//   * This should not be called in parallel with other QueryExecution methods.
+//   */
+//   public boolean isActive() ;
 }

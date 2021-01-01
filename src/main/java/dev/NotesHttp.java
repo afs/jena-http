@@ -20,7 +20,7 @@ package dev;
 
 public class NotesHttp {
 
-    // Try log4j-jul (JUL adapter)
+    // QExec
 
     // Documentation
     //   updates for RDFConnection
@@ -39,6 +39,10 @@ public class NotesHttp {
 
     // Tests of HttpEnv.getHttpClient
 
+    // QExec -> QExecAdapter.
+    // Refactor the different parts.
+    //  Iterator returns?
+    //    default methods.
 
 
     // [ ] RequestLogging

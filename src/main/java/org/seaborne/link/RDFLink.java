@@ -165,6 +165,28 @@ public interface RDFLink extends
             } );
     }
 
+    /** Execute a CONSTRUCT query and return as a DatasetGraph */
+    //@Override
+    public default DatasetGraph queryConstructDataset(Query query) {
+        return
+            Txn.calculateRead(this, ()->{
+                try ( QueryExecution qExec = query(query) ) {
+                    return qExec.execConstructDataset().asDatasetGraph();
+                }
+            } );
+    }
+
+    /** Execute a CONSTRUCT query and return as a Graph */
+    //@Override
+    public default DatasetGraph queryConstructDataset(String queryString) {
+        return
+            Txn.calculateRead(this, ()->{
+                try ( QueryExecution qExec = query(queryString) ) {
+                    return qExec.execConstructDataset().asDatasetGraph();
+                }
+            } );
+    }
+
     /** Execute a CONSTRUCT query and return as a Graph */
     @Override
     public default Graph queryConstruct(Query query) {
@@ -175,6 +197,8 @@ public interface RDFLink extends
                 }
             } );
     }
+
+
 
     /** Execute a DESCRIBE query and return as a Graph */
     @Override

@@ -18,8 +18,45 @@
 
 package org.seaborne.improvements;
 
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.Syntax;
+import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.util.Context;
+
 // Commonality between QueryExecutionHTTP and QueryExecutionLocal
-public class AbstractQueryExecutionBuilder {
+// Is it worth it?
+
+public abstract class AbstractQueryExecutionBuilder<B extends AbstractQueryExecutionBuilder<B>> {
+
+    protected Query        query              = null;
+    protected Context      context            = null;
+    protected Binding      initialBinding     = null;
+
+    public AbstractQueryExecutionBuilder<B> query(Query query) {
+        this.query = query;
+        return this;
+    }
+
+    public AbstractQueryExecutionBuilder<B> query(String queryString) {
+        query(queryString, Syntax.syntaxARQ);
+        return this;
+    }
+
+    public AbstractQueryExecutionBuilder<B> query(String queryString, Syntax syntax) {
+        this.query = QueryFactory.create(queryString, syntax);
+        return this;
+    }
+
+    public AbstractQueryExecutionBuilder<B> context(Context context) {
+        this.context = context;
+        return this;
+    }
+
+    public AbstractQueryExecutionBuilder<B> initialBinding(Binding binding) {
+        this.initialBinding = binding;
+        return this;
+    }
 
 }
 
