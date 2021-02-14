@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.seaborne.http.TS_JenaHttp;
 import org.seaborne.integration.TS_RDFLinkIntegration;
-import org.seaborne.link.*;
+import org.seaborne.link.TS_RDFLink;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses( {
