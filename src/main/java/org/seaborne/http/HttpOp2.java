@@ -61,11 +61,7 @@ public class HttpOp2 {
         return handleResponseRtnString(response);
     }
 
-    static HttpRequest newGetRequest(HttpClient httpClient, String url, Consumer<HttpRequest.Builder> modifier) {
-//        if ( acceptHeader == null )
-//            acceptHeader = "*/*";
-//        if ( acceptHeader != null )
-//            builder.header(HttpNames.hAccept, acceptHeader);
+    /*package*/ static HttpRequest newGetRequest(HttpClient httpClient, String url, Consumer<HttpRequest.Builder> modifier) {
         HttpRequest.Builder builder = HttpRequest.newBuilder().uri(toRequestURI(url)).GET();
         if ( modifier != null )
             modifier.accept(builder);

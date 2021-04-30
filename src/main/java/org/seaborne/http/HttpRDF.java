@@ -193,7 +193,7 @@ public class HttpRDF {
         pushBody(httpClient, url, Push.PUT, bodyPublisher, format, httpHeaders);
     }
 
-    // Shared betyween Push* and put*
+    // Shared between push* and put*
     private static void pushBody(HttpClient httpClient, String url, Push style, BodyPublisher bodyPublisher,
                                  RDFFormat format, Map<String, String> httpHeaders) {
         String contentType = format.getLang().getHeaderString();

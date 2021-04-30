@@ -20,7 +20,15 @@ package dev;
 
 public class NotesHttp {
 
+    // Test with https and unsigned certificate.
+
     // QExec
+    // Add alternative "load" and "put" via SPARQL Update. JENA-2093
+
+    // Consider having an "immediately consuming" option for incoming result sets to
+    // be safer for connection management.
+    // Twin with "buffer, send with Content-length" option in Fuseki?
+    //   Still an issue if client does not read the data.
 
     // Documentation
     //   updates for RDFConnection
@@ -43,7 +51,6 @@ public class NotesHttp {
     // Refactor the different parts.
     //  Iterator returns?
     //    default methods.
-
 
     // [ ] RequestLogging
     //     Query, Update, GSP. -> all through HttpLib.execute!

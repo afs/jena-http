@@ -42,6 +42,7 @@ public class DevHTTP {
     static { LogCtl.setLog4j2(); }
 
     public static void main(String...args) {
+
         FusekiServer server = FusekiServer.create()
             //.parseConfigFile("/home/afs/tmp/config.ttl")
             .add("/ds", DatasetGraphFactory.createTxnMem())
