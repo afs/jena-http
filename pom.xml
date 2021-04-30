@@ -35,7 +35,7 @@
   <name>Http code (${project.artifactId})</name>
   
   <properties>
-    <ver.jena>4.0.0-SNAPSHOT</ver.jena>
+    <ver.jena>4.0.0</ver.jena>
   </properties>
 
   <dependencies>
