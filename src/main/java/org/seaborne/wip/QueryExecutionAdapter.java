@@ -19,18 +19,15 @@
 package org.seaborne.wip;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
-import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
@@ -40,13 +37,17 @@ import org.apache.jena.sparql.util.Context;
  *
  * @see QueryExecution
  */
-public abstract class QueryExecutionAdapter implements QueryExecution
+public class QueryExecutionAdapter implements QueryExecution
 {
     private final QExec qExec;
+    private final Dataset dataset;
     //public static QueryExecBuilder create() { return QueryExecBuilder.create(); }
+    private final List<String> varNames;
 
     public QueryExecutionAdapter(QExec qExec) {
         this.qExec = qExec;
+        this.dataset = DatasetFactory.wrap(qExec.getDataset());
+        this.varNames = qExec.getQuery().getResultVars();
     }
 
     /** Set the initial association of variables and values.
@@ -54,7 +55,7 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      * @param binding
      */
     @Override
-    public abstract void setInitialBinding(Binding binding) ;
+    public void setInitialBinding(Binding binding) {}
 
     /**
      * The dataset against which the query will execute.
@@ -62,7 +63,7 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      * has a dataset description.
      */
     @Override
-    public abstract Dataset getDataset() ;
+    public Dataset getDataset() { return dataset; }
 
     /** The properties associated with a query execution -
      *  implementation specific parameters  This includes
@@ -71,13 +72,13 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      *  May be null (this implementation does not provide any configuration).
      */
     @Override
-    public abstract Context getContext() ;
+    public Context getContext() { return qExec.getContext(); }
 
     /** The query associated with a query execution.
      *  May be null (QueryExecution may have been created by other means)
      */
     @Override
-    public abstract Query getQuery() ;
+    public Query getQuery() { return qExec.getQuery(); }
 
     /**
      *  Execute a SELECT query
@@ -91,16 +92,22 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      *  </p>
      *  */
     @Override
-    public abstract ResultSet execSelect();
+    public ResultSet execSelect() {
+        return new ResultSetAdapter(qExec.select(), dataset.getDefaultModel());
+    }
 
     /** Execute a CONSTRUCT query */
     @Override
-    public abstract Model execConstruct();
+    public Model execConstruct() { return ModelFactory.createModelForGraph(qExec.construct()); }
 
     /** Execute a CONSTRUCT query, putting the statements into a graph.
      *  @return Graph The model argument for cascaded code.
      */
-    public abstract Graph execConstruct(Graph graph);
+    @Override
+    public Model execConstruct(Model model) {
+        qExec.construct(model.getGraph());
+        return model;
+    }
 
     /**
      * Execute a CONSTRUCT query, returning the results as an iterator of {@link Triple}.
@@ -120,7 +127,7 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      * by applying the CONSTRUCT template of the query to the bindings in the WHERE clause.
      */
     @Override
-    public abstract Iterator<Triple> execConstructTriples();
+    public Iterator<Triple> execConstructTriples() { return qExec.constructTriples(); }
 
     /**
      * Execute a CONSTRUCT query, returning the results as an iterator of {@link Quad}.
@@ -135,27 +142,37 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      * See {@link #execConstructTriples} for usage and features.
      */
     @Override
-    public abstract Iterator<Quad> execConstructQuads();
+    public Iterator<Quad> execConstructQuads() { return qExec.constructQuads(); }
 
     /** Execute a CONSTRUCT query, putting the statements into 'dataset'.
      *  This maybe an extended syntax query (if supported).
      */
     @Override
-    public abstract Dataset execConstructDataset();
+    public Dataset execConstructDataset() {
+        return DatasetFactory.wrap(qExec.constructDataset());
+    }
 
     /** Execute a CONSTRUCT query, putting the statements into 'dataset'.
      *  This may be an extended syntax query (if supported).
      */
-    public abstract DatasetGraph execConstructDataset(DatasetGraph dataset);
+    @Override
+    public Dataset execConstructDataset(Dataset dataset) {
+        qExec.constructDataset(dataset.asDatasetGraph());
+        return dataset;
+    }
 
     /** Execute a DESCRIBE query */
     @Override
-    public abstract Model execDescribe();
+    public Model execDescribe() { return ModelFactory.createModelForGraph(qExec.describe()); }
 
     /** Execute a DESCRIBE query, putting the statements into a graph.
      *  @return Graph The model argument for cascaded code.
      */
-    public abstract Graph execDescribe(Graph graph);
+    @Override
+    public Model execDescribe(Model model) {
+        qExec.describe(model.getGraph());
+        return model;
+    }
 
     /**
      * Execute a DESCRIBE query, returning the results as an iterator of {@link Triple}.
@@ -174,19 +191,19 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      * @return An iterator of Triple objects (possibly containing duplicates) generated as the output of the DESCRIBE query.
      */
     @Override
-    public abstract Iterator<Triple> execDescribeTriples();
+    public Iterator<Triple> execDescribeTriples() { return qExec.execDescribeTriples(); }
 
     /** Execute an ASK query */
     @Override
-    public abstract boolean execAsk();
+    public boolean execAsk() { return qExec.execAsk(); }
 
     /** Execute a JSON query and return a json array */
     @Override
-    public abstract JsonArray execJson() ;
+    public JsonArray execJson() { return qExec.execJson(); }
 
     /** Execute a JSON query and return an iterator */
     @Override
-    public abstract Iterator<JsonObject> execJsonItems() ;
+    public Iterator<JsonObject> execJsonItems() { return qExec.execJsonItems(); }
 
     /** Stop in mid execution.
      *  This method can be called in parallel with other methods on the
@@ -198,7 +215,7 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      */
 
     @Override
-    public abstract void abort();
+    public void abort() { qExec.abort(); }
 
     /** Close the query execution and stop query evaluation as soon as convenient.
      *  QueryExecution objects, and a {@link ResultSet} from {@link #execSelect},
@@ -212,16 +229,15 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      *  No operations on the query execution or any associated
      *  result set are permitted after this call.
      */
-    //@Override
     @Override
-    public abstract void close();
+    public void close() { qExec.close(); }
 
     /**
      * Answer whether this QueryExecution object has been closed or not.
      * @return boolean
      */
     @Override
-    public abstract boolean isClosed();
+    public boolean isClosed() { return qExec.isClosed(); }
 
     /** Set a timeout on the query execution.
      * Processing will be aborted after the timeout (which starts when the appropriate exec call is made).
@@ -229,13 +245,13 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      * A timeout of less than zero means no timeout.
      */
     @Override
-    public abstract void setTimeout(long timeout, TimeUnit timeoutUnits) ;
+    public void setTimeout(long timeout, TimeUnit timeoutUnits)  {}
 
     /** Set time, in milliseconds
      * @see #setTimeout(long, TimeUnit)
      */
     @Override
-    public abstract void setTimeout(long timeout) ;
+    public void setTimeout(long timeout) {}
 
     /** Set timeouts on the query execution; the first timeout refers to time to first result,
      * the second refers to overall query execution after the first result.
@@ -245,26 +261,27 @@ public abstract class QueryExecutionAdapter implements QueryExecution
      */
 
     @Override
-    public abstract void setTimeout(long timeout1, TimeUnit timeUnit1, long timeout2, TimeUnit timeUnit2) ;
+    public void setTimeout(long timeout1, TimeUnit timeUnit1, long timeout2, TimeUnit timeUnit2) {
+        throw new UnsupportedOperationException();
+    }
 
     /** Set time, in milliseconds
      *  @see #setTimeout(long, TimeUnit, long, TimeUnit)
      */
     @Override
-    public abstract void setTimeout(long timeout1, long timeout2) ;
+    public void setTimeout(long timeout1, long timeout2) {
+        throw new UnsupportedOperationException();
+    }
 
     /** Return the first timeout (time to first result), in milliseconds: negative if unset */
     @Override
-    public abstract long getTimeout1() ;
+    public long getTimeout1() { return -1L; }
     /** Return the second timeout (overall query execution after first result), in milliseconds: negative if unset */
     @Override
-    public abstract long getTimeout2() ;
+    public long getTimeout2() { return -1L; }
 
-//  /** Say whether this QueryExecution is usable or not.
-//   * An active execution is one that has not been closed, ended or aborted yet.
-//     * May not be supported or meaningful for all QueryExecution implementations.
-//     * aborted queries may not immediate show as no longer active.
-//     * This should not be called in parallel with other QueryExecution methods.
-//     */
-//    public abstract boolean isActive() ;
+    @Override
+    public void setInitialBinding(QuerySolution binding) {
+        throw new UnsupportedOperationException();
+    }
 }

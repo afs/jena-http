@@ -125,7 +125,7 @@ public class GSP {
         return new GSP().service(service);
     }
 
-    private GSP() {}
+    protected GSP() {}
 
     /**
      * Set the URL of the query endpoint. This replaces any value set in the

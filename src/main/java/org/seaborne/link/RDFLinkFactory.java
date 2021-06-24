@@ -30,17 +30,13 @@ import org.apache.jena.sys.JenaSystem;
 public class RDFLinkFactory {
     static { JenaSystem.init(); }
 
-    /** Create a connection to a remote location by URL.
-     * This is the URL for the dataset.
-     *
-     *  This call assumes the names of services as:
-     *  <ul>
-     *  <li>SPARQL Query endpoint : "sparql"
-     *  <li>SPARQL Update endpoint : "update"
-     *  <li>SPARQL Graph Store Protocol : "data"
-     *  </ul>
-     *  These are the default names in <a href="http://jena.apache.org/documentation/fuseki2">Fuseki</a>
-     *  Other names can be specified using {@link #connect(String, String, String, String)}
+    /**
+     * Create a connection to a remote location by URL. This is the URL for the
+     * dataset. This call assumes the SPARQL Query endpoint, SPARQL Update endpoint
+     * and SPARQL Graph Store Protocol endpoinst are the same URL.
+     * Thisis suported by <a href="http://jena.apache.org/documentation/fuseki2">Apache Jena Fuseki</a>.
+     * Other names can be specified using {@link #connect(String, String, String, String)}
+     * or {@link RDFLinkRemoteBuilder}.
      *
      * @param destination
      * @return RDFLink

@@ -19,7 +19,6 @@
 package org.seaborne.wip;
 
 import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
@@ -27,10 +26,10 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.engine.binding.Binding;
+import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.util.Context;
 
 /**
@@ -40,48 +39,8 @@ import org.apache.jena.sparql.util.Context;
  */
 public interface QExec extends AutoCloseable
 {
-    // Fundamental building blocks.
-    /*
-     * Basics: builder.
-     *
-     *      QueryExecutionLocalBuilder
-     *      QueryExecutionHTTPBuilder
-     *   Setup part
-     *     setInitialBinding -> Parameterized by syntax transform
-     *     setTimeout
-     *     + query
-     *
-     *     + target: [L]dataset or [R] URL
-     *     + lots of HTTP features.
-     *
-     * Result part:
-     *   ResultSet
-     *     Iterator<Binding>
-     *     vars: Project bindings
-     *   Stream<Triple>
-     *   Stream<Quad>
-     *   Stream<JsonObject
-     *   Boolean
-     *
-     *   abort
-     *
-     * Setup:
-     *   getQuery
-     *   getDataset
-     *   getContext
-     *
-     *   isOpen
-     *   isclosed
-     */
 
-
-    //public static QueryExecBuilder create() { return QueryExecBuilder.create(); }
-
-    /** Set the initial association of variables and values.
-     * May not be supported by all QueryExecution implementations.
-     * @param binding
-     */
-    public void setInitialBinding(Binding binding) ;
+    public static QExecBuilder create() { return QExecBuilder.newBuilder(); }
 
     /**
      * The dataset against which the query will execute.
@@ -114,15 +73,18 @@ public interface QExec extends AutoCloseable
      *  over the results.
      *  </p>
      *  */
-    public ResultSet execSelect();
+    public RowSet select();
 
     /** Execute a CONSTRUCT query */
-    public Graph execConstruct();
+    public default Graph construct() {
+        Graph graph = GraphFactory.createDefaultGraph();
+        return construct(graph);
+    }
 
     /** Execute a CONSTRUCT query, putting the statements into a graph.
-     *  @return Graph The model argument for cascaded code.
+     *  @return Graph The graph argument for cascaded code.
      */
-    public Graph execConstruct(Graph graph);
+    public Graph construct(Graph graph);
 
     /**
      * Execute a CONSTRUCT query, returning the results as an iterator of {@link Triple}.
@@ -141,7 +103,7 @@ public interface QExec extends AutoCloseable
      * @return An iterator of Triple objects (possibly containing duplicates) generated
      * by applying the CONSTRUCT template of the query to the bindings in the WHERE clause.
      */
-    public Iterator<Triple> execConstructTriples();
+    public Iterator<Triple> constructTriples();
 
     /**
      * Execute a CONSTRUCT query, returning the results as an iterator of {@link Quad}.
@@ -153,27 +115,32 @@ public interface QExec extends AutoCloseable
      * by applying the CONSTRUCT template of the query to the bindings in the WHERE clause.
      * </p>
      * <p>
-     * See {@link #execConstructTriples} for usage and features.
+     * See {@link #constructTriples} for usage and features.
      */
-    public Iterator<Quad> execConstructQuads();
+    public Iterator<Quad> constructQuads();
 
     /** Execute a CONSTRUCT query, putting the statements into 'dataset'.
      *  This maybe an extended syntax query (if supported).
      */
-    public DatasetGraph execConstructDataset();
+    public default DatasetGraph constructDataset(){
+        return constructDataset(DatasetGraphFactory.create()) ;
+    }
 
     /** Execute a CONSTRUCT query, putting the statements into 'dataset'.
      *  This may be an extended syntax query (if supported).
      */
-    public DatasetGraph execConstructDataset(DatasetGraph dataset);
+    public DatasetGraph constructDataset(DatasetGraph dataset);
 
     /** Execute a DESCRIBE query */
-    public Graph execDescribe();
+    public default Graph describe() {
+        Graph graph = GraphFactory.createDefaultGraph();
+        return describe(graph);
+    }
 
     /** Execute a DESCRIBE query, putting the statements into a graph.
      *  @return Graph The model argument for cascaded code.
      */
-    public Graph execDescribe(Graph graph);
+    public Graph describe(Graph graph);
 
     /**
      * Execute a DESCRIBE query, returning the results as an iterator of {@link Triple}.
@@ -210,14 +177,14 @@ public interface QExec extends AutoCloseable
      *  No operations on the query execution or any associated
      *  result set are permitted after this call and may cause exceptions to be thrown.
      */
-
     public void abort();
 
     /** Close the query execution and stop query evaluation as soon as convenient.
-     *  QueryExecution objects, and a {@link ResultSet} from {@link #execSelect},
-     *  can not be used once the QueryExecution is closed.
-     *  Model results from {@link #execConstruct} and {@link #execDescribe}
+     *  QExec objects, and a {@link RowSet} from {@link #select},
+     *  can not be used once the QExec is closed.
+     *  Model results from {@link #construct} and {@link #describe}
      *  are still valid.
+     *  <p>
      *  It is important to close query execution objects in order to release
      *  resources such as working memory and to stop the query execution.
      *  Some storage subsystems require explicit ends of operations and this
@@ -233,43 +200,4 @@ public interface QExec extends AutoCloseable
      * @return boolean
      */
     public boolean isClosed();
-
-    /** Set a timeout on the query execution.
-     * Processing will be aborted after the timeout (which starts when the appropriate exec call is made).
-     * Not all query execution systems support timeouts.
-     * A timeout of less than zero means no timeout.
-     */
-    public void setTimeout(long timeout, TimeUnit timeoutUnits) ;
-
-    /** Set time, in milliseconds
-     * @see #setTimeout(long, TimeUnit)
-     */
-    public void setTimeout(long timeout) ;
-
-    /** Set timeouts on the query execution; the first timeout refers to time to first result,
-     * the second refers to overall query execution after the first result.
-     * Processing will be aborted if a timeout expires.
-     * Not all query execution systems support timeouts.
-     * A timeout of less than zero means no timeout; this can be used for timeout1 or timeout2.
-     */
-
-    public void setTimeout(long timeout1, TimeUnit timeUnit1, long timeout2, TimeUnit timeUnit2) ;
-
-    /** Set time, in milliseconds
-     *  @see #setTimeout(long, TimeUnit, long, TimeUnit)
-     */
-    public void setTimeout(long timeout1, long timeout2) ;
-
-    /** Return the first timeout (time to first result), in milliseconds: negative if unset */
-    public long getTimeout1() ;
-    /** Return the second timeout (overall query execution after first result), in milliseconds: negative if unset */
-    public long getTimeout2() ;
-
-//  /** Say whether this QueryExecution is usable or not.
-//   * An active execution is one that has not been closed, ended or aborted yet.
-//   * May not be supported or meaningful for all QueryExecution implementations.
-//   * aborted queries may not immediate show as no longer active.
-//   * This should not be called in parallel with other QueryExecution methods.
-//   */
-//   public boolean isActive() ;
 }

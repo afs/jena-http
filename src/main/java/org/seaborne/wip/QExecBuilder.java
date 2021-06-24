@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.improvements;
+package org.seaborne.wip;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,43 +25,81 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.apache.jena.atlas.lib.Pair;
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.*;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.EngineLib;
 import org.apache.jena.sparql.engine.QueryEngineFactory;
 import org.apache.jena.sparql.engine.QueryEngineRegistry;
-import org.apache.jena.sparql.engine.QueryExecutionBase;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.apache.jena.sparql.util.Context;
 
 /**
- * Query Execution for local datasets - builder style.
+ * Query execution for local datasets - builder style.
  */
-public class QueryExecutionLocalBuilderAbs extends AbstractQueryExecutionBuilder<QueryExecutionLocalBuilderAbs>{
+public class QExecBuilder {
+    // Had been migrated.
+    // May have evolved.
     // Improvements to QueryExecutionBuilder
 
     /** Create a new builder of {@link QueryExecution} for a local dataset. */
-    public static QueryExecutionLocalBuilderAbs newBuilder() {
-        QueryExecutionLocalBuilderAbs builder = new QueryExecutionLocalBuilderAbs();
+    public static QExecBuilder newBuilder() {
+        QExecBuilder builder = new QExecBuilder();
         return builder;
     }
 
+    private static final long UNSET         = -1;
+
     private DatasetGraph dataset            = null;
-    private long         timeout1           = -1;
+    private Query        query              = null;
+    private Context      context            = null;
+    private Binding      initialBinding     = null;
+    private long         timeout1           = UNSET;
     private TimeUnit     timeoutTimeUnit1   = null;
-    private long         timeout2           = -1;
+    private long         timeout2           = UNSET;
     private TimeUnit     timeoutTimeUnit2   = null;
 
-    public QueryExecutionLocalBuilderAbs dataset(DatasetGraph dsg) {
+    public QExecBuilder query(Query query) {
+        this.query = query;
+        return this;
+    }
+
+    public QExecBuilder query(String queryString) {
+        query(queryString, Syntax.syntaxARQ);
+        return this;
+    }
+
+    public QExecBuilder query(String queryString, Syntax syntax) {
+        this.query = QueryFactory.create(queryString, syntax);
+        return this;
+    }
+
+    public QExecBuilder dataset(DatasetGraph dsg) {
         this.dataset = dsg;
         return this;
     }
 
-    public QueryExecutionLocalBuilderAbs timeout(long value, TimeUnit timeUnit) {
+    public QExecBuilder dataset(Dataset dataset) {
+        this.dataset = dataset.asDatasetGraph();
+        return this;
+    }
+
+    public QExecBuilder context(Context context) {
+        this.context = context;
+        return this;
+    }
+
+    public QExecBuilder initialBinding(Binding binding) {
+        this.initialBinding = binding;
+        return this;
+    }
+
+    public QExecBuilder timeout(long value, TimeUnit timeUnit) {
         this.timeout1 = value;
         this.timeoutTimeUnit1 = timeUnit;
         this.timeout2 = value;
@@ -69,19 +107,43 @@ public class QueryExecutionLocalBuilderAbs extends AbstractQueryExecutionBuilder
         return this;
     }
 
-    public QueryExecutionLocalBuilderAbs initialTimeout(long value, TimeUnit timeUnit) {
-        this.timeout1 = value;
+    public QExecBuilder initialTimeout(long value, TimeUnit timeUnit) {
+        this.timeout1 = value < 0 ? -1L : value ;
         this.timeoutTimeUnit1 = timeUnit;
         return this;
     }
 
-    public QueryExecutionLocalBuilderAbs overallTimeout(long value, TimeUnit timeUnit) {
+    public QExecBuilder overallTimeout(long value, TimeUnit timeUnit) {
         this.timeout2 = value;
         this.timeoutTimeUnit2 = timeUnit;
         return this;
     }
 
-    public QueryExecution build() {
+    // Set times from context if not set directly.
+    private static void defaultTimeoutsFromContext(QExecBuilder builder, Context cxt) {
+        if ( cxt.isDefined(ARQ.queryTimeout) ) {
+            Object obj = cxt.get(ARQ.queryTimeout);
+            try {
+                if ( obj instanceof Number ) {
+                    long x = ((Number)obj).longValue();
+                    if ( builder.timeout2 < 0 )
+                        builder.overallTimeout(x, TimeUnit.MILLISECONDS);
+                } else if ( obj instanceof String ) {
+                    String str = obj.toString();
+                    Pair<Long, Long> pair = EngineLib.parseTimoutStr(str, TimeUnit.MILLISECONDS);
+                    if ( builder.timeout1 < 0 )
+                        builder.initialTimeout(pair.getLeft(), TimeUnit.MILLISECONDS);
+                    if ( builder.timeout2 < 0 )
+                        builder.overallTimeout(pair.getRight(), TimeUnit.MILLISECONDS);
+                } else
+                    Log.warn(builder, "Can't interpret timeout: " + obj);
+            } catch (Exception ex) {
+                Log.warn(builder, "Exception setting timeouts (context) from: "+obj);
+            }
+        }
+    }
+
+    public QExec build() {
         Objects.requireNonNull(query, "Query for QueryExecution");
 
         query.setResultVars();
@@ -97,31 +159,21 @@ public class QueryExecutionLocalBuilderAbs extends AbstractQueryExecutionBuilder
             // Isolate to snapshot it and to allow it to be  modified.
             cxt = context.copy();
         }
-
         QueryEngineFactory f = QueryEngineRegistry.get().find(query, dataset, cxt);
         if ( f == null ) {
-            Log.warn(QueryExecutionLocalBuilderAbs.class, "Failed to find a QueryEngineFactory");
+            Log.warn(QExecBuilder.class, "Failed to find a QueryEngineFactory");
             return null;
         }
 
+        // Initial bindings / parameterized query
         Query queryActual = query;
         if ( initialBinding != null ) {
             Map<Var, Node> substitutions = bindingToMap(initialBinding);
             queryActual = QueryTransformOps.transform(query, substitutions);
         }
 
-        // QueryExecutionBase set up the final context, merging in the dataset context and setting the current time.
-        QueryExecution qExec = new QueryExecutionBase(queryActual, dataset, cxt, f);
-        if ( false ) {
-            if ( initialBinding != null )
-                qExec.setInitialBinding(initialBinding);
-        }
-        if ( timeoutTimeUnit1 != null && timeout1 > 0 ) {
-            if ( timeoutTimeUnit2 != null  && timeout2 > 0 )
-                qExec.setTimeout(timeout1, timeoutTimeUnit1, timeout2, timeoutTimeUnit2);
-            else
-                qExec.setTimeout(timeout1, timeoutTimeUnit1);
-        }
+        defaultTimeoutsFromContext(this, cxt);
+        QExec qExec = new QExecBase(queryActual, dataset, cxt, f, timeout1, timeoutTimeUnit1, timeout2, timeoutTimeUnit2);
         return qExec;
     }
 
@@ -140,43 +192,44 @@ public class QueryExecutionLocalBuilderAbs extends AbstractQueryExecutionBuilder
 
     // (Slightly shorter) abbreviated forms - build-execute now.
 
+    public RowSet select() {
+        return build().select();
+    }
+
     public void select(Consumer<Binding> rowAction) {
         if ( !query.isSelectType() )
             throw new QueryExecException("Attempt to execute SELECT for a "+query.queryType()+" query");
-        try ( QueryExecution qExec = build() ) {
-            forEachRow(qExec.execSelect(), rowAction);
+        try ( QExec qExec = build() ) {
+            forEachRow(qExec.select(), rowAction);
         }
     }
 
     // Also in RDFLink
-    private static void forEachRow(ResultSet resultSet, Consumer<Binding> rowAction) {
-        while(resultSet.hasNext()) {
-            rowAction.accept(resultSet.nextBinding());
-        }
+    private static void forEachRow(RowSet rowSet, Consumer<Binding> rowAction) {
+        rowSet.forEachRemaining(rowAction);
     }
 
     public Graph construct() {
         if ( !query.isConstructType() )
             throw new QueryExecException("Attempt to execute CONSTRUCT for a "+query.queryType()+" query");
-        try ( QueryExecution qExec = build() ) {
-            return qExec.execConstruct().getGraph();
+        try ( QExec qExec = build() ) {
+            return qExec.construct();
         }
     }
 
     public Graph describe() {
         if ( !query.isDescribeType() )
             throw new QueryExecException("Attempt to execute DESCRIBE for a "+query.queryType()+" query");
-        try ( QueryExecution qExec = build() ) {
-            return qExec.execDescribe().getGraph();
+        try ( QExec qExec = build() ) {
+            return qExec.describe();
         }
     }
 
     public boolean ask() {
         if ( !query.isAskType() )
             throw new QueryExecException("Attempt to execute ASK for a "+query.queryType()+" query");
-        try ( QueryExecution qExec = build() ) {
+        try ( QExec qExec = build() ) {
             return qExec.execAsk();
         }
     }
 }
-

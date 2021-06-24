@@ -44,9 +44,9 @@ import org.seaborne.http.*;
 public class RDFLinkRemote implements RDFLink {
     // Adds a Builder to help with HTTP details.
 
-    private static final String fusekiDftSrvQuery   = "sparql";
-    private static final String fusekiDftSrvUpdate  = "update";
-    private static final String fusekiDftSrvGSP     = "data";
+//    private static final String fusekiDftSrvQuery   = "sparql";
+//    private static final String fusekiDftSrvUpdate  = "update";
+//    private static final String fusekiDftSrvGSP     = "data";
 
     private boolean isOpen = true;
     protected final String destination;

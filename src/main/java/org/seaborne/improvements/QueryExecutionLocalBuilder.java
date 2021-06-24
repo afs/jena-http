@@ -42,6 +42,8 @@ import org.apache.jena.sparql.util.Context;
  * Query Execution for local datasets - builder style.
  */
 public class QueryExecutionLocalBuilder {
+    // Had been migrated.
+    // May have evolved.
     // Improvements to QueryExecutionBuilder
 
     /** Create a new builder of {@link QueryExecution} for a local dataset. */
@@ -76,6 +78,11 @@ public class QueryExecutionLocalBuilder {
 
     public QueryExecutionLocalBuilder dataset(DatasetGraph dsg) {
         this.dataset = dsg;
+        return this;
+    }
+
+    public QueryExecutionLocalBuilder dataset(Dataset dataset) {
+        this.dataset = dataset.asDatasetGraph();
         return this;
     }
 

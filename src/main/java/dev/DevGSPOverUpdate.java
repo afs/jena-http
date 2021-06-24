@@ -25,9 +25,13 @@ import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.modify.request.QuadDataAcc;
 import org.apache.jena.sparql.modify.request.Target;
 import org.apache.jena.sparql.modify.request.UpdateClear;
@@ -35,6 +39,10 @@ import org.apache.jena.sparql.modify.request.UpdateDataInsert;
 import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
+import org.seaborne.http.GSP;
+import org.seaborne.http.QueryExecutionHTTP;
+import org.seaborne.link.RDFLink;
+import org.seaborne.link.RDFLinkFactory;
 
 public class DevGSPOverUpdate {
     // GSP POST as INSERT DATA.
@@ -50,6 +58,125 @@ public class DevGSPOverUpdate {
 
         UpdateRequest req2 = datasetGSP();
         System.out.println(req2);
+    }
+
+
+    private static final Var s = Var.alloc("s");
+    private static final Var p = Var.alloc("s");
+    private static final Var o = Var.alloc("s");
+
+    static class GSP2 extends GSP {
+        /** Get a graph */
+        @Override
+        public Graph GET() {
+            if ( false ) {
+                boolean isNamedGraph = true ;
+                String gn = "";
+                String URL = "";
+                // CONSTRUCT?
+                String queryString = isNamedGraph
+                        ? "SELECT ?s ?p ?o { GRAPH <"+gn+"> { ?s ?p ?o } }"
+                        : "SELECT ?s ?p ?o { ?s ?p ?o }" ;
+                Graph graph = GraphFactory.createDefaultGraph();
+                try ( RDFLink rdfLink = RDFLinkFactory.connect(URL) ) {
+                    rdfLink.querySelect(queryString, r->graph.add(r.get(s), r.get(p), r.get(o)));
+                }
+
+                // Alt.
+                try ( QueryExecution qExec = QueryExecutionHTTP
+                        .newBuilder()
+                        .acceptHeader(WebContent.contentTypeNTriples)
+                        .queryString(queryString)
+                        .build() ) {
+//                    // ?? ResultSet.stream(Binding)
+//                    qExec.execSelect().asBindings().forEachRemaining(r->{ graph.add(r.get(s), r.get(p), r.get(o)));
+                }
+                return graph;
+            }
+
+            return super.GET();
+//            validateGraphOperation();
+//            ensureAcceptHeader(WebContent.defaultGraphAcceptHeader);
+//            requestCompression();
+//            String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
+//            Graph graph = GraphFactory.createDefaultGraph();
+//            HttpClient hc = requestHttpClient(serviceEndpoint, url);
+//            HttpRDF.httpGetToStream(hc, url, httpHeaders, StreamRDFLib.graph(graph));
+//            return graph;
+        }
+
+        @Override
+        public void POST(String file) {
+            super.POST(file);
+            return;
+//            validateGraphOperation();
+//            String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
+//            String fileExtContentType = contentTypeFromFilename(file);
+//            HttpClient hc = requestHttpClient(serviceEndpoint, url);
+//            uploadTriples(hc, url, file, fileExtContentType, httpHeaders, Push.POST);
+        }
+
+        /** POST a graph. */
+        @Override
+        public void POST(Graph graph) {
+            super.POST(graph);
+            return;
+//            validateGraphOperation();
+//            RDFFormat requestFmt = rdfFormat(HttpEnv.dftTriplesFormat);
+//            String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
+//            HttpClient hc = requestHttpClient(serviceEndpoint, url);
+//            HttpRDF.postGraph(hc, url, graph, requestFmt, httpHeaders);
+        }
+
+        @Override
+        public void PUT(String file) {
+            super.PUT(file);
+            return;
+//            validateGraphOperation();
+//            String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
+//            String fileExtContentType = contentTypeFromFilename(file);
+//            HttpClient hc = requestHttpClient(serviceEndpoint, url);
+//            uploadTriples(hc, url, file, fileExtContentType, httpHeaders, Push.PUT);
+        }
+
+//        /**
+//         * PUT the contents of a file using the filename extension to determine the
+//         * Content-Type to use if it is not already set.
+//         * <p>
+//         * Synonym for {@link #PUT(String)}.
+//         * <p>
+//         * This operation does not parse the file.
+//         * <p>
+//         * If the data may have quads (named graphs), use {@link #putDataset(String)}.
+//         */
+//        public void putGraph(String file) {
+//            // Synonym
+//            PUT(file);
+//        }
+
+        /**
+         * PUT a graph.
+         */
+        @Override
+        public void PUT(Graph graph) {
+            super.PUT(graph);
+            return;
+//            validateGraphOperation();
+//            RDFFormat requestFmt = rdfFormat(HttpEnv.dftTriplesFormat);
+//            String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
+//            HttpClient hc = requestHttpClient(serviceEndpoint, url);
+//            HttpRDF.putGraph(hc, url, graph, requestFmt, httpHeaders);
+        }
+
+        /** Delete a graph. */
+        @Override
+        public void DELETE() {
+            super.DELETE();
+//            validateGraphOperation();
+//            String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
+//            HttpClient hc = requestHttpClient(serviceEndpoint, url);
+//            HttpRDF.httpDeleteGraph(hc, url);
+        }
     }
 
     private static UpdateRequest graphGSP() {
