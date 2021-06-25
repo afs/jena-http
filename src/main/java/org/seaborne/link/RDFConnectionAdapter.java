@@ -29,6 +29,8 @@ import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.update.UpdateRequest;
+import org.seaborne.qexec.QueryExecutionAdapter;
+import org.seaborne.qexec.ResultSetAdapter;
 
 /** Provide {@link RDFConnection} using a {@link RDFLink} */
 
@@ -51,22 +53,15 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public void queryResultSet(String queryString, Consumer<ResultSet> resultSetAction) {
-        get().queryResultSet(queryString, resultSetAction);
+        get().queryRowSet(queryString,
+                          rowSet->resultSetAction.accept(new ResultSetAdapter(rowSet)));
     }
 
     @Override
     public void queryResultSet(Query query, Consumer<ResultSet> resultSetAction) {
-        get().queryResultSet(query, resultSetAction);
+        get().queryRowSet(query,
+                          rowSet->resultSetAction.accept(new ResultSetAdapter(rowSet)));
     }
-
-    // Rely on the default methods for these rather than RDFLink.querySelect because
-    // of the action on QuerySolution being tied to the dataset model sometimes.
-
-//    public void querySelect(String queryString, Consumer<QuerySolution> rowAction) {
-//    }
-//    public void querySelect(Query query, Consumer<QuerySolution> rowAction) {
-//        get().querySelect(queryString, rowAction);
-//    }
 
     @Override
     public Model queryConstruct(String queryString) {
@@ -100,12 +95,12 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public QueryExecution query(Query query) {
-        return get().query(query);
+        return QueryExecutionAdapter.adapt(get().query(query));
     }
 
     @Override
     public QueryExecution query(String queryString) {
-        return get().query(queryString);
+        return QueryExecutionAdapter.adapt(get().query(queryString));
     }
 
     @Override
@@ -125,7 +120,7 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public Model fetch(String graphName) {
-        return  graph2model(get().fetch(name(graphName)));
+        return graph2model(get().fetch(name(graphName)));
     }
 
     @Override

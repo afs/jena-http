@@ -16,11 +16,19 @@
  * limitations under the License.
  */
 
-package org.seaborne.wip;
+package org.seaborne.http;
 
-public interface RowSetRewindable extends RowSet {
-    public void reset() ;
+/*8 Enum of different ways to send a SPARQL query over HTTP */
+public enum QuerySendMode {
 
-    /** return the number of solutions */
-    public long size() ;
+    // Switched to POST HTML Form encoding if the query is very long (HttpEnv.urlLimit).
+    asGetWithLimit,
+    // Use GET regardless
+    asGetAlways,
+    // Use POST HTML Form regardless
+    asPostForm,
+    // POST and application/sparql-query
+    asPostBody;
+
+    public static QuerySendMode systemtDefault = QuerySendMode.asGetWithLimit;
 }

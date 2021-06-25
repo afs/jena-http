@@ -27,7 +27,6 @@ import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
@@ -36,6 +35,7 @@ import org.apache.jena.sparql.sse.SSE;
 import org.junit.Test;
 import org.seaborne.link.RDFLinkFuseki;
 import org.seaborne.link.RDFLinkRemoteBuilder;
+import org.seaborne.qexec.QExec;
 
 /* Tests that blank nodes work over RDFLinkFuseki.
  */
@@ -71,18 +71,18 @@ public class TestRDFLinkFusekiBinary {
                     assertEquals("b3456", obj.getBlankNodeLabel());
                 });
 
-                try(QueryExecution qExec = link.query("ASK {?s ?p <_:b3456>}")){
-                    boolean bool = qExec.execAsk();
+                try(QExec qExec = link.query("ASK {?s ?p <_:b3456>}")){
+                    boolean bool = qExec.ask();
                     assertTrue(bool);
                 }
 
-                try (QueryExecution qExec = link.query("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . FILTER (sameTerm(?o, <_:b3456>)) }")){
-                    Graph graph2 = qExec.execConstruct().getGraph() ;
+                try (QExec qExec = link.query("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . FILTER (sameTerm(?o, <_:b3456>)) }")){
+                    Graph graph2 = qExec.construct();
                     checkGraph(graph2, "b3456");
                 }
 
-                try(QueryExecution qExec = link.query("DESCRIBE ?s WHERE { ?s ?p <_:b3456>}")){
-                    Graph graph2 = qExec.execDescribe().getGraph() ;
+                try(QExec qExec = link.query("DESCRIBE ?s WHERE { ?s ?p <_:b3456>}")){
+                    Graph graph2 = qExec.describe();
                     checkGraph(graph2, "b3456");
                 }
 

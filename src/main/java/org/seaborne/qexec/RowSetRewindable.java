@@ -16,30 +16,11 @@
  * limitations under the License.
  */
 
-package org.seaborne.wip;
+package org.seaborne.qexec;
 
-import java.util.Iterator;
-import java.util.List;
+public interface RowSetRewindable extends RowSet {
+    public void reset() ;
 
-import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.binding.Binding;
-
-public interface RowSet extends Iterator<Binding> {
-
-    @Override public boolean hasNext() ;
-
-    @Override public Binding next() ;
-
-    public List<Var> getResultVars() ;
-
-    /**
-     *  Create a {@link RowSetRewindable} from the current position to the end.
-     *  This consumes this RowSet - the iterator wil have ended after a call to this method.
-     */
-    public default RowSetRewindable rewindable() {
-        return RowSetMem.create(this);
-    }
-
-    /** Return the row number. The first row is row 1. */
-    public long getRowNumber();
+    /** return the number of solutions */
+    public long size() ;
 }

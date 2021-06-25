@@ -16,24 +16,37 @@
  * limitations under the License.
  */
 
-package org.seaborne.wip;
+package org.seaborne.qexec;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
+import java.util.Iterator;
+
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.core.Var;
-import org.apache.jena.sparql.engine.ResultSetStream;
+import org.apache.jena.sparql.engine.binding.Binding;
 
-public class ResultSetAdapter extends ResultSetStream /*implements ResultSet*/ {
+public class RowSetAdapter extends RowSetStream {
 
+    private final ResultSet other;
 
-    public ResultSetAdapter(RowSet rowSet) {
-        super(Var.varNames(rowSet.getResultVars()),
-              ModelFactory.createDefaultModel(),
-              rowSet);
+    public ResultSet get() { return other; }
+
+    public RowSetAdapter(ResultSet resultSet) {
+        super(bindingIterator(resultSet), Var.varList(resultSet.getResultVars()));
+        this.other = resultSet;
     }
 
+    private static Iterator<Binding> bindingIterator(ResultSet resultSet) {
+        return new Iterator<Binding>() {
 
-    public ResultSetAdapter(RowSet rowSet, Model m) {
-        super(Var.varNames(rowSet.getResultVars()), m, rowSet);
+            @Override
+            public boolean hasNext() {
+                return resultSet.hasNext();
+            }
+
+            @Override
+            public Binding next() {
+                return resultSet.nextBinding();
+            }
+        };
     }
 }

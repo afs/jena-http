@@ -49,6 +49,7 @@ import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.lib.IRILib;
 import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.query.ARQ;
+import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sparql.util.Context;
@@ -161,11 +162,12 @@ public class HttpLib {
 
     /**
      * Handle the HTTP response and return the body {@code InputStream} if a 200.
-     * Otherwise, throw an {@link HttpExpection}.
-     * @param response
+     * Otherwise, throw an {@link HttpException}.
+     * @param httpResponse
      * @return InputStream
      */
-    static InputStream handleResponseInputStream(HttpResponse<InputStream> httpResponse) {
+    public
+    /*package*/ static InputStream handleResponseInputStream(HttpResponse<InputStream> httpResponse) {
         handleHttpStatusCode(httpResponse);
         return getInputStream(httpResponse);
     }
@@ -220,6 +222,7 @@ public class HttpLib {
      * {@code close} may close the underlying HTTP connection.
      *  See {@link BodySubscribers#ofInputStream()}.
      */
+    public
     /*package*/ static void finish(HttpResponse<InputStream> response) {
         finish(response.body());
     }
@@ -228,7 +231,7 @@ public class HttpLib {
      *  {@code close} may close the underlying HTTP connection.
      *  See {@link BodySubscribers#ofInputStream()}.
      */
-    /*package*/ static void finish(InputStream input) {
+    /*package*/ public static void finish(InputStream input) {
         consume(input);
     }
 
@@ -278,11 +281,11 @@ public class HttpLib {
         }
     }
 
-    static <X> X dft(X value, X dftValue) {
+    public static <X> X dft(X value, X dftValue) {
         return (value != null) ? value : dftValue;
     }
 
-    static <X> List<X> copyArray(List<X> array) {
+    public static <X> List<X> copyArray(List<X> array) {
         if ( array == null )
             return null;
         return new ArrayList<>(array);
@@ -296,7 +299,8 @@ public class HttpLib {
     }
 
     /** Query string is assumed to already be encoded. */
-    static String requestURL(String url, String queryString) {
+    public
+    /*package*/ static String requestURL(String url, String queryString) {
         String sep =  url.contains("?") ? "&" : "?";
         String requestURL = url+sep+queryString;
         return requestURL;
@@ -306,6 +310,7 @@ public class HttpLib {
 //        return newBuilder(url, null, allowCompression, readTimeout, readTimeoutUnit);
 //    }
 
+    public
     /*package*/ static Builder newBuilder(String url, Map<String, String> httpHeaders, boolean allowCompression, long readTimeout, TimeUnit readTimeoutUnit) {
         HttpRequest.Builder builder = HttpRequest.newBuilder();
         headers(builder, httpHeaders);
@@ -313,7 +318,7 @@ public class HttpLib {
         if ( readTimeout >= 0 )
             builder.timeout(Duration.ofMillis(readTimeoutUnit.toMillis(readTimeout)));
         if ( allowCompression )
-            builder.header(HttpNames.hAcceptEncoding, WebContent2.acceptEncoding);
+            builder.header(HttpNames.hAcceptEncoding, WebContent.acceptEncoding);
         return builder;
     }
 
@@ -326,14 +331,16 @@ public class HttpLib {
 
 
     /** Set the "Accept" header if value is not null. Returns the builder. */
-    static Builder acceptHeader(Builder builder, String acceptHeader) {
+    public
+    /*package*/ static Builder acceptHeader(Builder builder, String acceptHeader) {
         if ( acceptHeader != null )
             builder.header(HttpNames.hAccept, acceptHeader);
         return builder;
     }
 
     /** Set the "Content-Type" header if value is not null. Returns the builder. */
-    static Builder contentTypeHeader(Builder builder, String contentType) {
+    public
+    /*package*/ static Builder contentTypeHeader(Builder builder, String contentType) {
         if ( contentType != null )
             builder.header(HttpNames.hContentType, contentType);
         return builder;
@@ -343,7 +350,8 @@ public class HttpLib {
      * Set the "Accept-Encoding" header. Returns the builder.
      * See {@link #getInputStream(HttpResponse)}.
      */
-    static Builder acceptEncoding(Builder builder) {
+    public
+    /*package*/ static Builder acceptEncoding(Builder builder) {
         builder.header(HttpNames.hAcceptEncoding, "gzip,inflate");
         return builder;
     }
@@ -352,9 +360,10 @@ public class HttpLib {
      * {@link #handleHttpStatusCode(HttpResponse)}.
      * @param httpClient
      * @param httpRequest
-     * @return
+     * @return HttpResponse
      */
-    static HttpResponse<InputStream> execute(HttpClient httpClient, HttpRequest httpRequest) {
+    public
+    /*package*/ static HttpResponse<InputStream> execute(HttpClient httpClient, HttpRequest httpRequest) {
         return execute(httpClient, httpRequest, BodyHandlers.ofInputStream());
     }
 
@@ -366,7 +375,7 @@ public class HttpLib {
      * @param httpClient
      * @param httpRequest
      * @param bodyHandler
-     * @return
+     * @return HttpResponse
      */
     private static <T> HttpResponse<T> execute(HttpClient httpClient, HttpRequest httpRequest, BodyHandler<T> bodyHandler) {
         try {
@@ -406,7 +415,7 @@ public class HttpLib {
     }
 
     // This is to allow setting additional/optional query parameters on a per remote service (including for SERVICE).
-    /*package*/ static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
+    /*package*/ public static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
         // Old Constant.
         RegistryServiceModifier srvReg = context.get(ARQ.serviceParams);
         if ( srvReg != null ) {

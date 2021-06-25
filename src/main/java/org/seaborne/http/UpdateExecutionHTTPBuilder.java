@@ -25,10 +25,13 @@ import java.util.*;
 
 import org.apache.jena.query.QueryException;
 import org.apache.jena.sparql.engine.http.Params;
+import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.update.UpdateRequest;
-import org.seaborne.http.UpdateExecutionHTTP.SendMode;
+import org.seaborne.http.UpdateExecutionHTTP.UpdateSendMode;
 
 public class UpdateExecutionHTTPBuilder {
+
+    static { JenaSystem.init(); }
 
     private String serviceURL;
     private UpdateRequest update;
@@ -37,7 +40,7 @@ public class UpdateExecutionHTTPBuilder {
     private boolean allowCompression;
     private Map<String, String> httpHeaders = new HashMap<>();
     private HttpClient httpClient;
-    private SendMode sendMode = UpdateExecutionHTTP.defaultSendMode;
+    private UpdateSendMode sendMode = UpdateExecutionHTTP.defaultSendMode;
     private UpdateRequest updateRequest;
 
     private List<String> usingGraphURIs = null;
@@ -76,7 +79,7 @@ public class UpdateExecutionHTTPBuilder {
      * If false (the default), send as "application/sparql-query" (default).
      */
     public UpdateExecutionHTTPBuilder sendHtmlForm(boolean htmlForm) {
-        this.sendMode =  htmlForm ? SendMode.asPostForm : SendMode.asPostBody;
+        this.sendMode =  htmlForm ? UpdateSendMode.asPostForm : UpdateSendMode.asPostBody;
         return this;
     }
 

@@ -24,12 +24,15 @@ import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.update.*;
 
 /**
  * Build a {@link UpdateProcessor}.
  */
 public class UpdateExecutionLocalBuilder {
+
+    static { JenaSystem.init(); }
 
     private UpdateRequest updateRequest = new UpdateRequest();
     private DatasetGraph dataset;

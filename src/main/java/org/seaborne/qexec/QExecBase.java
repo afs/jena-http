@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.wip;
+package org.seaborne.qexec;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -309,12 +309,12 @@ public class QExecBase implements QExec
     // ?? Change to iterator from Describe Handlers.
     // (Streaming DESCRIBE isn't important enough to worry about)
     @Override
-    public Iterator<Triple> execDescribeTriples() {
+    public Iterator<Triple> describeTriples() {
         return describe().find();
     }
 
     @Override
-    public boolean execAsk() {
+    public boolean ask() {
         checkNotClosed();
         if ( !query.isAskType() )
             throw new QueryExecException("Attempt to have boolean from a " + labelForQuery(query) + " query");

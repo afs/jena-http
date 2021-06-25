@@ -36,7 +36,12 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.system.Txn;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
-import org.seaborne.http.*;
+import org.seaborne.http.GSP;
+import org.seaborne.http.HttpEnv;
+import org.seaborne.http.QExecHTTPBuilder;
+import org.seaborne.http.UpdateExecutionHTTP;
+import org.seaborne.qexec.QExec;
+import org.seaborne.qexec.RowSet;
 
 /**
  * Implementation of the {@link RDFLink} interface using remote SPARQL operations.
@@ -145,16 +150,16 @@ public class RDFLinkRemote implements RDFLink {
     // server to have custom syntax extensions or interpretations of comments.
 
     /**
-     * Execute a SELECT query and process the ResultSet with the handler code.
+     * Execute a SELECT query and process the RowSet with the handler code.
      * @param queryString
-     * @param resultSetAction
+     * @param rowSetAction
      */
     @Override
-    public void queryResultSet(String queryString, Consumer<ResultSet> resultSetAction) {
+    public void queryRowSet(String queryString, Consumer<RowSet> rowSetAction) {
         Txn.executeRead(this, ()->{
-            try ( QueryExecution qExec = query(queryString, QueryType.SELECT) ) {
-                ResultSet rs = qExec.execSelect();
-                resultSetAction.accept(rs);
+            try ( QExec qExec = query(queryString, QueryType.SELECT) ) {
+                RowSet rs = qExec.select();
+                rowSetAction.accept(rs);
             }
         } );
     }
@@ -167,11 +172,8 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public void querySelect(String queryString, Consumer<Binding> rowAction) {
         Txn.executeRead(this, ()->{
-            try ( QueryExecution qExec = query(queryString, QueryType.SELECT) ) {
-                ResultSet rs = qExec.execSelect();
-                while(rs.hasNext() ) {
-                    rowAction.accept(rs.nextBinding());
-                }
+            try ( QExec qExec = query(queryString, QueryType.SELECT) ) {
+                qExec.select().forEachRemaining(rowAction);
             }
         } );
     }
@@ -181,8 +183,8 @@ public class RDFLinkRemote implements RDFLink {
     public Graph queryConstruct(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QueryExecution qExec = query(queryString, QueryType.CONSTRUCT) ) {
-                    return qExec.execConstruct().getGraph();
+                try ( QExec qExec = query(queryString, QueryType.CONSTRUCT) ) {
+                    return qExec.construct();
                 }
             } );
     }
@@ -192,8 +194,8 @@ public class RDFLinkRemote implements RDFLink {
     public Graph queryDescribe(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QueryExecution qExec = query(queryString, QueryType.DESCRIBE) ) {
-                    return qExec.execDescribe().getGraph();
+                try ( QExec qExec = query(queryString, QueryType.DESCRIBE) ) {
+                    return qExec.describe();
                 }
             } );
     }
@@ -203,8 +205,8 @@ public class RDFLinkRemote implements RDFLink {
     public boolean queryAsk(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QueryExecution qExec = query(queryString, QueryType.ASK) ) {
-                    return qExec.execAsk();
+                try ( QExec qExec = query(queryString, QueryType.ASK) ) {
+                    return qExec.ask();
                 }
             } );
     }
@@ -215,24 +217,24 @@ public class RDFLinkRemote implements RDFLink {
      * @param queryType
      * @return QueryExecution
      */
-    protected QueryExecution query(String queryString, QueryType queryType) {
+    protected QExec query(String queryString, QueryType queryType) {
         Objects.requireNonNull(queryString);
         return queryExec(null, queryString, queryType);
     }
 
     @Override
-    public QueryExecution query(String queryString) {
+    public QExec query(String queryString) {
         Objects.requireNonNull(queryString);
         return queryExec(null, queryString, null);
     }
 
     @Override
-    public QueryExecution query(Query query) {
+    public QExec query(Query query) {
         Objects.requireNonNull(query);
         return queryExec(query, null, null);
     }
 
-    private QueryExecution queryExec(Query query, String queryString, QueryType queryType) {
+    private QExec queryExec(Query query, String queryString, QueryType queryType) {
         checkQuery();
         if ( query == null && queryString == null )
             throw new InternalErrorException("Both query and query string are null");
@@ -243,12 +245,12 @@ public class RDFLinkRemote implements RDFLink {
 
         // Use the query string as provided if possible, otherwise serialize the query.
         String queryStringToSend = ( queryString != null ) ? queryString : query.toString();
-        return createQueryExecution(query, queryStringToSend, queryType);
+        return createQExec(query, queryStringToSend, queryType);
     }
 
-    // Create the QueryExecution
-    private QueryExecution createQueryExecution(Query query, String queryStringToSend, QueryType queryType) {
-        QueryExecutionHTTPBuilder builder = QueryExecutionHTTP.newBuilder()
+    // Create the QExec
+    private QExec createQExec(Query query, String queryStringToSend, QueryType queryType) {
+        QExecHTTPBuilder builder = QExecHTTPBuilder.newBuilder()
             .service(svcQuery)
             .httpClient(httpClient)
             .queryString(queryStringToSend);

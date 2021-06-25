@@ -22,10 +22,11 @@ import java.util.function.Consumer;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.ResultSet;
+
 import org.apache.jena.sparql.core.Transactional;
 import org.apache.jena.sparql.engine.binding.Binding;
+import org.seaborne.qexec.QExec;
+import org.seaborne.qexec.RowSet;
 
 /** SPARQL Query Operations on a connection.
  *
@@ -34,18 +35,18 @@ import org.apache.jena.sparql.engine.binding.Binding;
 public interface LinkSparqlQuery extends Transactional, AutoCloseable
 {
     /**
-     * Execute a SELECT query and process the ResultSet with the handler code.
+     * Execute a SELECT query and process the RowSet with the handler code.
      * @param query
-     * @param resultSetAction
+     * @param rowSetAction
      */
-    public void queryResultSet(String query, Consumer<ResultSet> resultSetAction);
+    public void queryRowSet(String query, Consumer<RowSet> rowSetAction);
 
     /**
-     * Execute a SELECT query and process the ResultSet with the handler code.
+     * Execute a SELECT query and process the RowSet with the handler code.
      * @param query
-     * @param resultSetAction
+     * @param rowSetAction
      */
-    public void queryResultSet(Query query, Consumer<ResultSet> resultSetAction);
+    public void queryRowSet(Query query, Consumer<RowSet> rowSetAction);
 
     /**
      * Execute a SELECT query and process the rows of the results with the handler code.
@@ -86,9 +87,9 @@ public interface LinkSparqlQuery extends Transactional, AutoCloseable
      *  for ways to execute queries for of a specific form.
      *
      * @param query
-     * @return QueryExecution
+     * @return QExec
      */
-    public QueryExecution query(Query query);
+    public QExec query(Query query);
 
     /** Setup a SPARQL query execution.
      *
@@ -97,9 +98,9 @@ public interface LinkSparqlQuery extends Transactional, AutoCloseable
      *  for ways to execute queries for of a specific form.
      *
      * @param queryString
-     * @return QueryExecution
+     * @return QExec
      */
-    public QueryExecution query(String queryString);
+    public QExec query(String queryString);
 
     /** Close this connection.  Use with try-resource. */
     @Override public void close();

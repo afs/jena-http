@@ -31,10 +31,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.compose.Union;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.ReadWrite;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.sse.SSE;
@@ -44,6 +41,8 @@ import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.web.HttpSC;
 import org.junit.Assume;
 import org.junit.Test;
+import org.seaborne.qexec.QExec;
+import org.seaborne.qexec.RowSet;
 
 public abstract class AbstractTestRDFLink {
     // Testing data.
@@ -323,9 +322,8 @@ public abstract class AbstractTestRDFLink {
     @Test public void query_01() {
         try ( RDFLink link = link() ) {
             Txn.executeRead(link, ()->{
-                try ( QueryExecution qExec = link.query("SELECT ?x {}") ) {
-                    ResultSet rs = qExec.execSelect();
-                    ResultSetFormatter.consume(rs);
+                try ( QExec qExec = link.query("SELECT ?x {}") ) {
+                    RowSet rs = qExec.select();
                 }
             });
         }
@@ -334,8 +332,8 @@ public abstract class AbstractTestRDFLink {
     @Test public void query_02() {
         try ( RDFLink link = link() ) {
             Txn.executeRead(link, ()->{
-                try ( QueryExecution qExec = link.query("ASK{}") ) {
-                    boolean b = qExec.execAsk();
+                try ( QExec qExec = link.query("ASK{}") ) {
+                    boolean b = qExec.ask();
                     assertTrue(b);
                 }
             });

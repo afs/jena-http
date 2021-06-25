@@ -18,18 +18,6 @@
 
 package org.seaborne.improvements;
 
-import org.seaborne.unused.QueryExecutionHTTP;
-import org.seaborne.unused.QueryExecutionHTTPBuilder;
+public class Adapt {
 
-public class QE {
-
-    /** @Deprecated */
-    public static QueryExecutionHTTPBuilder remote() {
-        return QueryExecutionHTTP.newBuilder();
-    }
-
-    public static QueryExecutionLocalBuilder local() {
-        return QueryExecutionLocalBuilder.newBuilder();
-    }
 }
-

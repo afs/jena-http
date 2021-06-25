@@ -33,6 +33,7 @@ import org.apache.jena.update.UpdateRequest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.seaborne.unused.QueryExecutionHTTP;
 
 public class TestUpdateExecutionHTTP {
 

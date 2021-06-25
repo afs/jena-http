@@ -19,52 +19,27 @@
 package dev;
 
 import org.apache.jena.fuseki.system.FusekiLogging;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
+import org.apache.jena.query.*;
 import org.apache.jena.riot.RIOT;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sys.JenaSystem;
-import org.seaborne.wip.QExec;
-import org.seaborne.wip.ResultSetAdapter;
-import org.seaborne.wip.RowSet;
+import org.seaborne.link.RDFLink;
+import org.seaborne.link.RDFLinkFactory;
+import org.seaborne.qexec.QExec;
+import org.seaborne.qexec.RowSet;
+import org.seaborne.qexec.RowSetFormatter;
 
 public class DevQExec {
     static {
         JenaSystem.init();
         RIOT.getContext().set(RIOT.symTurtleDirectiveStyle, "sparql");
         FusekiLogging.setLogging();
-        }
+    }
 
-    // [QExec]
-    // in "wip"
-
-    // [x] QExec is the Node level version.
-    // [x] QExec.Builder.
-    // [x] QueryExecutionAdapter -- concrete adapter, not abstract.
-    // [x] Use rewrite for initial bindings.
-    // [?] QueryEngineFactory API change (migration).
-    // [ ] Relation to RDFLink.
-    // [ ] QExec tests. Or complete switch over!
-    // [ ] The other adpater.
-
-    // ----
-
-    // Base level : Iterator<Binding> iter
-    //   ResultTable = Iterator<Binding> + vars
-    //   QueryEngineBase.evaluate produces QueryIterator: hide and only Iterator<Binding>
-
-    // 1 - ResultSet reader-writers
-    // Bridge? ResultSetFactory.create(QueryIterator, List<vars>)
-    //
-    // Where does an app get them from? QueryExecution simpler equivalent.
-    // QExec.create().
-
+    // See NotesQExec
 
     public static void main(String... args){
-
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
         Query query = QueryFactory.create("SELECT * { VALUES (?x ?y) { (1 2) (3 '4') } }");
 //        QueryExecution.create()
@@ -72,14 +47,20 @@ public class DevQExec {
 //            .query(query)
 //            .select(System.out::println);
 
-//        try ( qExec ) {
-//            ResultSet rs = qExec.execSelect();
-//            ResultSetFormatter.out(rs);
-//        }
+        try ( QueryExecution qExec = QueryExecution.create()
+                .dataset(dsg)
+                .query(query)
+                .build(); ) {
+            ResultSet rs = qExec.execSelect();
+            ResultSetFormatter.out(rs);
+        }
 
-        //try ( RowSet rs = new QExecBuilder().dataset(dsg).query(query).select() ) {
+        try ( RDFLink link = RDFLinkFactory.connect(dsg) ) {
+            link.queryRowSet(query,
+                             rowSet -> RowSetFormatter.out(rowSet));
+        }
+
         RowSet rowSet = QExec.create().dataset(dsg).query(query).select();
-        ResultSet resultSet = new ResultSetAdapter(rowSet);
-        ResultSetFormatter.out(resultSet);
+        RowSetFormatter.out(rowSet);
     }
 }

@@ -37,11 +37,15 @@ import org.apache.jena.sparql.engine.QueryExecutionBase;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.syntax.syntaxtransform.QueryTransformOps;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.sys.JenaSystem;
 
 /**
  * Query Execution for local datasets - builder style.
  */
 public class QueryExecutionLocalBuilder {
+
+    static { JenaSystem.init(); }
+
     // Had been migrated.
     // May have evolved.
     // Improvements to QueryExecutionBuilder

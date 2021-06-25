@@ -462,7 +462,7 @@ public class GSP {
 
     private void requestCompression() {
         if ( allowCompression )
-            httpHeader(HttpNames.hAcceptEncoding, WebContent2.acceptEncoding);
+            httpHeader(HttpNames.hAcceptEncoding, WebContent.acceptEncoding);
     }
 
     /**

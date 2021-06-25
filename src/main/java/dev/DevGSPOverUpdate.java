@@ -25,8 +25,6 @@ import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
@@ -40,7 +38,6 @@ import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
 import org.seaborne.http.GSP;
-import org.seaborne.http.QueryExecutionHTTP;
 import org.seaborne.link.RDFLink;
 import org.seaborne.link.RDFLinkFactory;
 
@@ -65,43 +62,34 @@ public class DevGSPOverUpdate {
     private static final Var p = Var.alloc("s");
     private static final Var o = Var.alloc("s");
 
-    static class GSP2 extends GSP {
+    /** Provide GSP functionality using SPARQL query and update */
+    // JENA-2093
+    static class GSP_SPARQL extends GSP {
         /** Get a graph */
         @Override
         public Graph GET() {
-            if ( false ) {
-                boolean isNamedGraph = true ;
-                String gn = "";
-                String URL = "";
-                // CONSTRUCT?
-                String queryString = isNamedGraph
-                        ? "SELECT ?s ?p ?o { GRAPH <"+gn+"> { ?s ?p ?o } }"
+            boolean isNamedGraph = true ;
+            String gn = "";
+            String URL = "";
+            // CONSTRUCT?
+            String queryString = isNamedGraph
+                    ? "SELECT ?s ?p ?o { GRAPH <"+gn+"> { ?s ?p ?o } }"
                         : "SELECT ?s ?p ?o { ?s ?p ?o }" ;
-                Graph graph = GraphFactory.createDefaultGraph();
-                try ( RDFLink rdfLink = RDFLinkFactory.connect(URL) ) {
-                    rdfLink.querySelect(queryString, r->graph.add(r.get(s), r.get(p), r.get(o)));
-                }
-
-                // Alt.
-                try ( QueryExecution qExec = QueryExecutionHTTP
-                        .newBuilder()
-                        .acceptHeader(WebContent.contentTypeNTriples)
-                        .queryString(queryString)
-                        .build() ) {
-//                    // ?? ResultSet.stream(Binding)
-//                    qExec.execSelect().asBindings().forEachRemaining(r->{ graph.add(r.get(s), r.get(p), r.get(o)));
-                }
-                return graph;
+            Graph graph = GraphFactory.createDefaultGraph();
+            try ( RDFLink rdfLink = RDFLinkFactory.connect(URL) ) {
+                rdfLink.querySelect(queryString, r->graph.add(r.get(s), r.get(p), r.get(o)));
             }
+            return graph;
 
-            return super.GET();
-//            validateGraphOperation();
-//            ensureAcceptHeader(WebContent.defaultGraphAcceptHeader);
-//            requestCompression();
-//            String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
-//            Graph graph = GraphFactory.createDefaultGraph();
-//            HttpClient hc = requestHttpClient(serviceEndpoint, url);
-//            HttpRDF.httpGetToStream(hc, url, httpHeaders, StreamRDFLib.graph(graph));
+//            // Alt.
+//            try ( QExec qExec = QueryExecutionHTTP
+//                    .newBuilder()
+//                    .acceptHeader(WebContent.contentTypeNTriples)
+//                    .queryString(queryString)
+//                    .build() ) {
+////                    // ?? ResultSet.stream(Binding)
+////                    qExec.execSelect().asBindings().forEachRemaining(r->{ graph.add(r.get(s), r.get(p), r.get(o)));
+//            }
 //            return graph;
         }
 

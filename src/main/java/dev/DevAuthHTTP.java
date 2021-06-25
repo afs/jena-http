@@ -25,6 +25,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.time.Duration;
 
+import org.seaborne.qexec.QueryExecutionAdapter;
 import org.apache.jena.atlas.lib.DateTimeUtils;
 import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.atlas.web.AuthScheme;
@@ -44,6 +45,8 @@ import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.security.UserStore;
 import org.seaborne.http.*;
 import org.seaborne.http.RegistryServiceModifier.RequestModifer;
+import org.seaborne.qexec.QExec;
+import org.seaborne.unused.QueryExecutionHTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,13 +141,14 @@ public class DevAuthHTTP {
                 .connectTimeout(Duration.ofSeconds(10))
                 .authenticator(authenticator)
                 .build();
+            QueryExecutionAdapter.adapt(null);
             for ( var qs : x ) {
-                try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
+                try ( QExec qexec = QExecHTTP.newBuilder()
                     .httpClient(hc)
                     .service("http://localhost:3030/ds/query")
                     .queryString(qs)
                     .build()) {
-                    QueryExecUtils.executeQuery(qexec);
+                    QueryExecUtils.executeQuery(QueryExecutionAdapter.adapt(qexec));
                 }
             }
         });

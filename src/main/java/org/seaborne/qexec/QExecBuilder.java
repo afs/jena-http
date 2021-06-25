@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.wip;
+package org.seaborne.qexec;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -84,10 +84,10 @@ public class QExecBuilder {
         return this;
     }
 
-    public QExecBuilder dataset(Dataset dataset) {
-        this.dataset = dataset.asDatasetGraph();
-        return this;
-    }
+//    public QExecBuilder dataset(Dataset dataset) {
+//        this.dataset = dataset.asDatasetGraph();
+//        return this;
+//    }
 
     public QExecBuilder context(Context context) {
         this.context = context;
@@ -229,7 +229,7 @@ public class QExecBuilder {
         if ( !query.isAskType() )
             throw new QueryExecException("Attempt to execute ASK for a "+query.queryType()+" query");
         try ( QExec qExec = build() ) {
-            return qExec.execAsk();
+            return qExec.ask();
         }
     }
 }

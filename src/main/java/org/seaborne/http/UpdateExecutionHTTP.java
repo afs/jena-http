@@ -41,14 +41,14 @@ import org.seaborne.improvements.UpdateExecution;
 
 public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ UpdateExecution {
 
-    enum SendMode {
+    enum UpdateSendMode {
         // POST HTML forms (update=...)
         asPostForm,
         // POST application/sparql-update
         asPostBody
         }
 
-    /*package*/static SendMode defaultSendMode = SendMode.asPostBody;
+    /*package*/static UpdateSendMode defaultSendMode = UpdateSendMode.asPostBody;
 
     public static UpdateExecutionHTTPBuilder newBuilder() { return new UpdateExecutionHTTPBuilder(); }
 
@@ -58,7 +58,7 @@ public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ Upd
     private final String updateString;
     private final Map<String, String> httpHeaders;
     private final HttpClient httpClient;
-    private final SendMode sendMode;
+    private final UpdateSendMode sendMode;
     private final Params params;
     private final List<String> usingGraphURIs;
     private final List<String> usingNamedGraphURIs;
@@ -67,7 +67,7 @@ public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ Upd
                                     HttpClient httpClient, Params params,
                                     List<String> usingGraphURIs,
                                     List<String> usingNamedGraphURIs,
-                                    Map<String, String> httpHeaders, SendMode sendMode) {
+                                    Map<String, String> httpHeaders, UpdateSendMode sendMode) {
         this.context = ARQ.getContext().copy();
         this.service = serviceURL;
         this.update = update;

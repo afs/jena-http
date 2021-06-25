@@ -40,6 +40,7 @@ import org.apache.jena.sparql.core.Quad;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.seaborne.unused.QueryExecutionHTTP;
 
 /**
  * Tests for {@link QueryExecutionHTTP} with no authentication.

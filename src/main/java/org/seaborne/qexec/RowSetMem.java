@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.wip;
+package org.seaborne.qexec;
 
 import java.util.ArrayList ;
 import java.util.List ;

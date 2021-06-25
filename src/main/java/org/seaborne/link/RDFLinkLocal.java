@@ -38,6 +38,7 @@ import org.apache.jena.sparql.graph.GraphReadOnly;
 import org.apache.jena.system.Txn;
 import org.apache.jena.update.UpdateExecutionFactory;
 import org.apache.jena.update.UpdateRequest;
+import org.seaborne.qexec.QExec;
 
 /**
  * Implement of {@link RDFConnection} over a {@link Dataset} in the same JVM.
@@ -70,10 +71,10 @@ public class RDFLinkLocal implements RDFLink {
     }
 
     @Override
-    public QueryExecution query(Query query) {
+    public QExec query(Query query) {
         checkOpen();
         // There is no point doing this in a transaction because the QueryExecution is passed out.
-        return QueryExecutionFactory.create(query, dataset);
+        return QExec.create().query(query).dataset(dataset).build();
     }
 
     @Override

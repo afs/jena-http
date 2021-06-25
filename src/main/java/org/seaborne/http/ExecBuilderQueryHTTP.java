@@ -18,83 +18,86 @@
 
 package org.seaborne.http;
 
-import static org.seaborne.http.HttpLib.copyArray;
-
 import java.net.http.HttpClient;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryException;
 import org.apache.jena.sparql.engine.http.Params;
-import org.seaborne.http.QueryExecutionHTTP.SendMode;
+import org.apache.jena.sys.JenaSystem;
 
-public class QueryExecutionHTTPBuilder {
-    private String serviceURL = null;
-    private Query query = null;
-    private String queryString = null;
-    private HttpClient httpClient = null;
-    private Params params = new Params();
+/** Execution builder for remote queries. */
+public abstract class ExecBuilderQueryHTTP<X, Y> {
+
+    static { JenaSystem.init(); }
+
+    protected String serviceURL = null;
+    protected Query query = null;
+    protected String queryString = null;
+    protected HttpClient httpClient = null;
+    protected Params params = new Params();
     // Accept: Handled as special case because the defaults varies by query type.
-    private String acceptHeader;
-    private boolean allowCompression;
-    private Map<String, String> httpHeaders = new HashMap<>();
-    private long timeout = -1;
-    private TimeUnit timeoutUnit = null;
+    protected String acceptHeader;
+    protected boolean allowCompression;
+    protected Map<String, String> httpHeaders = new HashMap<>();
+    protected long timeout = -1;
+    protected TimeUnit timeoutUnit = null;
 
-    private int urlLimit = HttpEnv.urlLimit;
-    private SendMode sendMode = QueryExecutionHTTP.defaultSendMode;
-    private List<String> defaultGraphURIs = new ArrayList<>();
-    private List<String> namedGraphURIs = new ArrayList<>();
+    protected int urlLimit = HttpEnv.urlLimit;
+    protected QuerySendMode sendMode = QuerySendMode.systemtDefault;
+    protected List<String> defaultGraphURIs = new ArrayList<>();
+    protected List<String> namedGraphURIs = new ArrayList<>();
 
-    public QueryExecutionHTTPBuilder() {}
+    public ExecBuilderQueryHTTP() {}
+
+    protected abstract Y thisBuilder();
 
     /** Set the URL of the query endpoint. */
-    public QueryExecutionHTTPBuilder service(String serviceURL) {
+    public Y service(String serviceURL) {
         this.serviceURL = Objects.requireNonNull(serviceURL);
-        return this;
+        return thisBuilder();
     }
 
     /** Set the query - this also sets the query string to agree with the query argument. */
-    public QueryExecutionHTTPBuilder query(Query query) {
+    public Y query(Query query) {
         this.query = Objects.requireNonNull(query);
         this.queryString = query.toString();
-        return this;
+        return thisBuilder();
     }
 
     /** Set the query string - this also clears any Query already set. */
-    public QueryExecutionHTTPBuilder queryString(String queryString) {
+    public Y queryString(String queryString) {
         this.query = null;
         this.queryString = Objects.requireNonNull(queryString);
-        return this;
+        return thisBuilder();
     }
 
-    public QueryExecutionHTTPBuilder addDefaultGraphURI(String uri) {
+    public Y addDefaultGraphURI(String uri) {
         if (this.defaultGraphURIs == null)
             this.defaultGraphURIs = new ArrayList<>();
         this.defaultGraphURIs.add(uri);
-        return this;
+        return thisBuilder();
     }
 
-    public QueryExecutionHTTPBuilder addNamedGraphURI(String uri) {
+    public Y addNamedGraphURI(String uri) {
         if (this.namedGraphURIs == null)
             this.namedGraphURIs = new ArrayList<>();
         this.namedGraphURIs.add(uri);
-        return this;
+        return thisBuilder();
     }
 
-    public QueryExecutionHTTPBuilder httpClient(HttpClient httpClient) {
+    public Y httpClient(HttpClient httpClient) {
         this.httpClient = Objects.requireNonNull(httpClient);
-        return this;
+        return thisBuilder();
     }
 
     /**
      * Send the query using HTTP POST with HTML form-encoded data.
      * If set false, the URL limit still applies.
      */
-    public QueryExecutionHTTPBuilder sendHtmlForm(boolean htmlForm) {
-        this.sendMode =  htmlForm ? SendMode.asPostForm : SendMode.asGetWithLimit;
-        return this;
+    public Y sendHtmlForm(boolean htmlForm) {
+        this.sendMode =  htmlForm ? QuerySendMode.asPostForm : QuerySendMode.asGetWithLimit;
+        return thisBuilder();
     }
 
     /**
@@ -111,27 +114,27 @@ public class QueryExecutionHTTPBuilder {
      * @see #useGet
      * @see #postQuery
      */
-    public QueryExecutionHTTPBuilder useGetWithLimit() {
-        this.sendMode = SendMode.asGetWithLimit;
-        return this;
+    public Y useGetWithLimit() {
+        this.sendMode = QuerySendMode.asGetWithLimit;
+        return thisBuilder();
     }
 
     /**
      * Send the query using HTTP GET and the HTTP URL query string regardless of length.
      * By default, queries with a log URL are sent in an HTTP form with POST.
      */
-    public QueryExecutionHTTPBuilder useGet() {
-        this.sendMode = SendMode.asGetAlways;
-        return this;
+    public Y useGet() {
+        this.sendMode = QuerySendMode.asGetAlways;
+        return thisBuilder();
     }
 
     /**
      * Send the query request using POST with a Content-Type of as a
      * "application/sparql-query"
      */
-    public QueryExecutionHTTPBuilder postQuery() {
-        this.sendMode = SendMode.asPostBody;
-        return this;
+    public Y postQuery() {
+        this.sendMode = QuerySendMode.asPostBody;
+        return thisBuilder();
     }
 
     /**
@@ -147,47 +150,47 @@ public class QueryExecutionHTTPBuilder {
      * <p>
      * See also {@link #sendHtmlForm(boolean)} to send a request as an HTML form.
      */
-    public QueryExecutionHTTPBuilder urlGetLimit(int urlLimit) {
+    public Y urlGetLimit(int urlLimit) {
         this.urlLimit = urlLimit;
-        return this;
+        return thisBuilder();
     }
 
-    public QueryExecutionHTTPBuilder param(String name) {
+    public Y param(String name) {
         Objects.requireNonNull(name);
         this.params.addParam(name);
-        return this;
+        return thisBuilder();
     }
 
-    public QueryExecutionHTTPBuilder param(String name, String value) {
+    public Y param(String name, String value) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(value);
         this.params.addParam(name, value);
-        return this;
+        return thisBuilder();
     }
 
-    public QueryExecutionHTTPBuilder acceptHeader(String acceptHeader) {
+    public Y acceptHeader(String acceptHeader) {
         Objects.requireNonNull(acceptHeader);
         this.acceptHeader = acceptHeader;
-        return this;
+        return thisBuilder();
     }
 
-    public QueryExecutionHTTPBuilder httpHeader(String headerName, String headerValue) {
+    public Y httpHeader(String headerName, String headerValue) {
         Objects.requireNonNull(headerName);
         Objects.requireNonNull(headerValue);
         this.httpHeaders.put(headerName, headerValue);
-        return this;
+        return thisBuilder();
     }
 
-    public QueryExecutionHTTPBuilder allowCompression(boolean allowCompression) {
+    public Y allowCompression(boolean allowCompression) {
         this.allowCompression = allowCompression;
-        return this;
+        return thisBuilder();
     }
 
     /**
      * Set a timeout to the overall overall operation.
      * Time-to-connect can be set with a custom {@link HttpClient} - see {@link java.net.http.HttpClient.Builder#connectTimeout(java.time.Duration)}.
      */
-    public QueryExecutionHTTPBuilder timeout(long timeout, TimeUnit timeoutUnit) {
+    public Y timeout(long timeout, TimeUnit timeoutUnit) {
         if ( timeout < 0 ) {
             this.timeout = -1;
             this.timeoutUnit = null;
@@ -195,19 +198,8 @@ public class QueryExecutionHTTPBuilder {
             this.timeout = timeout;
             this.timeoutUnit = Objects.requireNonNull(timeoutUnit);
         }
-        return this;
+        return thisBuilder();
     }
 
-    public QueryExecutionHTTP build() {
-        Objects.requireNonNull(serviceURL, "No service URL");
-        if ( queryString == null && query == null )
-            throw new QueryException("No query for QueryExecutionHTTP");
-        HttpClient hClient = HttpEnv.getHttpClient(serviceURL, httpClient);
-        return new QueryExecutionHTTP(serviceURL, query, queryString, urlLimit,
-                                      hClient, new HashMap<>(httpHeaders), new Params(params),
-                                      copyArray(defaultGraphURIs),
-                                      copyArray(namedGraphURIs),
-                                      sendMode, acceptHeader, allowCompression,
-                                      timeout, timeoutUnit);
-    }
+    public abstract X build();
 }

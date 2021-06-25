@@ -24,7 +24,6 @@ import java.nio.charset.StandardCharsets;
 import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
@@ -36,7 +35,9 @@ import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.seaborne.http.GSP;
 import org.seaborne.http.HttpOp2;
-import org.seaborne.http.QueryExecutionHTTP;
+import org.seaborne.http.QExecHTTP;
+import org.seaborne.qexec.QExec;
+import org.seaborne.qexec.QueryExecutionAdapter;
 
 public class DevHTTP {
     static { LogCtl.setLog4j2(); }
@@ -100,13 +101,23 @@ public class DevHTTP {
 //            , "CONSTRUCT WHERE { ?s ?p ?o }"
         };
 
-        for ( var qs : x ) {
-            try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
-                    .service("http://localhost:3030/ds/query")
-                    .queryString(qs)
-                    .build()) {
-                QueryExecUtils.executeQuery(qexec);
-            }
-        }
+//        for ( var qs : x ) {
+//            try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
+//                    .service("http://localhost:3030/ds/query")
+//                    .queryString(qs)
+//                    .build()) {
+//                QueryExecUtils.executeQuery(qexec);
+//            }
+//        }
+
+      for ( var qs : x ) {
+      try ( QExec qexec = QExecHTTP.newBuilder()
+              .service("http://localhost:3030/ds/query")
+              .queryString(qs)
+              .build()) {
+          QueryExecUtils.executeQuery(QueryExecutionAdapter.adapt(qexec));
+      }
+  }
+
     }
 }

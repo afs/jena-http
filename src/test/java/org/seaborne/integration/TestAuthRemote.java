@@ -44,6 +44,7 @@ import org.seaborne.http.RegistryServiceModifier.RequestModifer;
 import org.seaborne.link.RDFLink;
 import org.seaborne.link.RDFLinkFactory;
 import org.seaborne.link.RDFLinkRemote;
+import org.seaborne.unused.QueryExecutionHTTP;
 
 /**
  * This is more than just RDFLinkRemote - it covers the components

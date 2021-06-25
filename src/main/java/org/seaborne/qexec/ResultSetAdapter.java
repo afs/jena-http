@@ -16,20 +16,28 @@
  * limitations under the License.
  */
 
-package org.seaborne.improvements;
+package org.seaborne.qexec;
 
-import org.seaborne.unused.QueryExecutionHTTP;
-import org.seaborne.unused.QueryExecutionHTTPBuilder;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.ResultSetStream;
 
-public class QE {
+public class ResultSetAdapter extends ResultSetStream /*implements ResultSet*/ {
 
-    /** @Deprecated */
-    public static QueryExecutionHTTPBuilder remote() {
-        return QueryExecutionHTTP.newBuilder();
+    private final RowSet rowSet;
+
+    public ResultSetAdapter(RowSet rowSet) {
+        super(Var.varNames(rowSet.getResultVars()),
+              ModelFactory.createDefaultModel(),
+              rowSet);
+        this.rowSet = rowSet;
     }
 
-    public static QueryExecutionLocalBuilder local() {
-        return QueryExecutionLocalBuilder.newBuilder();
+    public ResultSetAdapter(RowSet rowSet, Model m) {
+        super(Var.varNames(rowSet.getResultVars()), m, rowSet);
+        this.rowSet = rowSet;
     }
+
+    public RowSet get() { return rowSet; }
 }
-

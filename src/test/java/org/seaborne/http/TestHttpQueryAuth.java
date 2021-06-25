@@ -42,6 +42,7 @@ import org.eclipse.jetty.security.UserStore;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.seaborne.unused.QueryExecutionHTTP;
 
 public class TestHttpQueryAuth {
     // Superseded by TestAuthRemote
