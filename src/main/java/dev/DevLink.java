@@ -21,6 +21,9 @@ package dev;
 import org.apache.jena.atlas.web.WebLib;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.fuseki.system.FusekiLogging;
+import org.apache.jena.link.RDFConnectionAdapter;
+import org.apache.jena.link.RDFLink;
+import org.apache.jena.link.RDFLinkFactory;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -30,9 +33,6 @@ import org.apache.jena.riot.RIOT;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.util.QueryExecUtils;
-import org.seaborne.link.RDFConnectionAdapter;
-import org.seaborne.link.RDFLink;
-import org.seaborne.link.RDFLinkFactory;
 
 public class DevLink {
     static {

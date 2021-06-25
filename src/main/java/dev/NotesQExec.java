@@ -25,6 +25,9 @@ public class NotesQExec {
     // [QExec]
     // in "exec"
 
+    // ** Not closing?
+    // *8 Wrong conneg
+
     // [x] QExec is the Node level version. QExec.Builder.
     // [x] QueryExecutionAdapter -- concrete adapter, not abstract.
     // [x] Use rewrite for initial bindings.
@@ -36,20 +39,50 @@ public class NotesQExec {
     // [ ] No RowSetMgr: Reader/Write set
     //     RowSetformatter - text and SSE only.
 
+    // [ ] Eliminate choosePort.
+
     // ResultsWriter.builder.prefixMap(PrefixMap) - only needed for text
 
-    // [ ] ResultsReaders, ResultWriter
+    // ** Impact
+    // * No use of Apache httpClient - needs upgrading anyway
+    // * Old use of QueryEngineHTTP (deprecate now, then delete).
+    // *    QueryEngineHTTP --QueryExecutionHTTPBuilder
+    // * Deprecation of QueryExecution.setTimeout
+    // * Switch to rewrite for initial bindings.
+
+    // If big bang:
+    //   Just leave QueryEngineHTTP as legacy.
+    //   Using org.apache.http.client
+
+
+    // [ ] ResultsReaders, ResultsWriter
+
+    // Remove/deprecate: org.apache.jena.sparql.engine.http.Params;
 
     // Migration
     // [ ] ResultSet adapter: new ResultSetAdapter -> ResultSet.adapt(RowSet rowSet)
     // [ ]    Or like "Prefxes" --> Results? SPARQL? GPI? Adapt.
     // [ ] ResultSetWriter -> RowSetWriter + default method, prefixes.
     // [ ] ResultSetReader/Writer to work on RowSets
-    // [ ] QueryExecution setter getter : deprecate in favour of builder.
-    // [ ] Merge WebContent2 into WebContent (now?)
+    // [ ] QueryExecution setter, getter : deprecate in favour of builder.
+    // [x] Merge WebContent2 into WebContent (now?)
     // [ ] getLink in RDFConnection.
     // [ ] Remove RDFConnection(Others)
     // [ ] Fuseki tests isFuseki
+    // [ ] G2 merge to G
+    // QueryExecUtils.executeQuery to work on GPI. Deprectae rest. Redo.
+
+    // Destination:
+    // [no] New module jena-http? jena-gpi? Replaces RDFConnection?
+
+    // Tests QueryExecutionHTTP (basic only needed)
+
+    // jena-arq:
+    //   org.apache.jena.http - HttpEnv, HttpLib, HttpOp2 (rename), HttpRDF?
+    //   org.apache.jena.sparql.http  - execHTTP, GSP registries.
+
+    // jena-rdfconnection:
+    //    org.apache.jena.link (rdflink)
 
     // [ ] QueryExecUtils
     // [ ] Service.java
@@ -87,7 +120,11 @@ public class NotesQExec {
     // Twin with "buffer, send with Content-length" option in Fuseki?
     //   Still an issue if client does not read the data.
 
-    // [ ] QueySendMode handling : switch from GET topPOST application/sparql-query not form.
+    // [x] QuerySendMode handling : switch from GET to POST application/sparql-query not form.
+    //     Already does this.
+    // [ ] QuerySendMode.getOrPOST
+    //     asGetWithLimit => asGetOrPostForm; asGetOrPostBody
+    //     Default asGetWithLimitForm => asGetWithLimitBody
 
 /*
     Packages:

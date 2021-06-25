@@ -16,21 +16,11 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.apache.jena.queryexec;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+public interface RowSetRewindable extends RowSet {
+    public void reset() ;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
-})
-public class TC_NewLink {
-
+    /** return the number of solutions */
+    public long size() ;
 }
-

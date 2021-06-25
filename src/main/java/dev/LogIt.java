@@ -62,6 +62,5 @@ public class LogIt {
         });
         return sj.toString();
     }
-
 }
 

@@ -16,21 +16,28 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.apache.jena.queryexec;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.engine.ResultSetStream;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
-})
-public class TC_NewLink {
+public class ResultSetAdapter extends ResultSetStream /*implements ResultSet*/ {
 
+    private final RowSet rowSet;
+
+    public ResultSetAdapter(RowSet rowSet) {
+        super(Var.varNames(rowSet.getResultVars()),
+              ModelFactory.createDefaultModel(),
+              rowSet);
+        this.rowSet = rowSet;
+    }
+
+    public ResultSetAdapter(RowSet rowSet, Model m) {
+        super(Var.varNames(rowSet.getResultVars()), m, rowSet);
+        this.rowSet = rowSet;
+    }
+
+    public RowSet get() { return rowSet; }
 }
-

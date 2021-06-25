@@ -16,21 +16,21 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.apache.jena.link;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
-})
-public class TC_NewLink {
+public class TestRDFLinkLocalTxnMem extends AbstractTestRDFLink {
 
+    @Override
+    protected boolean supportsAbort() { return true; }
+
+    @Override
+    protected RDFLink link() {
+        // Full transactional in-memory dataset.
+        DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
+        return RDFLinkFactory.connect(dsg);
+    }
 }
 

@@ -25,7 +25,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.time.Duration;
 
-import org.seaborne.qexec.QueryExecutionAdapter;
 import org.apache.jena.atlas.lib.DateTimeUtils;
 import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.atlas.web.AuthScheme;
@@ -33,8 +32,11 @@ import org.apache.jena.fuseki.auth.Auth;
 import org.apache.jena.fuseki.jetty.JettyLib;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.http.*;
+import org.apache.jena.http.RegistryServiceModifier.RequestModifer;
 import org.apache.jena.query.ARQ;
-import org.apache.jena.query.QueryExecution;
+import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExecutionAdapter;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.web.HttpNames;
@@ -43,10 +45,6 @@ import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.sparql.util.QueryExecUtils;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.security.UserStore;
-import org.seaborne.http.*;
-import org.seaborne.http.RegistryServiceModifier.RequestModifer;
-import org.seaborne.qexec.QExec;
-import org.seaborne.unused.QueryExecutionHTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,12 +155,12 @@ public class DevAuthHTTP {
         LOG.info("-- Query with HTTP header");
         auth(()->{
             for ( var qs : x ) {
-                try ( QueryExecution qexec = QueryExecutionHTTP.newBuilder()
+                try ( QExec qexec = QExecHTTP.newBuilder()
                     .service("http://localhost:3030/ds/query")
                     .httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
                     .queryString(qs)
                     .build()) {
-                    QueryExecUtils.executeQuery(qexec);
+                    QueryExecUtils.executeQuery(QueryExecutionAdapter.adapt(qexec));
                 }
             }
         });

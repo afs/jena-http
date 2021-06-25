@@ -19,16 +19,16 @@
 package dev;
 
 import org.apache.jena.fuseki.system.FusekiLogging;
+import org.apache.jena.link.RDFLink;
+import org.apache.jena.link.RDFLinkFactory;
 import org.apache.jena.query.*;
+import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.RowSet;
+import org.apache.jena.queryexec.RowSetFormatter;
 import org.apache.jena.riot.RIOT;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sys.JenaSystem;
-import org.seaborne.link.RDFLink;
-import org.seaborne.link.RDFLinkFactory;
-import org.seaborne.qexec.QExec;
-import org.seaborne.qexec.RowSet;
-import org.seaborne.qexec.RowSetFormatter;
 
 public class DevQExec {
     static {

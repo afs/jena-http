@@ -25,6 +25,9 @@ import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.graph.Node;
+import org.apache.jena.http.GSP;
+import org.apache.jena.link.RDFLink;
+import org.apache.jena.link.RDFLinkFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
@@ -37,9 +40,6 @@ import org.apache.jena.sparql.modify.request.UpdateDataInsert;
 import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
-import org.seaborne.http.GSP;
-import org.seaborne.link.RDFLink;
-import org.seaborne.link.RDFLinkFactory;
 
 public class DevGSPOverUpdate {
     // GSP POST as INSERT DATA.
@@ -56,7 +56,6 @@ public class DevGSPOverUpdate {
         UpdateRequest req2 = datasetGSP();
         System.out.println(req2);
     }
-
 
     private static final Var s = Var.alloc("s");
     private static final Var p = Var.alloc("s");

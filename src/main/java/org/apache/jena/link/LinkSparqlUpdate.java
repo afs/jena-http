@@ -16,21 +16,37 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.apache.jena.link;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.apache.jena.sparql.core.Transactional;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateRequest;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
-})
-public class TC_NewLink {
+/** SPARQL Update Operations on a connection.
+ *
+ * @see RDFLink
+ */
+public interface LinkSparqlUpdate extends Transactional, AutoCloseable
+{
+    /** Execute a SPARQL Update.
+     *
+     * @param update
+     */
+    public void update(Update update);
 
+    /** Execute a SPARQL Update.
+     *
+     * @param update
+     */
+    public void update(UpdateRequest update);
+
+    /** Execute a SPARQL Update.
+     *
+     * @param updateString
+     */
+    public void update(String updateString);
+
+    /** Close this connection. */
+    @Override public void close();
 }
 

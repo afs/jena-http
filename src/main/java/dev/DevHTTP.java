@@ -24,6 +24,11 @@ import java.nio.charset.StandardCharsets;
 import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
+import org.apache.jena.http.GSP;
+import org.apache.jena.http.HttpOp2;
+import org.apache.jena.http.QExecHTTP;
+import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExecutionAdapter;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
@@ -33,11 +38,6 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.util.QueryExecUtils;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
-import org.seaborne.http.GSP;
-import org.seaborne.http.HttpOp2;
-import org.seaborne.http.QExecHTTP;
-import org.seaborne.qexec.QExec;
-import org.seaborne.qexec.QueryExecutionAdapter;
 
 public class DevHTTP {
     static { LogCtl.setLog4j2(); }

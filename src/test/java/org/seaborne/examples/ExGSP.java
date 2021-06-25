@@ -24,6 +24,9 @@ import org.apache.jena.fuseki.system.FusekiLogging;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.http.GSP;
+import org.apache.jena.http.UpdateExecutionHTTP;
+import org.apache.jena.http.UpdateExecutionHTTPBuilder;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -31,9 +34,6 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.sse.SSE;
-import org.seaborne.http.GSP;
-import org.seaborne.http.UpdateExecutionHTTP;
-import org.seaborne.http.UpdateExecutionHTTPBuilder;
 
 public class ExGSP {
 

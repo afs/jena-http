@@ -18,17 +18,17 @@
 
 package org.seaborne.unused;
 
-import static org.seaborne.http.HttpLib.copyArray;
+import static org.apache.jena.http.HttpLib.copyArray;
 
 import java.net.http.HttpClient;
 import java.util.HashMap;
 import java.util.Objects;
 
+import org.apache.jena.http.ExecBuilderQueryHTTP;
+import org.apache.jena.http.HttpEnv;
 import org.apache.jena.query.QueryException;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.sparql.engine.http.Params;
-import org.seaborne.http.ExecBuilderQueryHTTP;
-import org.seaborne.http.HttpEnv;
 
 public class QueryExecutionHTTPBuilder extends ExecBuilderQueryHTTP<QueryExecution, QueryExecutionHTTPBuilder> {
 

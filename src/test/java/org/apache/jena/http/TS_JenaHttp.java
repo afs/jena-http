@@ -16,21 +16,20 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.apache.jena.http;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
+    TestHttpOp2.class
+    , TestHttpRDF.class
+    , TestGSP.class
+    , TestQueryExecHTTP.class
+    , TestQueryExecCleanServer.class
+    , TestHttpQueryAuth.class
+    , TestUpdateExecutionHTTP.class
 })
-public class TC_NewLink {
 
-}
-
+public class TS_JenaHttp { }

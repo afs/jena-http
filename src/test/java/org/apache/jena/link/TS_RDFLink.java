@@ -16,21 +16,19 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.apache.jena.link;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
+    // Other tests, for RDFLinkRemote and RDFLinkFuseki, are in jena-integration-tests
+    TestLocalIsolation.class
+    , TestRDFLinkLocalTxnMem.class
+    , TestRDFLinkLocalMRSW.class
+    , TestLibRDFLink.class
 })
-public class TC_NewLink {
 
-}
+public class TS_RDFLink {}
 

@@ -16,21 +16,26 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.apache.jena.http;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import java.util.Map;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
-})
-public class TC_NewLink {
+import org.apache.jena.sparql.engine.http.Params;
 
+/**
+ * A service registry is a set of actions to take to modify an HTTP request before
+ * sending it to a specific endpoint.
+ *
+ * The key can be a prefix which must end in "/"
+ */
+public class RegistryServiceModifier extends RegistryByServiceURL<RegistryServiceModifier.RequestModifer> {
+
+    /** Query string parameters and HTTP headers for inspection and modification. */
+    @FunctionalInterface
+    public interface RequestModifer { void modify(Params params, Map<String, String> httpHeaders) ; }
+
+    private static RegistryServiceModifier singleton = new RegistryServiceModifier();
+    public static RegistryServiceModifier get() { return singleton; }
+
+    public RegistryServiceModifier() { }
 }
-

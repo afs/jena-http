@@ -16,21 +16,25 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.apache.jena.http;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+/*8 Enum of different ways to send a SPARQL query over HTTP */
+public enum QuerySendMode {
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
-})
-public class TC_NewLink {
+    // Use HTTP GET when below the lkength limit else POST an HTML Form encoding
+    asGetWithLimitForm,
 
+    // Use HTTP GET when below the length limit else POST the query as application/sparql-query
+    asGetWithLimitBody,
+
+    // Use GET regardless
+    asGetAlways,
+
+    // Use POST HTML Form regardless
+    asPostForm,
+
+    // POST and application/sparql-query
+    asPostBody;
+
+    public static QuerySendMode systemtDefault = QuerySendMode.asGetWithLimitForm;
 }
-

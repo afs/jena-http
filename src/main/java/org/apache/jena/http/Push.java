@@ -16,21 +16,23 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.apache.jena.http;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import static org.apache.jena.riot.web.HttpNames.METHOD_PATCH;
+import static org.apache.jena.riot.web.HttpNames.METHOD_POST;
+import static org.apache.jena.riot.web.HttpNames.METHOD_PUT;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
-})
-public class TC_NewLink {
+/** Enum for HTTP push operations */
+enum Push {
+    // Less use of Strings in method arguments.
+    PUT(METHOD_PUT), POST(METHOD_POST), PATCH(METHOD_PATCH);
+    private final String method;
 
+    Push(String method) {
+        this.method = method;
+    }
+
+    public String method() {
+        return method;
+    }
 }
-
