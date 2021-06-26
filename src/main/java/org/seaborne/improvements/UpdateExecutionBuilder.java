@@ -30,7 +30,7 @@ import org.apache.jena.update.*;
 /**
  * Build a {@link UpdateProcessor}.
  */
-public class UpdateExecutionLocalBuilder {
+public class UpdateExecutionBuilder {
 
     static { JenaSystem.init(); }
 
@@ -39,35 +39,35 @@ public class UpdateExecutionLocalBuilder {
     private Binding initialBinding;
     private Context context = null;
 
-    public static UpdateExecutionLocalBuilder newBuilder() {
-        return new UpdateExecutionLocalBuilder();
+    public static UpdateExecutionBuilder newBuilder() {
+        return new UpdateExecutionBuilder();
     }
 
-    public UpdateExecutionLocalBuilder() {}
+    public UpdateExecutionBuilder() {}
 
-    public UpdateExecutionLocalBuilder add(UpdateRequest update) {
+    public UpdateExecutionBuilder add(UpdateRequest update) {
         this.updateRequest = update;
         update.forEach(updateRequest::add);
         return this;
     }
 
-    public UpdateExecutionLocalBuilder add(Update update) {
+    public UpdateExecutionBuilder add(Update update) {
         this.updateRequest.add(update);
         return this;
     }
 
-    public UpdateExecutionLocalBuilder set(String updateStr) {
+    public UpdateExecutionBuilder set(String updateStr) {
         UpdateRequest req = UpdateFactory.create(updateStr, Syntax.syntaxARQ);
         add(req);
         return this;
     }
 
-    public UpdateExecutionLocalBuilder dataset(DatasetGraph dataset) {
+    public UpdateExecutionBuilder dataset(DatasetGraph dataset) {
         this.dataset = dataset;
         return this;
     }
 
-    public UpdateExecutionLocalBuilder context(Context context) {
+    public UpdateExecutionBuilder context(Context context) {
         this.context = context;
         return this;
     }

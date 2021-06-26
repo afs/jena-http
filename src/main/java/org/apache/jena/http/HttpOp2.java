@@ -32,7 +32,6 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
@@ -196,11 +195,7 @@ public class HttpOp2 {
         Objects.requireNonNull(url);
         acceptString = HttpLib.dft(acceptString, "*/*");
         URI uri = toRequestURI(url);
-        String formData =
-            params.pairs().stream()
-                .map(p->urlEncodeQueryString(p.getLeft())+"="+urlEncodeQueryString(p.getRight()))
-                .collect(Collectors.joining("&"));
-
+        String formData = params.httpString();
         HttpRequest request = HttpRequest.newBuilder()
             .uri(uri)
             .POST(BodyPublishers.ofString(formData))

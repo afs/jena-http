@@ -165,28 +165,28 @@ public class TestHttpOp2 {
     }
 
     @Test public void httpPostForm_01() {
-        Params params = new Params().addParam("query", "ASK{}");
+        Params params = Params.create().add("query", "ASK{}");
         HttpResponse<InputStream> response = HttpOp2.httpPostForm(sparqlURL(), params, WebContent.contentTypeResultsJSON);
         try ( InputStream in = response.body() ) {} catch (IOException e) { IO.exception(e); }
     }
 
     @Test public void httpPostForm_02() {
-        Params params = new Params().addParam("query", "ASK{}");
+        Params params = Params.create().add("query", "ASK{}");
         // Query to Update
         execWithHttpException(HttpSC.BAD_REQUEST_400,
                 () -> HttpOp2.httpPostForm(updateURL(), params, WebContent.contentTypeResultsJSON));
     }
 
     @Test public void httpPostForm_03() {
-        Params params = new Params().addParam("update", "CLEAR ALL");
+        Params params = Params.create().add("update", "CLEAR ALL");
         // Update to Query
         execWithHttpException(HttpSC.BAD_REQUEST_400,
             ()->HttpOp2.httpPostForm(queryURL(), params, "*/*"));
     }
 
     @Test public void httpPostForm_04() {
-        Params params = new Params().addParam("update", "CLEAR ALL");
-        // Update to update
+        Params params = Params.create().add("update", "CLEAR ALL");
+        // Update request to update endpoint.
         HttpOp2.httpPostForm(updateURL(), params, "*/*");
     }
 

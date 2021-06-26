@@ -21,7 +21,6 @@ package org.apache.jena.integration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.jena.atlas.web.WebLib;
 import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
@@ -49,10 +48,10 @@ public class TestRDFLinkFusekiBinary {
         Graph graph = GraphFactory.createDefaultGraph();
         graph.add(triple);
 
-        int PORT = WebLib.choosePort();
-        FusekiServer server = createFusekiServer(PORT).build().start();
+        FusekiServer server = createFusekiServer().build().start();
+        int port = server.getPort();
         try {
-            String dsURL = "http://localhost:"+PORT+"/ds" ;
+            String dsURL = "http://localhost:"+port+"/ds" ;
             assertTrue(Fuseki.isFuseki(dsURL));
 
             RDFLinkRemoteBuilder builder = RDFLinkFuseki.newBuilder().destination(dsURL);
@@ -110,11 +109,11 @@ public class TestRDFLinkFusekiBinary {
     }
 
 
-    private static FusekiServer.Builder createFusekiServer(int PORT) {
+    private static FusekiServer.Builder createFusekiServer() {
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
         return
             FusekiServer.create().loopback(true)
-                .port(PORT)
+                .port(0)
                 //.setStaticFileBase("/home/afs/ASF/jena-fuseki-cmds/sparqler")
                 .add("/ds", dsg)
                 //.setVerbose(true)

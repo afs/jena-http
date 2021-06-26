@@ -42,7 +42,7 @@ import org.apache.jena.sys.JenaSystem;
 /**
  * Query Execution for local datasets - builder style.
  */
-public class QueryExecutionLocalBuilder {
+public class QueryExecutionBuilder {
 
     static { JenaSystem.init(); }
 
@@ -51,8 +51,8 @@ public class QueryExecutionLocalBuilder {
     // Improvements to QueryExecutionBuilder
 
     /** Create a new builder of {@link QueryExecution} for a local dataset. */
-    public static QueryExecutionLocalBuilder newBuilder() {
-        QueryExecutionLocalBuilder builder = new QueryExecutionLocalBuilder();
+    public static QueryExecutionBuilder newBuilder() {
+        QueryExecutionBuilder builder = new QueryExecutionBuilder();
         return builder;
     }
 
@@ -65,42 +65,42 @@ public class QueryExecutionLocalBuilder {
     private long         timeout2           = -1;
     private TimeUnit     timeoutTimeUnit2   = null;
 
-    public QueryExecutionLocalBuilder query(Query query) {
+    public QueryExecutionBuilder query(Query query) {
         this.query = query;
         return this;
     }
 
-    public QueryExecutionLocalBuilder query(String queryString) {
+    public QueryExecutionBuilder query(String queryString) {
         query(queryString, Syntax.syntaxARQ);
         return this;
     }
 
-    public QueryExecutionLocalBuilder query(String queryString, Syntax syntax) {
+    public QueryExecutionBuilder query(String queryString, Syntax syntax) {
         this.query = QueryFactory.create(queryString, syntax);
         return this;
     }
 
-    public QueryExecutionLocalBuilder dataset(DatasetGraph dsg) {
+    public QueryExecutionBuilder dataset(DatasetGraph dsg) {
         this.dataset = dsg;
         return this;
     }
 
-    public QueryExecutionLocalBuilder dataset(Dataset dataset) {
+    public QueryExecutionBuilder dataset(Dataset dataset) {
         this.dataset = dataset.asDatasetGraph();
         return this;
     }
 
-    public QueryExecutionLocalBuilder context(Context context) {
+    public QueryExecutionBuilder context(Context context) {
         this.context = context;
         return this;
     }
 
-    public QueryExecutionLocalBuilder initialBinding(Binding binding) {
+    public QueryExecutionBuilder initialBinding(Binding binding) {
         this.initialBinding = binding;
         return this;
     }
 
-    public QueryExecutionLocalBuilder timeout(long value, TimeUnit timeUnit) {
+    public QueryExecutionBuilder timeout(long value, TimeUnit timeUnit) {
         this.timeout1 = value;
         this.timeoutTimeUnit1 = timeUnit;
         this.timeout2 = value;
@@ -108,13 +108,13 @@ public class QueryExecutionLocalBuilder {
         return this;
     }
 
-    public QueryExecutionLocalBuilder initialTimeout(long value, TimeUnit timeUnit) {
+    public QueryExecutionBuilder initialTimeout(long value, TimeUnit timeUnit) {
         this.timeout1 = value;
         this.timeoutTimeUnit1 = timeUnit;
         return this;
     }
 
-    public QueryExecutionLocalBuilder overallTimeout(long value, TimeUnit timeUnit) {
+    public QueryExecutionBuilder overallTimeout(long value, TimeUnit timeUnit) {
         this.timeout2 = value;
         this.timeoutTimeUnit2 = timeUnit;
         return this;
@@ -139,7 +139,7 @@ public class QueryExecutionLocalBuilder {
 
         QueryEngineFactory f = QueryEngineRegistry.get().find(query, dataset, cxt);
         if ( f == null ) {
-            Log.warn(QueryExecutionLocalBuilder.class, "Failed to find a QueryEngineFactory");
+            Log.warn(QueryExecutionBuilder.class, "Failed to find a QueryEngineFactory");
             return null;
         }
 

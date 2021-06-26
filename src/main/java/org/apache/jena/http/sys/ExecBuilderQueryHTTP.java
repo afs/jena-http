@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.query.Query;
-import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sys.JenaSystem;
 
 /** Execution builder for remote queries. */
@@ -36,7 +35,7 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
     protected Query query = null;
     protected String queryString = null;
     protected HttpClient httpClient = null;
-    protected Params params = new Params();
+    protected Params params = Params.create();
     // Accept: Handled as special case because the defaults varies by query type.
     protected String acceptHeader;
     protected boolean allowCompression;
@@ -92,14 +91,29 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
         return thisBuilder();
     }
 
+//    /**
+//     * Send the query using HTTP POST with HTML form-encoded data.
+//     * If set false, the URL limit still applies.
+//     */
+//    public Y sendHtmlForm(boolean htmlForm) {
+//        this.sendMode =  htmlForm ? QuerySendMode.asPostForm : QuerySendMode.asGetWithLimitBody;
+//        return thisBuilder();
+//    }
+
     /**
-     * Send the query using HTTP POST with HTML form-encoded data.
-     * If set false, the URL limit still applies.
+     * Choose how to send the query string over HTTP.
+     * <p>
+     * The default is {@code QuerySendMode.systemDefault} which is {@code QuerySendMode.asGetWithLimitBody} &ndash;
+     * send by HTTP GET and a query string unless too long (see {@link #urlLimit}), when it switch to
+     * POST and application/sparql-query".
+     *
+     * @see QuerySendMode
      */
-    public Y sendHtmlForm(boolean htmlForm) {
-        this.sendMode =  htmlForm ? QuerySendMode.asPostForm : QuerySendMode.asGetWithLimitBody;
+    public Y sendMode(QuerySendMode mode) {
+        this.sendMode = mode;
         return thisBuilder();
     }
+
 
     /**
      * Send the query using HTTP GET and the HTTP URL query string,
@@ -149,7 +163,7 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
      * See also {@link #postQuery} to send the request using HTTP POST with the
      * query in the POST body using {@code Content-Type} "application/sparql-query"
      * <p>
-     * See also {@link #sendHtmlForm(boolean)} to send a request as an HTML form.
+     * See also {@link #sendMode} to choose a specific "send" policy.
      */
     public Y urlGetLimit(int urlLimit) {
         this.urlLimit = urlLimit;
@@ -158,14 +172,14 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
 
     public Y param(String name) {
         Objects.requireNonNull(name);
-        this.params.addParam(name);
+        this.params.add(name);
         return thisBuilder();
     }
 
     public Y param(String name, String value) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(value);
-        this.params.addParam(name, value);
+        this.params.add(name, value);
         return thisBuilder();
     }
 

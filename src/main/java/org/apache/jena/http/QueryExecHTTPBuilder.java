@@ -26,7 +26,6 @@ import java.util.Objects;
 
 import org.apache.jena.query.QueryException;
 import org.apache.jena.queryexec.QueryExec;
-import org.apache.jena.sparql.engine.http.Params;
 
 public class QueryExecHTTPBuilder extends ExecBuilderQueryHTTP<QueryExec, QueryExecHTTPBuilder> {
 
@@ -41,7 +40,7 @@ public class QueryExecHTTPBuilder extends ExecBuilderQueryHTTP<QueryExec, QueryE
           throw new QueryException("No query for QueryExecHTTP");
       HttpClient hClient = HttpEnv.getHttpClient(serviceURL, httpClient);
       return new QueryExecHTTP(serviceURL, query, queryString, urlLimit,
-                           hClient, new HashMap<>(httpHeaders), new Params(params),
+                           hClient, new HashMap<>(httpHeaders), Params.create(params),
                            copyArray(defaultGraphURIs),
                            copyArray(namedGraphURIs),
                            sendMode, acceptHeader, allowCompression,

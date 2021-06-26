@@ -25,19 +25,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** A collection of parameters for protocol use. */
-
-/*package*/ class Params
+/** A collection of parameters for HTTP protocol use. */
+public class Params
 {
     // As seen.
-    private List<Param> paramList = new ArrayList<>() ;
+    private List<Param> paramList = new ArrayList<>();
 
     // string -> list -> string
-    private Map<String, List<String>> params = new HashMap<>() ;
+    private Map<String, List<String>> params = new HashMap<>();
 
     /** Create a Params object */
+    private Params() { }
 
-    public Params() { }
+    /** Pattern: {@code String URL = Params.create().add("name", "value")... .httpString(endpoint);} */
+    public static Params create() { return new Params(); }
+
+    /** Pattern: {@code String URL = Params.create(baseParams).add("name", "value")... .httpString(endpoint);} */
+    public static Params create(Params other) { return new Params(other); }
 
     /**
      * Create a Params object, initialized from another one. A copy is made so the
@@ -46,7 +50,7 @@ import java.util.Map;
      *
      * @param other
      */
-    public Params(Params other) {
+    private Params(Params other) {
         merge(other);
     }
 
@@ -62,7 +66,7 @@ import java.util.Map;
      * @param value Value - May be null to indicate none - the name still goes.
      * @return this Params for continued operation
      */
-    public Params addParam(String name, String value) {
+    public Params add(String name, String value) {
         Param p = new Param(name, value);
         paramList.add(p);
         params.computeIfAbsent(name, n -> new ArrayList<>()).add(value);
@@ -70,9 +74,9 @@ import java.util.Map;
     }
 
     /** Valueless parameter */
-    public void addParam(String name) { addParam(name, null) ; }
+    public void add(String name) { add(name, null); }
 
-    public boolean containsParam(String name) { return params.containsKey(name) ; }
+    public boolean containsParam(String name) { return params.containsKey(name); }
 
     public String getValue(String name) {
         List<String> x = getMV(name);
@@ -99,7 +103,7 @@ import java.util.Map;
         return paramList;
     }
 
-    public int count() { return paramList.size() ; }
+    public int count() { return paramList.size(); }
 
     /** Get the names of parameters - one occurrence */
     public List<String> names() {
@@ -108,23 +112,36 @@ import java.util.Map;
 
     /** URL query string, without leading "?" */
     public String httpString() {
-        return format(paramList) ;
+        return format(new StringBuilder(), paramList).toString();
     }
 
-    private static String format(List <Param> parameters) {
-        StringBuilder result = new StringBuilder();
+//    /** URL query string, without leading "?" */
+//    public String httpString(String endpoint) {
+//        if ( count() == 0 )
+//            return endpoint;
+//        Objects.requireNonNull(endpoint);
+//        StringBuilder sBuff = new StringBuilder(endpoint);
+//        String sep =  endpoint.contains("?") ? "&" : "?";
+//        sBuff.append(sep);
+//        return format(sBuff, paramList).toString();
+//    }
+
+    /**
+     * Return a string that is suitable for HTTP use.
+     */
+    private static StringBuilder format(StringBuilder result, List <Param> parameters) {
         parameters.forEach(param->{
             String encodedName = encode(param.getName());
-            String encodedValue = encode(param.getName());
+            String encodedValue = encode(param.getValue());
             if ( result.length() > 0 )
                 result.append("&");
             result.append(encodedName);
-          if (encodedValue != null) {
-              result.append("=");
-              result.append(encodedValue);
-          }
+            if (encodedValue != null) {
+                result.append("=");
+                result.append(encodedValue);
+            }
         });
-        return result.toString();
+        return result;
     }
 
     private static String encode(String name) {
@@ -151,7 +168,7 @@ import java.util.Map;
     // Pair, with more appropriate method names.
     static class Param extends org.apache.jena.atlas.lib.Pair<String, String> {
         public Param(String name, String value) { super(name, value); }
-        public String getName()  { return getLeft() ;  }
-        public String getValue() { return getRight() ; }
+        public String getName()  { return getLeft();  }
+        public String getValue() { return getRight(); }
     }
 }

@@ -135,10 +135,10 @@ public class RDFLinkFactory {
      *
      * @param dataset
      * @return RDFLink
-     * @see RDFLinkLocal
+     * @see RDFLinkDataset
      */
     public static RDFLink connect(DatasetGraph dataset) {
-        return new RDFLinkLocal(dataset);
+        return new RDFLinkDataset(dataset);
     }
 
     /**
@@ -160,7 +160,7 @@ public class RDFLinkFactory {
      * @return RDFLink
      */
     public static RDFLink connect(DatasetGraph dataset, Isolation isolation) {
-        return new RDFLinkLocal(dataset, isolation);
+        return new RDFLinkDataset(dataset, isolation);
     }
 
     /** Create a connection to a remote Fuseki server by URL.

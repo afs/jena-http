@@ -16,12 +16,16 @@
  * limitations under the License.
  */
 
-package org.seaborne.improvements;
+package org.apache.jena.http;
 
-public class QE {
+/** Enum of different ways to send a SPARQL update over HTTP */
+enum UpdateSendMode {
 
-    public static QueryExecutionBuilder local() {
-        return QueryExecutionBuilder.newBuilder();
-    }
+    // POST HTML forms (update=...)
+    asPostForm,
+
+    // POST application/sparql-update
+    asPostBody ;
+
+    public static UpdateSendMode systemtDefault = UpdateSendMode.asPostBody;
 }
-

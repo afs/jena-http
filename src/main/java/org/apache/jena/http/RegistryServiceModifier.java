@@ -20,8 +20,6 @@ package org.apache.jena.http;
 
 import java.util.Map;
 
-import org.apache.jena.sparql.engine.http.Params;
-
 /**
  * A service registry is a set of actions to take to modify an HTTP request before
  * sending it to a specific endpoint.

@@ -41,6 +41,7 @@ import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.http.HttpEnv;
 import org.apache.jena.http.HttpLib;
+import org.apache.jena.http.Params;
 import org.apache.jena.http.QuerySendMode;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
@@ -53,7 +54,6 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.ResultSetCheckCondition;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.http.HttpParams;
-import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.util.Context;
 
@@ -62,8 +62,10 @@ import org.apache.jena.sparql.util.Context;
  * service over HTTP.
  */
 class QueryExecutionHTTP implements QueryExecution {
-    // Not Need
-    // Because of setInitialBinding and setTimeOut ?
+    // Not Need but retained because of setInitialBinding and setTimeOut ?
+    // == QueryEngineHTTP
+
+    // IF USED - restore finish().
 
     /** @deprecated Use {@link #newBuilder} */
     @Deprecated
@@ -104,8 +106,6 @@ class QueryExecutionHTTP implements QueryExecution {
     private String describeAcceptHeader  = WebContent.defaultGraphAcceptHeader;
     private String constructAcceptHeader = WebContent.defaultGraphAcceptHeader;
     private String datasetAcceptHeader   = WebContent.defaultDatasetAcceptHeader;
-    // CONSTRUCT or DESCRIBE
-    private String modelAcceptHeader     = WebContent.defaultGraphAcceptHeader;
 
     // If this is non-null, it overrides the use of any Content-Type above.
     private String acceptHeader         = null;
@@ -245,7 +245,7 @@ class QueryExecutionHTTP implements QueryExecution {
         if ( lang == null )
             throw new QueryException("Endpoint returned Content-Type: " + actualContentType + " which is not supported for ASK queries");
         boolean result = ResultSetMgr.readBoolean(in, lang);
-        finish(response);
+        //XXXfinish(response);
         return result;
     }
 
@@ -266,14 +266,14 @@ class QueryExecutionHTTP implements QueryExecution {
     public Model execConstruct(Model model) {
         checkNotClosed();
         check(QueryType.CONSTRUCT);
-        return execModel(model);
+        return execModel(model, constructAcceptHeader);
     }
 
     @Override
     public Iterator<Triple> execConstructTriples() {
         checkNotClosed();
         check(QueryType.CONSTRUCT);
-        return execTriples();
+        return execTriples(constructAcceptHeader);
     }
 
     @Override
@@ -305,23 +305,23 @@ class QueryExecutionHTTP implements QueryExecution {
     public Model execDescribe(Model model) {
         checkNotClosed();
         check(QueryType.DESCRIBE);
-        return execModel(model);
+        return execModel(model, describeAcceptHeader);
     }
 
     @Override
     public Iterator<Triple> execDescribeTriples() {
         checkNotClosed();
-        return execTriples();
+        return execTriples(describeAcceptHeader);
     }
 
-    private Model execModel(Model model) {
-        Pair<InputStream, Lang> p = execRdfWorker(modelAcceptHeader, WebContent.contentTypeRDFXML);
+    private Model execModel(Model model, String acceptHeader) {
+        Pair<InputStream, Lang> p = execRdfWorker(acceptHeader, WebContent.contentTypeRDFXML);
         InputStream in = p.getLeft();
         Lang lang = p.getRight();
         try {
             RDFDataMgr.read(model, in, lang);
         } catch (RiotException ex) {
-            finish(in);
+            //XXX finish(in);
             throw ex;
         }
         return model;
@@ -334,14 +334,14 @@ class QueryExecutionHTTP implements QueryExecution {
         try {
             RDFDataMgr.read(dataset, in, lang);
         } catch (RiotException ex) {
-            finish(in);
+            //XXX finish(in);
             throw ex;
         }
         return dataset;
     }
 
-    private Iterator<Triple> execTriples() {
-        Pair<InputStream, Lang> p = execRdfWorker(modelAcceptHeader, WebContent.contentTypeRDFXML);
+    private Iterator<Triple> execTriples(String acceptHeader) {
+        Pair<InputStream, Lang> p = execRdfWorker(acceptHeader, WebContent.contentTypeRDFXML);
         InputStream in = p.getLeft();
         Lang lang = p.getRight();
         // Base URI?
@@ -515,19 +515,19 @@ class QueryExecutionHTTP implements QueryExecution {
 
         //  SERVICE specials.
 
-        Params thisParams = params;
+        Params thisParams = Params.create(params);
 
         if ( defaultGraphURIs != null ) {
             for ( String dft : defaultGraphURIs )
-                thisParams.addParam( HttpParams.pDefaultGraph, dft );
+                thisParams.add( HttpParams.pDefaultGraph, dft );
         }
         if ( namedGraphURIs != null ) {
             for ( String name : namedGraphURIs )
-                thisParams.addParam( HttpParams.pNamedGraph, name );
+                thisParams.add( HttpParams.pNamedGraph, name );
         }
 
         // Same as UpdateExecutionHTTP
-        HttpLib.modifyByService(service,  context,  thisParams,  httpHeaders);
+        HttpLib.modifyByService(service, context, thisParams,  httpHeaders);
 
         QuerySendMode actualSendMode = actualSendMode();
         HttpRequest.Builder builder;
@@ -590,7 +590,7 @@ class QueryExecutionHTTP implements QueryExecution {
         Objects.requireNonNull(httpClient);
 
         String requestURL = service;
-        thisParams.addParam(HttpParams.pQuery, queryString);
+        thisParams.add(HttpParams.pQuery, queryString);
         String qs = params.httpString();
 
         HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
@@ -600,7 +600,7 @@ class QueryExecutionHTTP implements QueryExecution {
 
     private HttpRequest.Builder executeQueryPostForm(Params thisParams, String acceptHeader) {
         String requestURL = service;
-        thisParams.addParam(HttpParams.pQuery, queryString);
+        thisParams.add(HttpParams.pQuery, queryString);
         String qs = params.httpString();
 
         HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);

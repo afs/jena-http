@@ -52,7 +52,6 @@ import org.apache.jena.http.RegistryServiceModifier.RequestModifer;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
-import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.web.HttpSC;
 
@@ -294,7 +293,7 @@ public class HttpLib {
     /** Encode a string suitable for use in an URL query string */
     public static String urlEncodeQueryString(String str) {
         // java.net.URLEncoder is excessive - it encodes / and : which
-        // is not necessary in a query string or fragement.
+        // is not necessary in a query string or fragment.
         return IRILib.encodeUriQueryFrag(str);
     }
 

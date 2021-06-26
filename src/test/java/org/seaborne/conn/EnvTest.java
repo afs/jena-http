@@ -19,7 +19,6 @@
 package org.seaborne.conn;
 
 import org.apache.jena.atlas.web.AuthScheme;
-import org.apache.jena.atlas.web.WebLib;
 import org.apache.jena.fuseki.auth.Auth;
 import org.apache.jena.fuseki.jetty.JettyLib;
 import org.apache.jena.fuseki.main.FusekiServer;
@@ -105,9 +104,8 @@ public class EnvTest {
         if ( user != null ) {}
 
         String data = "/data";
-        int port = WebLib.choosePort();
         FusekiServer.Builder builder = FusekiServer.create()
-            .port(port)
+            .port(0)
             //.verbose(true)
             .enablePing(true)
             .addServlet(data, holder)

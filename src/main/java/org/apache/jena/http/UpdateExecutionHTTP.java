@@ -34,21 +34,11 @@ import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.engine.http.HttpParams;
-import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.update.UpdateRequest;
 import org.seaborne.improvements.UpdateExecution;
 
 public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ UpdateExecution {
-
-    enum UpdateSendMode {
-        // POST HTML forms (update=...)
-        asPostForm,
-        // POST application/sparql-update
-        asPostBody
-        }
-
-    /*package*/static UpdateSendMode defaultSendMode = UpdateSendMode.asPostBody;
 
     public static UpdateExecutionHTTPBuilder newBuilder() { return new UpdateExecutionHTTPBuilder(); }
 
@@ -92,15 +82,14 @@ public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ Upd
 
     @Override
     public void execute() {
-
-        Params thisParams = new Params(params);
+        Params thisParams = Params.create(params);
         if ( usingGraphURIs != null ) {
             for ( String uri : usingGraphURIs )
-                thisParams.addParam(HttpNames.paramUsingGraphURI, uri);
+                thisParams.add(HttpNames.paramUsingGraphURI, uri);
         }
         if ( usingNamedGraphURIs != null ) {
             for ( String uri : usingNamedGraphURIs )
-                thisParams.addParam(HttpNames.paramUsingNamedGraphURI, uri);
+                thisParams.add(HttpNames.paramUsingNamedGraphURI, uri);
         }
 
         // Same as QueryExecutionHTTP
@@ -128,7 +117,7 @@ public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ Upd
 
     private void executePostForm(Params thisParams) {
         String requestURL = service;
-        thisParams.addParam(HttpParams.pUpdate, updateString);
+        thisParams.add(HttpParams.pUpdate, updateString);
         String formString = thisParams.httpString();
         // Everything goes into the form body, no use of the request URI query string.
         executeUpdate(requestURL, BodyPublishers.ofString(formString, StandardCharsets.US_ASCII), WebContent.contentTypeHTMLForm);

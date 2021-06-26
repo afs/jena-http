@@ -26,9 +26,12 @@ import java.util.Objects;
 
 import org.apache.jena.http.ExecBuilderQueryHTTP;
 import org.apache.jena.http.HttpEnv;
+import org.apache.jena.http.Params;
+import org.apache.jena.http.QueryExecHTTP;
 import org.apache.jena.query.QueryException;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.sparql.engine.http.Params;
+import org.apache.jena.queryexec.QueryExec;
+import org.apache.jena.queryexec.QueryExecutionAdapter;
 
 public class QueryExecutionHTTPBuilder extends ExecBuilderQueryHTTP<QueryExecution, QueryExecutionHTTPBuilder> {
 
@@ -37,17 +40,25 @@ public class QueryExecutionHTTPBuilder extends ExecBuilderQueryHTTP<QueryExecuti
     private QueryExecutionHTTPBuilder() {}
 
     @Override
-    public QueryExecutionHTTP build() {
+    public QueryExecution build() {
       Objects.requireNonNull(serviceURL, "No service URL");
       if ( queryString == null && query == null )
           throw new QueryException("No query for QueryExecutionHTTP");
       HttpClient hClient = HttpEnv.getHttpClient(serviceURL, httpClient);
-      return new QueryExecutionHTTP(serviceURL, query, queryString, urlLimit,
-                                    hClient, new HashMap<>(httpHeaders), new Params(params),
-                                    copyArray(defaultGraphURIs),
-                                    copyArray(namedGraphURIs),
-                                    sendMode, acceptHeader, allowCompression,
-                                    timeout, timeoutUnit);
+//      return new QueryExecutionHTTP(serviceURL, query, queryString, urlLimit,
+//                                    hClient, new HashMap<>(httpHeaders), new Params(params),
+//                                    copyArray(defaultGraphURIs),
+//                                    copyArray(namedGraphURIs),
+//                                    sendMode, acceptHeader, allowCompression,
+//                                    timeout, timeoutUnit);
+      QueryExec qExec = new QueryExecHTTP(serviceURL, query, queryString, urlLimit,
+                                          hClient, new HashMap<>(httpHeaders), Params.create(params),
+                                          copyArray(defaultGraphURIs),
+                                          copyArray(namedGraphURIs),
+                                          sendMode, acceptHeader, allowCompression,
+                                          timeout, timeoutUnit);
+      return QueryExecutionAdapter.adapt(qExec);
+
   }
 
     @Override

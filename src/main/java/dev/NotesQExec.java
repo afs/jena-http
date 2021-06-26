@@ -20,28 +20,7 @@ package dev;
 
 public class NotesQExec {
 
-    // Test with https and unsigned certificate.
-
-    // [QExec]
-    // in "exec"
-
-    // ** Not closing?
-    // *8 Wrong conneg
-
-    // [x] QExec is the Node level version. QExec.Builder.
-    // [x] QueryExecutionAdapter -- concrete adapter, not abstract.
-    // [x] Use rewrite for initial bindings.
-    // [?] QueryEngineFactory API change (migration).
-
-    // Sharable between QueryExecution*Builer and QExec*Builder
-    // AbstractQExecXXXBuilder<X> -- build is
-
-    // [ ] No RowSetMgr: Reader/Write set
-    //     RowSetformatter - text and SSE only.
-
-    // [ ] Eliminate choosePort.
-
-    // ResultsWriter.builder.prefixMap(PrefixMap) - only needed for text
+    // ** Discuss
 
     // ** Impact
     // * No use of Apache httpClient - needs upgrading anyway
@@ -50,42 +29,74 @@ public class NotesQExec {
     // * Deprecation of QueryExecution.setTimeout
     // * Switch to rewrite for initial bindings.
 
+    // Test with https and unsigned certificate.
+
+    // Look for [QExec]
+
+    // [ ] No RowSetMgr: Reader/Write set
+    //     RowSetformatter - text and SSE only.
+    // SPARQLResult
+    // ResultsReader, ResultsWriter
+
+    // == ResultSetReader / ResultsReader
+    // == ResultSetWriter / ResultsWriter
+    // .read -> ResultSet (and deprecate)
+    //    ResultSetReader.readRowSet
+    // .write(,RowSet,) (and deprecate)
+    // ResultSetReaderJSON - not streaming.
+    // ** Quick and dirty : adapt(ResultSet)
+    // Assuming no extension, ResultSetReader/ResultSetWrite is not API.
+    // ResultSetReaderFactory => ResultSetReader.Factory
+    // ResultSetWriterFactory => ResultSetWriter.Factory
+    // [ ] ResultsWriter.builder.prefixMap(PrefixMap) - only needed for text
+
+    // == SPARQLresult - carry a RowSet (+ adapter + deprecated to get ResultSet)
+
+    // == ResultSet
+    // ResultSet.asRowSet =dft= RowSet.adapt(this)
+
+    // --------
+
+
     // If big bang:
-    //   Just leave QueryEngineHTTP as legacy.
+    //   Just leave QueryEngineHTTP as legacy, deprecated.
     //   Using org.apache.http.client
 
+    // == Params
+    // New Params: Like old params except that no dependence on ApacheHttpClient utility code.
+    //   Uses HttpLib.
+    // [ ] Copy new to old.
+    //     Used by QueryEnginHTTP
+    //     Used by HttpOp(old)
+    //     HttpOp2(new) - use only in post where the form body is needed - package scope.
 
-    // [ ] ResultsReaders, ResultsWriter
+    // == QueryEngineHTTP / QueryExecutionHTTP
+    // org.apache.jena.sparql.engine.http.QueryEngineHTTP
+    //   Place for QueryExecHTTP? And registries?
+    // QueryEngineHTTP replaced by QueryExecutionHTTP (is it just a rename?)
+    // [ ] Leave QueyEngineHTTP, deprecate and reference QueryExecutionHTTP(Builder.)/QueryExecHTTP
+    //   Merge new Accept strings into QueryEngineHTTP.
+    // Location of QueryExecutionHTTP?
 
-    // Remove/deprecate: org.apache.jena.sparql.engine.http.Params;
+    // == QueryExecution
+    // [ ] QueryExecutionBase -> QueryExecutionDataset (?? too late ??)
+    // [x] QueryExecutionBuilder - already right name.
+    // [ ] QueryExecution setter, getter : deprecate in favour of builders.
 
     // Migration
     // [ ] ResultSet adapter: new ResultSetAdapter -> ResultSet.adapt(RowSet rowSet)
-    // [ ]    Or like "Prefxes" --> Results? SPARQL? GPI? Adapt.
-    // [ ] ResultSetWriter -> RowSetWriter + default method, prefixes.
-    // [ ] ResultSetReader/Writer to work on RowSets
-    // [ ] QueryExecution setter, getter : deprecate in favour of builder.
-    // [x] Merge WebContent2 into WebContent (now?)
+    // [ ]    Or like "Prefixes" --> "Results"? SPARQL? GPI? Adapt.
     // [ ] getLink in RDFConnection.
-    // [ ] Remove RDFConnection(Others)
+    // [ ] Remove RDFConnection(clone from others)
     // [ ] Fuseki tests isFuseki
     // [ ] G2 merge to G
-    // QueryExecUtils.executeQuery to work on GPI. Deprectae rest. Redo.
-
+    // [ ] QueryExecUtils.executeQuery to work on GPI. Deprecate rest. Redo.
 
     // Tests
     // [ ] QueryExecutionHTTP (basic only needed)
 
     // -- Destination:
     // [no] New module jena-http? jena-gpi? Replaces RDFConnection?
-    // jena-arq:
-    //   org.apache.jena.http - HttpEnv, HttpLib, HttpOp2 (rename), old HttpOp->HttpOp1.
-    //      ==>org.apache.jena.riot.web == org.apache.jena.http
-    //   org.apache.jena.sparql.http  - execHTTP, GSP registries., HttpRDF?
-    //   org.apache.jena.queryexec
-
-    // jena-rdfconnection:
-    //    org.apache.jena.link (rdflink)
 
     // Other
     // [ ] UpdateProcessor(migrate name):: UpdateExecution, UpdateExecutionHTTP, UpdateExecutionHTTPBuilder
@@ -94,30 +105,27 @@ public class NotesQExec {
     // [ ] QueryExecUtils - both forms.
     // [ ] Service.java
 
-    // [x] QExec renamed as QueryExec?
-    // [ ] QExecBase renamed as QueryExecLocal
-    // [ ] QueryExecHTTP vs QueryExecRemote
+    // [ ] QExecBase renamed as QueryExecLocal (QueryExecutionBase)
+    // [x] QueryExecHTTP vs QueryExecRemote
     // [ ] QueryExec tests. Or complete switch over!
 
     // [ ] Move builders into classes
-    // [ ] QuerySndMode into QueryExecHTTP.Builder
-    // [x] RowSetFormatter (text!)
+    // [ ] QuerySendMode into QueryExecHTTP.Builder
     // [ ] RowSet and SSE
 
-    // [ ] Naming: *Remote vs *HTTP
-    // [x] QExec - get timeouts? no. local != remote
     // [ ] HttpLib : former "package" scope.
-    //       Move HttpLib in qexec package? When adapter based.
+    //       Move HttpLib in queryexec package? When adapter based.
 
     // Don't use:
     // QueryExecutionHTTP
 
     // [ ] Adapters:
-    // [ ] Put statics in target class not the Adapter. Or a "Adapt" class. "Results"?
+    //     Put statics in target class not the Adapter. Or a "Adapt" class. "Results"?
     // [x] RDFConnection over RDFLinkLocal, RDFLinkHTTP,
     // [ ] QueryExecution over QueryExecLocal, QueryExecHTTP,
     // [?] UpdateExecution over ?
     // [ ] create() vs newBuilder: create for API, newBuilder for SPI. (GPI?)
+    // [ ] Check old code switched to adapters
 
     // [ ] Tests : esp remote, at Link/Connection and QueryExecution/QExec level.
 
@@ -129,14 +137,18 @@ public class NotesQExec {
     // Twin with "buffer, send with Content-length" option in Fuseki?
     //   Still an issue if client does not read the data.
 
-    // [x] QuerySendMode handling : switch from GET to POST application/sparql-query not form.
-    //     Already does this.
-    // [ ] QuerySendMode.getOrPOST
-    //     asGetWithLimit => asGetOrPostForm; asGetOrPostBody
-    //     Default asGetWithLimitForm => asGetWithLimitBody
-
 /*
     Packages:
+
+    jena-arq:
+      org.apache.jena.http - HttpEnv, HttpLib, HttpOp2 (rename), old HttpOp->HttpOp1.
+         ==>org.apache.jena.riot.web == org.apache.jena.http
+      org.apache.jena.sparql.http  - execHTTP, GSP registries., HttpRDF?
+      org.apache.jena.queryexec
+
+    jena-rdfconnection:
+        org.apache.jena.rdfconnection.link (rdflink)
+        org.apache.jena.rdflink
 
     org.apache.jena.sparql.exec
       QExec
@@ -160,12 +172,6 @@ public class NotesQExec {
     RDFConnectionFuseki - no builder
 */
     // ----
-
-/*
-Documentation
-   HttpClient setup
- */
-
 
     // Documentation
     //   updates for RDFConnection
@@ -208,8 +214,6 @@ Documentation
     // * Fuseki binary -- add dataset operations.
 
     // QueryTransformOps.transform - see builders and XXX
-
-
 
     // ---- Review
     // https://openjdk.java.net/groups/net/httpclient/recipes.html

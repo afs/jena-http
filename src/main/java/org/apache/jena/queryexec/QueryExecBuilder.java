@@ -173,7 +173,7 @@ public class QueryExecBuilder {
         }
 
         defaultTimeoutsFromContext(this, cxt);
-        QueryExec qExec = new QueryExecBase(queryActual, dataset, cxt, f, timeout1, timeoutTimeUnit1, timeout2, timeoutTimeUnit2);
+        QueryExec qExec = new QueryExecDataset(queryActual, dataset, cxt, f, timeout1, timeoutTimeUnit1, timeout2, timeoutTimeUnit2);
         return qExec;
     }
 

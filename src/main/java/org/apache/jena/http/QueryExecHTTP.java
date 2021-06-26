@@ -52,7 +52,6 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.engine.http.HttpParams;
-import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sparql.util.Context;
 
 /**
@@ -100,8 +99,6 @@ public class QueryExecHTTP implements QueryExec {
     private String describeAcceptHeader  = WebContent.defaultGraphAcceptHeader;
     private String constructAcceptHeader = WebContent.defaultGraphAcceptHeader;
     private String datasetAcceptHeader   = WebContent.defaultDatasetAcceptHeader;
-    // CONSTRUCT or DESCRIBE
-    private String modelAcceptHeader     = WebContent.defaultGraphAcceptHeader;
 
     // If this is non-null, it overrides the use of any Content-Type above.
     private String acceptHeader         = null;
@@ -119,10 +116,10 @@ public class QueryExecHTTP implements QueryExec {
     // [QExec]
     public
     QueryExecHTTP(String serviceURL, Query query, String queryString, int urlLimit,
-                          HttpClient httpClient, Map<String, String> httpHeaders, Params params,
-                          List<String> defaultGraphURIs, List<String> namedGraphURIs,
-                          QuerySendMode sendMode, String acceptHeader, boolean allowCompression,
-                          long timeout, TimeUnit timeoutUnit) {
+                  HttpClient httpClient, Map<String, String> httpHeaders, Params params,
+                  List<String> defaultGraphURIs, List<String> namedGraphURIs,
+                  QuerySendMode sendMode, String acceptHeader, boolean allowCompression,
+                  long timeout, TimeUnit timeoutUnit) {
         // [QExec]
         this.context = ARQ.getContext().copy();
         this.service = serviceURL;
@@ -245,14 +242,14 @@ public class QueryExecHTTP implements QueryExec {
     public Graph construct(Graph graph) {
         checkNotClosed();
         check(QueryType.CONSTRUCT);
-        return execGraph(graph);
+        return execGraph(graph, constructAcceptHeader);
     }
 
     @Override
     public Iterator<Triple> constructTriples() {
         checkNotClosed();
         check(QueryType.CONSTRUCT);
-        return execTriples();
+        return execTriples(constructAcceptHeader);
     }
 
     @Override
@@ -278,17 +275,17 @@ public class QueryExecHTTP implements QueryExec {
     public Graph describe(Graph graph) {
         checkNotClosed();
         check(QueryType.DESCRIBE);
-        return execGraph(graph);
+        return execGraph(graph, describeAcceptHeader);
     }
 
     @Override
     public Iterator<Triple> describeTriples() {
         checkNotClosed();
-        return execTriples();
+        return execTriples(describeAcceptHeader);
     }
 
-    private Graph execGraph(Graph graph) {
-        Pair<InputStream, Lang> p = execRdfWorker(modelAcceptHeader, WebContent.contentTypeRDFXML);
+    private Graph execGraph(Graph graph, String acceptHeader) {
+        Pair<InputStream, Lang> p = execRdfWorker(acceptHeader, WebContent.contentTypeRDFXML);
         InputStream in = p.getLeft();
         Lang lang = p.getRight();
         try {
@@ -313,8 +310,8 @@ public class QueryExecHTTP implements QueryExec {
         return dataset;
     }
 
-    private Iterator<Triple> execTriples() {
-        Pair<InputStream, Lang> p = execRdfWorker(modelAcceptHeader, WebContent.contentTypeRDFXML);
+    private Iterator<Triple> execTriples(String acceptHeader) {
+        Pair<InputStream, Lang> p = execRdfWorker(acceptHeader, WebContent.contentTypeRDFXML);
         InputStream in = p.getLeft();
         Lang lang = p.getRight();
         // Base URI?
@@ -450,19 +447,19 @@ public class QueryExecHTTP implements QueryExec {
 
         //  SERVICE specials.
 
-        Params thisParams = params;
+        Params thisParams = Params.create(params);
 
         if ( defaultGraphURIs != null ) {
             for ( String dft : defaultGraphURIs )
-                thisParams.addParam( HttpParams.pDefaultGraph, dft );
+                thisParams.add( HttpParams.pDefaultGraph, dft );
         }
         if ( namedGraphURIs != null ) {
             for ( String name : namedGraphURIs )
-                thisParams.addParam( HttpParams.pNamedGraph, name );
+                thisParams.add( HttpParams.pNamedGraph, name );
         }
 
         // Same as UpdateExecutionHTTP
-        HttpLib.modifyByService(service,  context,  thisParams,  httpHeaders);
+        HttpLib.modifyByService(service, context, thisParams,  httpHeaders);
 
         QuerySendMode actualSendMode = actualSendMode();
         HttpRequest.Builder builder;
@@ -520,14 +517,11 @@ public class QueryExecHTTP implements QueryExec {
 
     private HttpRequest.Builder executeQueryGet(Params thisParams, String acceptHeader) {
         Objects.requireNonNull(service);
-        Objects.requireNonNull(params);
+        Objects.requireNonNull(thisParams);
         Objects.requireNonNull(httpClient);
 
-        String requestURL = service;
-        thisParams.addParam(HttpParams.pQuery, queryString);
-        String qs = params.httpString();
-
-        requestURL = requestURL(service, qs);
+        thisParams.add(HttpParams.pQuery, queryString);
+        String requestURL = requestURL(service, thisParams.httpString());
 
         HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
         acceptHeader(builder, acceptHeader);
@@ -536,28 +530,23 @@ public class QueryExecHTTP implements QueryExec {
 
     private HttpRequest.Builder executeQueryPostForm(Params thisParams, String acceptHeader) {
         String requestURL = service;
-        thisParams.addParam(HttpParams.pQuery, queryString);
-        String qs = params.httpString();
+        thisParams.add(HttpParams.pQuery, queryString);
+        String formBody = thisParams.httpString();
 
         HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
         acceptHeader(builder, acceptHeader);
         // Use an HTML form.
         contentTypeHeader(builder, WebContent.contentTypeHTMLForm);
         // Already UTF-8 encoded to ASCII.
-        return builder.POST(BodyPublishers.ofString(qs, StandardCharsets.US_ASCII));
+        return builder.POST(BodyPublishers.ofString(formBody, StandardCharsets.US_ASCII));
     }
 
     // Use SPARQL query body and MIME type.
     private HttpRequest.Builder executeQueryPostBody(Params thisParams, String acceptHeader) {
-        if (closed)
-            throw new ARQException("HTTP execution already closed");
-
         // Use thisParams (for default-graph-uri etc)
-        String url = service;
-        if ( thisParams.count() > 0 )
-            url = url + "&"+thisParams.httpString();
+        String requestURL = requestURL(service, thisParams.httpString());
 
-        HttpRequest.Builder builder = HttpLib.newBuilder(service, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
+        HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
         if ( allowCompression )
             acceptEncoding(builder);
         contentTypeHeader(builder, WebContent.contentTypeSPARQLQuery);

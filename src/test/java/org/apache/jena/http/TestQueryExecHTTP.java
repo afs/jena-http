@@ -28,7 +28,6 @@ import java.util.Iterator;
 import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.logging.LogCtl;
-import org.apache.jena.atlas.web.WebLib;
 import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
@@ -63,19 +62,19 @@ public class TestQueryExecHTTP {
         }
 
     @BeforeClass public static void beforeClass() {
-        int port = WebLib.choosePort();
-        URL = "http://localhost:"+port+"/";
-        dsURL = "http://localhost:"+port+dsName;
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
         dsg.add(q0);
         dsg.add(q1);
         dsg.add(q2);
         server = FusekiServer.create()
-            .port(port)
+            .port(0)
             .verbose(true)
             .add(dsName, dsg)
             .build();
         server.start();
+        int port = server.getPort();
+        URL = "http://localhost:"+port+"/";
+        dsURL = "http://localhost:"+port+dsName;
     }
 
     @AfterClass public static void afterClass() {
@@ -98,7 +97,7 @@ public class TestQueryExecHTTP {
 
     @Test
     public void query_select_post_form_1() {
-        try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder().sendHtmlForm(true)
+        try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder().sendMode(QuerySendMode.asPostForm)
                     .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             RowSet rs = qExec.select();
             assertTrue(rs.hasNext());

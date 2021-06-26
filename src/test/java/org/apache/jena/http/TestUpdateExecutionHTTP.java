@@ -98,7 +98,7 @@ public class TestUpdateExecutionHTTP {
         UpdateRequest req = UpdateFactory.create("INSERT DATA { <x:s> <x:p> 567 } ");
         UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
             .service(service())
-            .sendHtmlForm(true)
+            .sendMode(UpdateSendMode.asPostForm)
             .update(req)
             .build();
         uExec.execute();

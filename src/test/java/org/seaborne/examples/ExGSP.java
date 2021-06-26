@@ -44,13 +44,15 @@ public class ExGSP {
     public static void main(String ...a) {
         FusekiLogging.setLogging();
         String dsPath = "/ds";
-        int port = WebLib.choosePort();
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
-        FusekiServer server = FusekiServer.make(port, dsPath, dsg);
+        FusekiServer server = FusekiServer.make(0, dsPath, dsg);
+
+        server.start();
+        // Find port allocated by OS
+        int port = WebLib.choosePort();
         URL = "http://localhost:"+port+dsPath;
         factoryClearAll = UpdateExecutionHTTP.newBuilder().service(URL).updateString("CLEAR ALL");
 
-        server.start();
         try {
             ExGSP_addTriple();
             ExGSP_getDefaultGraph();

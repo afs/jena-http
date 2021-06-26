@@ -55,17 +55,17 @@ import org.apache.jena.update.UpdateRequest;
  * </ul>
  */
 
-public class RDFLinkLocal implements RDFLink {
+public class RDFLinkDataset implements RDFLink {
     private ThreadLocal<Boolean> transactionActive = ThreadLocal.withInitial(()->false);
 
     private DatasetGraph dataset;
     private final Isolation isolation;
 
-    public RDFLinkLocal(DatasetGraph dataset) {
+    public RDFLinkDataset(DatasetGraph dataset) {
         this(dataset, Isolation.NONE);
     }
 
-    public RDFLinkLocal(DatasetGraph dataset, Isolation isolation) {
+    public RDFLinkDataset(DatasetGraph dataset, Isolation isolation) {
         this.dataset = dataset;
         this.isolation = isolation;
     }

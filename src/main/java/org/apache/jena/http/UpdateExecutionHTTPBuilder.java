@@ -23,9 +23,7 @@ import static org.apache.jena.http.HttpLib.copyArray;
 import java.net.http.HttpClient;
 import java.util.*;
 
-import org.apache.jena.http.UpdateExecutionHTTP.UpdateSendMode;
 import org.apache.jena.query.QueryException;
-import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sys.JenaSystem;
 import org.apache.jena.update.UpdateRequest;
 
@@ -36,18 +34,17 @@ public class UpdateExecutionHTTPBuilder {
     private String serviceURL;
     private UpdateRequest update;
     private String updateString;
-    private Params params = new Params();
+    private Params params = Params.create();
     private boolean allowCompression;
     private Map<String, String> httpHeaders = new HashMap<>();
     private HttpClient httpClient;
-    private UpdateSendMode sendMode = UpdateExecutionHTTP.defaultSendMode;
+    private UpdateSendMode sendMode = UpdateSendMode.systemtDefault;
     private UpdateRequest updateRequest;
 
     private List<String> usingGraphURIs = null;
     private List<String> usingNamedGraphURIs = null;
 
     public UpdateExecutionHTTPBuilder() {}
-
 
     public UpdateExecutionHTTPBuilder service(String serviceURL) {
         this.serviceURL = serviceURL;
@@ -72,16 +69,26 @@ public class UpdateExecutionHTTPBuilder {
         return this;
     }
 
+//    /**
+//     * Whether to send the update request using POST and an HTML form, content type
+//     * "application/x-www-form-urlencoded".
+//     *
+//     * If false (the default), send as "application/sparql-query" (default).
+//     */
+//    public UpdateExecutionHTTPBuilder sendHtmlForm(boolean htmlForm) {
+//        this.sendMode =  htmlForm ? UpdateSendMode.asPostForm : UpdateSendMode.asPostBody;
+//        return this;
+//    }
+
     /**
-     * Whether to send the update request using POST and an HTML form, content type
-     * "application/x-www-form-urlencoded".
-     *
-     * If false (the default), send as "application/sparql-query" (default).
+     * Choose whether to send using POST as "application/sparql-update" (preferred) or
+     * as an HTML form, content type "application/x-www-form-urlencoded".
      */
-    public UpdateExecutionHTTPBuilder sendHtmlForm(boolean htmlForm) {
-        this.sendMode =  htmlForm ? UpdateSendMode.asPostForm : UpdateSendMode.asPostBody;
+    public UpdateExecutionHTTPBuilder sendMode(UpdateSendMode mode) {
+        this.sendMode = mode;
         return this;
     }
+
 
     // The old code, UpdateProcessRemote, didn't support this so may be not
     // provide it as its not being used.
@@ -102,14 +109,14 @@ public class UpdateExecutionHTTPBuilder {
 
     public UpdateExecutionHTTPBuilder param(String name) {
         Objects.requireNonNull(name);
-        this.params.addParam(name);
+        this.params.add(name);
         return this;
     }
 
     public UpdateExecutionHTTPBuilder param(String name, String value) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(value);
-        this.params.addParam(name, value);
+        this.params.add(name, value);
         return this;
     }
 
