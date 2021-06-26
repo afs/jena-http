@@ -22,7 +22,7 @@ import org.apache.jena.fuseki.system.FusekiLogging;
 import org.apache.jena.link.RDFLink;
 import org.apache.jena.link.RDFLinkFactory;
 import org.apache.jena.query.*;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.RowSet;
 import org.apache.jena.queryexec.RowSetFormatter;
 import org.apache.jena.riot.RIOT;
@@ -60,7 +60,7 @@ public class DevQExec {
                              rowSet -> RowSetFormatter.out(rowSet));
         }
 
-        RowSet rowSet = QExec.create().dataset(dsg).query(query).select();
+        RowSet rowSet = QueryExec.create().dataset(dsg).query(query).select();
         RowSetFormatter.out(rowSet);
     }
 }

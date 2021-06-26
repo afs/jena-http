@@ -25,22 +25,22 @@ import java.util.HashMap;
 import java.util.Objects;
 
 import org.apache.jena.query.QueryException;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.sparql.engine.http.Params;
 
-public class QExecHTTPBuilder extends ExecBuilderQueryHTTP<QExec, QExecHTTPBuilder> {
+public class QueryExecHTTPBuilder extends ExecBuilderQueryHTTP<QueryExec, QueryExecHTTPBuilder> {
 
-    public static QExecHTTPBuilder newBuilder() { return new QExecHTTPBuilder(); }
+    public static QueryExecHTTPBuilder newBuilder() { return new QueryExecHTTPBuilder(); }
 
-    private QExecHTTPBuilder() {}
+    private QueryExecHTTPBuilder() {}
 
     @Override
-    public QExecHTTP build() {
+    public QueryExecHTTP build() {
       Objects.requireNonNull(serviceURL, "No service URL");
       if ( queryString == null && query == null )
           throw new QueryException("No query for QueryExecHTTP");
       HttpClient hClient = HttpEnv.getHttpClient(serviceURL, httpClient);
-      return new QExecHTTP(serviceURL, query, queryString, urlLimit,
+      return new QueryExecHTTP(serviceURL, query, queryString, urlLimit,
                            hClient, new HashMap<>(httpHeaders), new Params(params),
                            copyArray(defaultGraphURIs),
                            copyArray(namedGraphURIs),
@@ -62,7 +62,7 @@ public class QExecHTTPBuilder extends ExecBuilderQueryHTTP<QExec, QExecHTTPBuild
 //    }
 
     @Override
-    protected QExecHTTPBuilder thisBuilder() {
+    protected QueryExecHTTPBuilder thisBuilder() {
         return this;
     }
 }

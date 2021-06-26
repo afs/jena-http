@@ -39,26 +39,26 @@ import org.apache.jena.sparql.util.Context;
  */
 public class QueryExecutionAdapter implements QueryExecution
 {
-    private final QExec qExec;
+    private final QueryExec qExec;
     private final Dataset dataset;
     //public static QueryExecBuilder create() { return QueryExecBuilder.create(); }
     private final List<String> varNames;
 
     // [QExec] Move to QueryExecution
-    public static QueryExecution adapt(QExec qExec) {
-        if ( qExec instanceof QExecAdapter) {
-            return ((QExecAdapter)qExec).get();
+    public static QueryExecution adapt(QueryExec qExec) {
+        if ( qExec instanceof QueryExecAdapter) {
+            return ((QueryExecAdapter)qExec).get();
         }
         return new QueryExecutionAdapter(qExec);
     }
 
-    private QueryExecutionAdapter(QExec qExec) {
+    private QueryExecutionAdapter(QueryExec qExec) {
         this.qExec = qExec;
         this.dataset = DatasetFactory.wrap(qExec.getDataset());
         this.varNames = qExec.getQuery().getResultVars();
     }
 
-    protected QExec get() { return qExec; }
+    protected QueryExec get() { return qExec; }
 
     /** Set the initial association of variables and values.
      * May not be supported by all QueryExecution implementations.

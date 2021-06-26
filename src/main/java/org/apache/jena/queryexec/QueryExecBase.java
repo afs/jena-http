@@ -65,7 +65,7 @@ import org.apache.jena.sparql.util.ModelUtils;
 
 /** All the SPARQL query result forms at the graph-level. */
 
-public class QExecBase implements QExec
+public class QueryExecBase implements QueryExec
 {
     private final Query              query;
     private final QueryEngineFactory qeFactory;
@@ -92,7 +92,7 @@ public class QExecBase implements QExec
     private final AlarmClock         alarmClock       = AlarmClock.get();
     private long                     queryStartTime   = -1; // Unset
 
-    protected QExecBase(Query query, DatasetGraph datasetGraph, Context cxt, QueryEngineFactory qeFactory,
+    protected QueryExecBase(Query query, DatasetGraph datasetGraph, Context cxt, QueryEngineFactory qeFactory,
                         long timeout1, TimeUnit timeUnit1, long timeout2, TimeUnit timeUnit2
                         ) {
         // Content cxt is already a safe copy.
@@ -383,7 +383,7 @@ public class QExecBase implements QExec
                 // it still may go off so it needs to check here it's still
                 // wanted.
                 if ( expectedCallback.get() == this )
-                    QExecBase.this.abort();
+                    QueryExecBase.this.abort();
             }
         }
     }

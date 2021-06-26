@@ -33,7 +33,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.compose.Union;
 import org.apache.jena.query.ReadWrite;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.RowSet;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -323,7 +323,7 @@ public abstract class AbstractTestRDFLink {
     @Test public void query_01() {
         try ( RDFLink link = link() ) {
             Txn.executeRead(link, ()->{
-                try ( QExec qExec = link.query("SELECT ?x {}") ) {
+                try ( QueryExec qExec = link.query("SELECT ?x {}") ) {
                     RowSet rs = qExec.select();
                     assertNotNull(rs);
                 }
@@ -334,7 +334,7 @@ public abstract class AbstractTestRDFLink {
     @Test public void query_02() {
         try ( RDFLink link = link() ) {
             Txn.executeRead(link, ()->{
-                try ( QExec qExec = link.query("ASK{}") ) {
+                try ( QueryExec qExec = link.query("ASK{}") ) {
                     boolean b = qExec.ask();
                     assertTrue(b);
                 }
@@ -345,7 +345,7 @@ public abstract class AbstractTestRDFLink {
     @Test public void query_03() {
         try ( RDFLink link = link() ) {
             Txn.executeRead(link, ()->{
-                try ( QExec qExec = link.query("CONSTRUCT WHERE{}") ) {
+                try ( QueryExec qExec = link.query("CONSTRUCT WHERE{}") ) {
                     Graph g = qExec.construct();
                     assertNotNull(g);
                 }

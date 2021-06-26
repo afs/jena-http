@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.Query;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.RowSet;
 import org.apache.jena.sparql.core.Transactional;
 import org.apache.jena.sparql.engine.binding.Binding;
@@ -88,7 +88,7 @@ public interface LinkSparqlQuery extends Transactional, AutoCloseable
      * @param query
      * @return QExec
      */
-    public QExec query(Query query);
+    public QueryExec query(Query query);
 
     /** Setup a SPARQL query execution.
      *
@@ -99,7 +99,7 @@ public interface LinkSparqlQuery extends Transactional, AutoCloseable
      * @param queryString
      * @return QExec
      */
-    public QExec query(String queryString);
+    public QueryExec query(String queryString);
 
     /** Close this connection.  Use with try-resource. */
     @Override public void close();

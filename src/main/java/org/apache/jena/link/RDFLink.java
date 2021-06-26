@@ -25,7 +25,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.RowSet;
 import org.apache.jena.rdfconnection.JenaConnectionException;
 import org.apache.jena.rdfconnection.RDFConnectionFactory;
@@ -100,7 +100,7 @@ public interface RDFLink extends
     @Override
     public default void queryRowSet(String queryString, Consumer<RowSet> rowSetAction) {
         Txn.executeRead(this, ()->{
-            try ( QExec qExec = query(queryString) ) {
+            try ( QueryExec qExec = query(queryString) ) {
                 RowSet rs = qExec.select();
                 rowSetAction.accept(rs);
             }
@@ -117,7 +117,7 @@ public interface RDFLink extends
         if ( ! query.isSelectType() )
             throw new JenaConnectionException("Query is not a SELECT query");
         Txn.executeRead(this, ()->{
-            try ( QExec qExec = query(query) ) {
+            try ( QueryExec qExec = query(query) ) {
                 RowSet rs = qExec.select();
                 rowSetAction.accept(rs);
             }
@@ -136,7 +136,7 @@ public interface RDFLink extends
     @Override
     public default void querySelect(String queryString, Consumer<Binding> rowAction) {
         Txn.executeRead(this, ()->{
-            try ( QExec qExec = query(queryString) ) {
+            try ( QueryExec qExec = query(queryString) ) {
                 forEachRow(qExec.select(), rowAction);
             }
         } );
@@ -152,7 +152,7 @@ public interface RDFLink extends
         if ( ! query.isSelectType() )
             throw new JenaConnectionException("Query is not a SELECT query");
         Txn.executeRead(this, ()->{
-            try ( QExec qExec = query(query) ) {
+            try ( QueryExec qExec = query(query) ) {
                 forEachRow(qExec.select(), rowAction);
             }
         } );
@@ -163,7 +163,7 @@ public interface RDFLink extends
     public default Graph queryConstruct(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(queryString) ) {
+                try ( QueryExec qExec = query(queryString) ) {
                     return qExec.construct();
                 }
             } );
@@ -174,7 +174,7 @@ public interface RDFLink extends
     public default DatasetGraph queryConstructDataset(Query query) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(query) ) {
+                try ( QueryExec qExec = query(query) ) {
                     return qExec.constructDataset();
                 }
             } );
@@ -185,7 +185,7 @@ public interface RDFLink extends
     public default DatasetGraph queryConstructDataset(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(queryString) ) {
+                try ( QueryExec qExec = query(queryString) ) {
                     return qExec.constructDataset();
                 }
             } );
@@ -196,7 +196,7 @@ public interface RDFLink extends
     public default Graph queryConstruct(Query query) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(query) ) {
+                try ( QueryExec qExec = query(query) ) {
                     return qExec.construct();
                 }
             } );
@@ -209,7 +209,7 @@ public interface RDFLink extends
     public default Graph queryDescribe(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(queryString) ) {
+                try ( QueryExec qExec = query(queryString) ) {
                     return qExec.describe();
                 }
             } );
@@ -220,7 +220,7 @@ public interface RDFLink extends
     public default Graph queryDescribe(Query query) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(query) ) {
+                try ( QueryExec qExec = query(query) ) {
                     return qExec.describe();
                 }
             } );
@@ -231,7 +231,7 @@ public interface RDFLink extends
     public default boolean queryAsk(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(queryString) ) {
+                try ( QueryExec qExec = query(queryString) ) {
                     return qExec.ask();
                 }
             } );
@@ -242,7 +242,7 @@ public interface RDFLink extends
     public default boolean queryAsk(Query query) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(query) ) {
+                try ( QueryExec qExec = query(query) ) {
                     return qExec.ask();
                 }
             } );
@@ -258,7 +258,7 @@ public interface RDFLink extends
      * @return QueryExecution
      */
     @Override
-    public QExec query(Query query);
+    public QueryExec query(Query query);
 
     /** Setup a SPARQL query execution.
      * This is a low-level operation.
@@ -274,7 +274,7 @@ public interface RDFLink extends
      * @return QueryExecution
      */
     @Override
-    public default QExec query(String queryString) {
+    public default QueryExec query(String queryString) {
         return query(QueryFactory.create(queryString));
     }
 

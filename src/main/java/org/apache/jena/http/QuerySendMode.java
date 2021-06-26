@@ -18,7 +18,7 @@
 
 package org.apache.jena.http;
 
-/*8 Enum of different ways to send a SPARQL query over HTTP */
+/** Enum of different ways to send a SPARQL query over HTTP */
 public enum QuerySendMode {
 
     // Use HTTP GET when below the lkength limit else POST an HTML Form encoding

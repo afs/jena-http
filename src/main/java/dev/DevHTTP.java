@@ -26,8 +26,8 @@ import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.http.GSP;
 import org.apache.jena.http.HttpOp2;
-import org.apache.jena.http.QExecHTTP;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.http.QueryExecHTTP;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.QueryExecutionAdapter;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -111,7 +111,7 @@ public class DevHTTP {
 //        }
 
       for ( var qs : x ) {
-      try ( QExec qexec = QExecHTTP.newBuilder()
+      try ( QueryExec qexec = QueryExecHTTP.newBuilder()
               .service("http://localhost:3030/ds/query")
               .queryString(qs)
               .build()) {

@@ -19,6 +19,7 @@
 package org.seaborne.conn;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -34,12 +35,12 @@ import org.apache.jena.web.HttpSC;
  */
 public class StringHolderServlet extends HttpServlet {
 
-    private String content = "";
+    private AtomicReference<String> content = new AtomicReference<>("");
 
     // Direct calls.
     public void clear() { set(""); }
-    public void set(String str) { content = str; }
-    public String get() { return content; }
+    public void set(String str) { content.set(str); }
+    public String get() { return content.get(); }
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -52,34 +53,33 @@ public class StringHolderServlet extends HttpServlet {
 
     private void doPatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String x = IO.readWholeFileAsUTF8(req.getInputStream());
-        content = content + x;
+        content.setOpaque(content.get() + x);
         resp.setStatus(HttpSC.OK_200);
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setStatus(HttpSC.OK_200);
-        resp.getOutputStream().print(content);
+        resp.getOutputStream().print(get());
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String x = IO.readWholeFileAsUTF8(req.getInputStream());
-        content = content + x;
+        content.setOpaque(content.get() + x);
         resp.setStatus(HttpSC.OK_200);
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String x = IO.readWholeFileAsUTF8(req.getInputStream());
-        content = x;
+        content.setOpaque(x);
         resp.setStatus(HttpSC.OK_200);
     }
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        // For testing, this is "clear"
-        content = "";
+        clear();
         resp.setStatus(HttpSC.OK_200);
     }
 

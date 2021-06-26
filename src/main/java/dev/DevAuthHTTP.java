@@ -35,7 +35,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.http.*;
 import org.apache.jena.http.RegistryServiceModifier.RequestModifer;
 import org.apache.jena.query.ARQ;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.QueryExecutionAdapter;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -141,7 +141,7 @@ public class DevAuthHTTP {
                 .build();
             QueryExecutionAdapter.adapt(null);
             for ( var qs : x ) {
-                try ( QExec qexec = QExecHTTP.newBuilder()
+                try ( QueryExec qexec = QueryExecHTTP.newBuilder()
                     .httpClient(hc)
                     .service("http://localhost:3030/ds/query")
                     .queryString(qs)
@@ -155,7 +155,7 @@ public class DevAuthHTTP {
         LOG.info("-- Query with HTTP header");
         auth(()->{
             for ( var qs : x ) {
-                try ( QExec qexec = QExecHTTP.newBuilder()
+                try ( QueryExec qexec = QueryExecHTTP.newBuilder()
                     .service("http://localhost:3030/ds/query")
                     .httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
                     .queryString(qs)

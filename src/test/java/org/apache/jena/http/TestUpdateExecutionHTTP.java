@@ -85,7 +85,7 @@ public class TestUpdateExecutionHTTP {
             .updateString("INSERT DATA { <x:s> <x:p> 234 } ")
             .build();
         uExec.execute();
-        try ( QExecHTTP qExec = QExecHTTP.newBuilder()
+        try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
                 .service(serviceQuery())
                 .queryString("ASK { ?s ?p 234 }")
                 .build()) {
@@ -102,7 +102,7 @@ public class TestUpdateExecutionHTTP {
             .update(req)
             .build();
         uExec.execute();
-        try ( QExecHTTP qExec = QExecHTTP.newBuilder()
+        try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
                 .service(serviceQuery())
                 .queryString("ASK { ?s ?p 567 }")
                 .build()) {
@@ -140,7 +140,7 @@ public class TestUpdateExecutionHTTP {
             uExec2.execute();
         }
 
-        try ( QExecHTTP qExec = QExecHTTP.newBuilder()
+        try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
                 .service(serviceQuery())
                 .queryString("ASK { ?s ?p 567 }")
                 .build()) {

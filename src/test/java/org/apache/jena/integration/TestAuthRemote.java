@@ -34,7 +34,7 @@ import org.apache.jena.link.RDFLink;
 import org.apache.jena.link.RDFLinkFactory;
 import org.apache.jena.link.RDFLinkRemote;
 import org.apache.jena.query.ARQ;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.graph.GraphFactory;
@@ -118,7 +118,7 @@ public class TestAuthRemote {
     @Test
     public void auth_qe_no_auth() {
         FusekiTest.expect401(()->{
-            try ( QExec qexec = QExecHTTP.newBuilder()
+            try ( QueryExec qexec = QueryExecHTTP.newBuilder()
                     //.httpClient(hc)
                     .service(env.datasetURL())
                     .queryString("ASK{}")
@@ -130,7 +130,7 @@ public class TestAuthRemote {
 
     @Test
     public void auth_qe_good_auth() {
-        try ( QExec qexec = QExecHTTP.newBuilder()
+        try ( QueryExec qexec = QueryExecHTTP.newBuilder()
                 .httpClient(httpClientGood())
                 .service(env.datasetURL())
                 .queryString("ASK{}")
@@ -142,7 +142,7 @@ public class TestAuthRemote {
     @Test
     public void auth_qe_bad_auth() {
         FusekiTest.expect401(()->{
-            try ( QExec qexec = QExecHTTP.newBuilder()
+            try ( QueryExec qexec = QueryExecHTTP.newBuilder()
                     .httpClient(httpClientBad())
                     .service(env.datasetURL())
                     .queryString("ASK{}")
@@ -156,7 +156,7 @@ public class TestAuthRemote {
     @Test
     public void auth_qe_bad_auth_retries() {
         FusekiTest.expect401(()->{
-            try ( QExec qexec = QExecHTTP.newBuilder()
+            try ( QueryExec qexec = QueryExecHTTP.newBuilder()
                     // retry blindly.
                     .httpClient(httpClient(authenticatorBadRetries()))
                     .service(env.datasetURL())
@@ -320,7 +320,7 @@ public class TestAuthRemote {
     }
 
     private void exec_register_test() {
-        try (QExec qExec = QExecHTTP.newBuilder()
+        try (QueryExec qExec = QueryExecHTTP.newBuilder()
                 .service(env.datasetURL())
                 .queryString("ASK{  }")
                 .build()) {
@@ -456,7 +456,7 @@ public class TestAuthRemote {
                 .updateString("INSERT DATA { <x:s> <x:p> <x:o> }")
                 .build()
                 .execute();
-            try ( QExec qExec = QExecHTTP.newBuilder()
+            try ( QueryExec qExec = QueryExecHTTP.newBuilder()
                     .service(env.datasetURL())
                     .queryString("ASK{ <x:s> <x:p> <x:o> }")
                     .build()){
@@ -501,7 +501,7 @@ public class TestAuthRemote {
             .defaultGraph()
             .POST(graph);
         // By query.
-        try ( QExec qExec = QExecHTTP.newBuilder()
+        try ( QueryExec qExec = QueryExecHTTP.newBuilder()
                 .service(env.datasetURL())
                 .queryString("ASK{ <x:s> <x:p> <x:o> }")
                 .httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth(user, password))

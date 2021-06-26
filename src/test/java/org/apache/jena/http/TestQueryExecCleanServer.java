@@ -93,7 +93,7 @@ public class TestQueryExecCleanServer {
                 ,"  BIND (afn:wait(100) AS ?X)"
                 ,"}");
 
-        try ( QExecHTTP qExec = QExecHTTP.newBuilder()
+        try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
                                             .service(dsURL)
                                             .queryString(queryString)
                                             // Short!

@@ -37,9 +37,9 @@ import org.apache.jena.sparql.util.Context;
  *
  * @see QueryExecution
  */
-public interface QExec extends AutoCloseable
+public interface QueryExec extends AutoCloseable
 {
-    public static QExecBuilder create() { return QExecBuilder.newBuilder(); }
+    public static QueryExecBuilder create() { return QueryExecBuilder.newBuilder(); }
 
     /**
      * The dataset against which the query will execute.
@@ -71,7 +71,7 @@ public interface QExec extends AutoCloseable
      *  executing this query which only gets evaluated when you actually start iterating
      *  over the results.
      *  </p>
-     *  */
+     */
     public RowSet select();
 
     /** Execute a CONSTRUCT query */
@@ -200,10 +200,10 @@ public interface QExec extends AutoCloseable
      */
     public boolean isClosed();
 
-    static QExec adapt(QueryExecution qExec) {
+    static QueryExec adapt(QueryExecution qExec) {
         if ( qExec instanceof QueryExecutionAdapter) {
             return ((QueryExecutionAdapter)qExec).get();
         }
-        return new QExecAdapter(qExec);
+        return new QueryExecAdapter(qExec);
     }
 }

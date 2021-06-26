@@ -41,7 +41,7 @@ import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.*;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.RowSet;
 import org.apache.jena.riot.*;
 import org.apache.jena.riot.resultset.ResultSetLang;
@@ -56,16 +56,16 @@ import org.apache.jena.sparql.engine.http.Params;
 import org.apache.jena.sparql.util.Context;
 
 /**
- * A {@link QExec} implementation where queries are executed against a remote
+ * A {@link QueryExec} implementation where queries are executed against a remote
  * service over HTTP.
  */
-public class QExecHTTP implements QExec {
+public class QueryExecHTTP implements QueryExec {
 
     /** @deprecated Use {@link #newBuilder} */
     @Deprecated
-    public static QExecHTTPBuilder create() { return newBuilder() ; }
+    public static QueryExecHTTPBuilder create() { return newBuilder() ; }
 
-    public static QExecHTTPBuilder newBuilder() { return QExecHTTPBuilder.newBuilder(); }
+    public static QueryExecHTTPBuilder newBuilder() { return QueryExecHTTPBuilder.newBuilder(); }
 
     //public static final String QUERY_MIME_TYPE = WebContent.contentTypeSPARQLQuery;
     private final Query query;
@@ -118,7 +118,7 @@ public class QExecHTTP implements QExec {
 
     // [QExec]
     public
-    /*package*/ QExecHTTP(String serviceURL, Query query, String queryString, int urlLimit,
+    QueryExecHTTP(String serviceURL, Query query, String queryString, int urlLimit,
                           HttpClient httpClient, Map<String, String> httpHeaders, Params params,
                           List<String> defaultGraphURIs, List<String> namedGraphURIs,
                           QuerySendMode sendMode, String acceptHeader, boolean allowCompression,

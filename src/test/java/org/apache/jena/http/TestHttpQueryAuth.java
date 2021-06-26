@@ -75,7 +75,7 @@ public class TestHttpQueryAuth {
 
     @Test public void query_no_auth() {
         FusekiTest.expect401(()->{
-            try ( QExecHTTP qExec = QExecHTTP.newBuilder()
+            try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
                     .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
                 RowSet rs = qExec.select();
                 assertNotNull(rs);
@@ -110,7 +110,7 @@ public class TestHttpQueryAuth {
             .connectTimeout(Duration.ofSeconds(10))
             .authenticator(authenticator)
             .build();
-        try ( QExecHTTP qExec = QExecHTTP.newBuilder()
+        try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
             .httpClient(httpClientAuth)
             .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             try {
@@ -134,7 +134,7 @@ public class TestHttpQueryAuth {
             .authenticator(authenticator)
             .build();
 
-        try ( QExecHTTP qExec = QExecHTTP.newBuilder()
+        try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
                 .httpClient(httpClientAuth)
                 .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             RowSet rs = qExec.select();
@@ -145,7 +145,7 @@ public class TestHttpQueryAuth {
     @Test public void query_auth_by_header() {
         // Manual setting, good.
         String x = HttpLib.basicAuth("u", "p");
-        try ( QExecHTTP qExec = QExecHTTP.newBuilder()
+        try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
                 .httpHeader(HttpNames.hAuthorization, x)
                 .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
             RowSet rs = qExec.select();
@@ -157,7 +157,7 @@ public class TestHttpQueryAuth {
         // Manual setting, bad.
         FusekiTest.expect401(()->{
             String x = HttpLib.basicAuth("u", "wrong");
-            try ( QExecHTTP qExec = QExecHTTP.newBuilder()
+            try ( QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
                 .httpHeader(HttpNames.hAuthorization, x)
                 .service(dsURL).queryString("SELECT * { ?s ?p ?o }").build() ) {
                 RowSet rs = qExec.select();

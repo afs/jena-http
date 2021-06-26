@@ -24,7 +24,7 @@ import org.apache.jena.atlas.lib.InternalErrorException;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.*;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.rdfconnection.Isolation;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.Lang;
@@ -71,10 +71,10 @@ public class RDFLinkLocal implements RDFLink {
     }
 
     @Override
-    public QExec query(Query query) {
+    public QueryExec query(Query query) {
         checkOpen();
         // There is no point doing this in a transaction because the QueryExecution is passed out.
-        return QExec.create().query(query).dataset(dataset).build();
+        return QueryExec.create().query(query).dataset(dataset).build();
     }
 
     @Override

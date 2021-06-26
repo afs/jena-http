@@ -28,7 +28,8 @@ import org.apache.jena.sys.JenaSystem;
 
 /** Execution builder for remote queries. */
 public abstract class ExecBuilderQueryHTTP<X, Y> {
-
+    // neutral superclass.
+    // [QExec] Collapse if RDFConnection is an adapter over RDFLink.
     static { JenaSystem.init(); }
 
     protected String serviceURL = null;

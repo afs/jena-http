@@ -72,26 +72,35 @@ public class NotesQExec {
     // [ ] G2 merge to G
     // QueryExecUtils.executeQuery to work on GPI. Deprectae rest. Redo.
 
-    // Destination:
+
+    // Tests
+    // [ ] QueryExecutionHTTP (basic only needed)
+
+    // -- Destination:
     // [no] New module jena-http? jena-gpi? Replaces RDFConnection?
-
-    // Tests QueryExecutionHTTP (basic only needed)
-
     // jena-arq:
-    //   org.apache.jena.http - HttpEnv, HttpLib, HttpOp2 (rename), HttpRDF?
-    //   org.apache.jena.sparql.http  - execHTTP, GSP registries.
+    //   org.apache.jena.http - HttpEnv, HttpLib, HttpOp2 (rename), old HttpOp->HttpOp1.
+    //      ==>org.apache.jena.riot.web == org.apache.jena.http
+    //   org.apache.jena.sparql.http  - execHTTP, GSP registries., HttpRDF?
+    //   org.apache.jena.queryexec
 
     // jena-rdfconnection:
     //    org.apache.jena.link (rdflink)
 
-    // [ ] QueryExecUtils
+    // Other
+    // [ ] UpdateProcessor(migrate name):: UpdateExecution, UpdateExecutionHTTP, UpdateExecutionHTTPBuilder
+    // --
+
+    // [ ] QueryExecUtils - both forms.
     // [ ] Service.java
 
-    // [ ] QExec renamed as QueryExec?
+    // [x] QExec renamed as QueryExec?
     // [ ] QExecBase renamed as QueryExecLocal
     // [ ] QueryExecHTTP vs QueryExecRemote
     // [ ] QueryExec tests. Or complete switch over!
 
+    // [ ] Move builders into classes
+    // [ ] QuerySndMode into QueryExecHTTP.Builder
     // [x] RowSetFormatter (text!)
     // [ ] RowSet and SSE
 

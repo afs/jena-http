@@ -29,7 +29,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.link.RDFLinkFuseki;
 import org.apache.jena.link.RDFLinkRemoteBuilder;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;
@@ -71,17 +71,17 @@ public class TestRDFLinkFusekiBinary {
                     assertEquals("b3456", obj.getBlankNodeLabel());
                 });
 
-                try(QExec qExec = link.query("ASK {?s ?p <_:b3456>}")){
+                try(QueryExec qExec = link.query("ASK {?s ?p <_:b3456>}")){
                     boolean bool = qExec.ask();
                     assertTrue(bool);
                 }
 
-                try (QExec qExec = link.query("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . FILTER (sameTerm(?o, <_:b3456>)) }")){
+                try (QueryExec qExec = link.query("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . FILTER (sameTerm(?o, <_:b3456>)) }")){
                     Graph graph2 = qExec.construct();
                     checkGraph(graph2, "b3456");
                 }
 
-                try(QExec qExec = link.query("DESCRIBE ?s WHERE { ?s ?p <_:b3456>}")){
+                try(QueryExec qExec = link.query("DESCRIBE ?s WHERE { ?s ?p <_:b3456>}")){
                     Graph graph2 = qExec.describe();
                     checkGraph(graph2, "b3456");
                 }

@@ -27,10 +27,10 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.http.GSP;
 import org.apache.jena.http.HttpEnv;
-import org.apache.jena.http.QExecHTTPBuilder;
+import org.apache.jena.http.QueryExecHTTPBuilder;
 import org.apache.jena.http.UpdateExecutionHTTP;
 import org.apache.jena.query.*;
-import org.apache.jena.queryexec.QExec;
+import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.RowSet;
 import org.apache.jena.rdfconnection.JenaConnectionException;
 import org.apache.jena.riot.RDFFormat;
@@ -157,7 +157,7 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public void queryRowSet(String queryString, Consumer<RowSet> rowSetAction) {
         Txn.executeRead(this, ()->{
-            try ( QExec qExec = query(queryString, QueryType.SELECT) ) {
+            try ( QueryExec qExec = query(queryString, QueryType.SELECT) ) {
                 RowSet rs = qExec.select();
                 rowSetAction.accept(rs);
             }
@@ -172,7 +172,7 @@ public class RDFLinkRemote implements RDFLink {
     @Override
     public void querySelect(String queryString, Consumer<Binding> rowAction) {
         Txn.executeRead(this, ()->{
-            try ( QExec qExec = query(queryString, QueryType.SELECT) ) {
+            try ( QueryExec qExec = query(queryString, QueryType.SELECT) ) {
                 qExec.select().forEachRemaining(rowAction);
             }
         } );
@@ -183,7 +183,7 @@ public class RDFLinkRemote implements RDFLink {
     public Graph queryConstruct(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(queryString, QueryType.CONSTRUCT) ) {
+                try ( QueryExec qExec = query(queryString, QueryType.CONSTRUCT) ) {
                     return qExec.construct();
                 }
             } );
@@ -194,7 +194,7 @@ public class RDFLinkRemote implements RDFLink {
     public Graph queryDescribe(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(queryString, QueryType.DESCRIBE) ) {
+                try ( QueryExec qExec = query(queryString, QueryType.DESCRIBE) ) {
                     return qExec.describe();
                 }
             } );
@@ -205,7 +205,7 @@ public class RDFLinkRemote implements RDFLink {
     public boolean queryAsk(String queryString) {
         return
             Txn.calculateRead(this, ()->{
-                try ( QExec qExec = query(queryString, QueryType.ASK) ) {
+                try ( QueryExec qExec = query(queryString, QueryType.ASK) ) {
                     return qExec.ask();
                 }
             } );
@@ -217,24 +217,24 @@ public class RDFLinkRemote implements RDFLink {
      * @param queryType
      * @return QueryExecution
      */
-    protected QExec query(String queryString, QueryType queryType) {
+    protected QueryExec query(String queryString, QueryType queryType) {
         Objects.requireNonNull(queryString);
         return queryExec(null, queryString, queryType);
     }
 
     @Override
-    public QExec query(String queryString) {
+    public QueryExec query(String queryString) {
         Objects.requireNonNull(queryString);
         return queryExec(null, queryString, null);
     }
 
     @Override
-    public QExec query(Query query) {
+    public QueryExec query(Query query) {
         Objects.requireNonNull(query);
         return queryExec(query, null, null);
     }
 
-    private QExec queryExec(Query query, String queryString, QueryType queryType) {
+    private QueryExec queryExec(Query query, String queryString, QueryType queryType) {
         checkQuery();
         if ( query == null && queryString == null )
             throw new InternalErrorException("Both query and query string are null");
@@ -249,8 +249,8 @@ public class RDFLinkRemote implements RDFLink {
     }
 
     // Create the QExec
-    private QExec createQExec(Query query, String queryStringToSend, QueryType queryType) {
-        QExecHTTPBuilder builder = QExecHTTPBuilder.newBuilder()
+    private QueryExec createQExec(Query query, String queryStringToSend, QueryType queryType) {
+        QueryExecHTTPBuilder builder = QueryExecHTTPBuilder.newBuilder()
             .service(svcQuery)
             .httpClient(httpClient)
             .queryString(queryStringToSend);
