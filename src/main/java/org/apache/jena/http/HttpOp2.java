@@ -60,14 +60,6 @@ public class HttpOp2 {
         return handleResponseRtnString(response);
     }
 
-    /*package*/ static HttpRequest newGetRequest(HttpClient httpClient, String url, Consumer<HttpRequest.Builder> modifier) {
-        HttpRequest.Builder builder = HttpRequest.newBuilder().uri(toRequestURI(url)).GET();
-        if ( modifier != null )
-            modifier.accept(builder);
-        HttpRequest request = builder.build();
-        return request;
-    }
-
     /** POST - like httpGetString but uses POST - expects a response */
     public static String httpPostRtnString(String url) {
         return httpPostRtnString(HttpEnv.getDftHttpClient(), url);

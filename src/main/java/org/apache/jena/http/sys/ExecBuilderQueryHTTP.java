@@ -16,12 +16,15 @@
  * limitations under the License.
  */
 
-package org.apache.jena.http;
+package org.apache.jena.http.sys;
 
 import java.net.http.HttpClient;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.jena.http.HttpEnv;
+import org.apache.jena.http.Params;
+import org.apache.jena.http.QuerySendMode;
 import org.apache.jena.query.Query;
 import org.apache.jena.sys.JenaSystem;
 

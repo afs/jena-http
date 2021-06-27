@@ -65,13 +65,12 @@ import org.apache.jena.sparql.graph.GraphFactory;
  * </pre>
  */
 public class GSP {
-
     /**
      * Return the URL for a graph named using the
      * <a href="https://www.w3.org/TR/sparql11-http-rdf-update/">SPARQL 1.1 Graph Store Protocol</a>.
-     * The {@code graphStoreProtocolService} is the network location of the graph store.
+     * The {@code graphStore} is the URL of the network location of the graph store.
      * The {@code graphName} be a valid, absolute URI (i.e. includes the scheme)
-     * or the word "default" (or null) for the default graph of the store
+     * or the word "default", or null, for the default graph of the store
      * or the word "union" for the union graph of the store (this is a Jena extension).
      * @param graphStore
      * @param graphName

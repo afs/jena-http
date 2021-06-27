@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -143,7 +144,7 @@ public class HttpLib {
             // or the application passed on a HttpClient with redirects off.
             // Either way, we should not continue processing.
             try {
-                HttpLib.finish(response.body());
+                finish(response);
                 //BodySubscribers.discarding().getBody().toCompletableFuture().get();
             //} catch (InterruptedException | ExecutionException | IOException ex) {
             } catch (Exception ex) {
@@ -221,7 +222,6 @@ public class HttpLib {
      * {@code close} may close the underlying HTTP connection.
      *  See {@link BodySubscribers#ofInputStream()}.
      */
-    public
     /*package*/ static void finish(HttpResponse<InputStream> response) {
         finish(response.body());
     }
@@ -230,7 +230,7 @@ public class HttpLib {
      *  {@code close} may close the underlying HTTP connection.
      *  See {@link BodySubscribers#ofInputStream()}.
      */
-    /*package*/ public static void finish(InputStream input) {
+    /*package*/ static void finish(InputStream input) {
         consume(input);
     }
 
@@ -278,6 +278,14 @@ public class HttpLib {
                 : String.format("Bad URL: %s starting at character %d", uriStr, idx);
             throw new HttpException(msg, ex);
         }
+    }
+
+    public static HttpRequest newGetRequest(HttpClient httpClient, String url, Consumer<HttpRequest.Builder> modifier) {
+        HttpRequest.Builder builder = HttpRequest.newBuilder().uri(toRequestURI(url)).GET();
+        if ( modifier != null )
+            modifier.accept(builder);
+        HttpRequest request = builder.build();
+        return request;
     }
 
     public static <X> X dft(X value, X dftValue) {
@@ -395,6 +403,11 @@ public class HttpLib {
         }
     }
 
+    /*package*/ static CompletableFuture<HttpResponse<InputStream>> asyncExecute(HttpClient httpClient, HttpRequest httpRequest) {
+        logAsyncRequest(httpRequest);
+        return httpClient.sendAsync(httpRequest, BodyHandlers.ofInputStream());
+    }
+
     /** Request */
     private static void logRequest(HttpRequest httpRequest) {
         // Uses the SystemLogger which defaults to JUL.
@@ -405,7 +418,10 @@ public class HttpLib {
 //        httpRequest.headers();
     }
 
-    /** Response (do not touch the body!)  */
+    /** Async Request */
+    private static void logAsyncRequest(HttpRequest httpRequest) {}
+
+        /** Response (do not touch the body!)  */
     private static void logResponse(HttpResponse<?> httpResponse) {
 //        httpResponse.uri();
 //        httpResponse.statusCode();

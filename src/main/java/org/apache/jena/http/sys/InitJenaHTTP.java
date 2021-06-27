@@ -16,25 +16,24 @@
  * limitations under the License.
  */
 
-package org.apache.jena.http;
+package org.apache.jena.http.sys;
 
-/** Enum of different ways to send a SPARQL query over HTTP */
-public enum QuerySendMode {
+import org.apache.jena.sys.JenaSubsystemLifecycle;
+import org.apache.jena.sys.JenaSystem;
 
-    // Use HTTP GET when below the lkength limit else POST an HTML Form encoding
-    asGetWithLimitForm,
+/**
+ * Jena start-up lifecycle initialization.
+ * Details in {@link JenaSystem}.
+ */
+public class InitJenaHTTP implements JenaSubsystemLifecycle {
 
-    // Use HTTP GET when below the length limit else POST the query as application/sparql-query
-    asGetWithLimitBody,
+    @Override
+    public void start() {}
 
-    // Use GET regardless
-    asGetAlways,
+    @Override
+    public void stop() {}
 
-    // Use POST HTML Form regardless
-    asPostForm,
 
-    // POST and application/sparql-query
-    asPostBody;
-
-    public static QuerySendMode systemtDefault = QuerySendMode.asGetWithLimitBody;
+    @Override
+    public int level() { return 60; }
 }

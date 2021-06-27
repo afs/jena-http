@@ -24,6 +24,7 @@ import java.net.http.HttpClient;
 import java.util.HashMap;
 import java.util.Objects;
 
+import org.apache.jena.http.sys.ExecBuilderQueryHTTP;
 import org.apache.jena.query.QueryException;
 import org.apache.jena.queryexec.QueryExec;
 

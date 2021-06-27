@@ -44,8 +44,11 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.graph.GraphFactory;
 
 /**
- * HTTP level operations for RDF related tasks.
- * This does not include GSP naming which is in {@link GSP}.
+ * A collection of convenience operations for  HTTP level operations
+ * for RDF related tasks. This does not include GSP naming
+ * which is in {@link GSP}.
+ *
+ * See also {@link AsyncHttpRDF}.
  */
 public class HttpRDF {
 
@@ -113,6 +116,11 @@ public class HttpRDF {
      */
     public static void httpGetToStream(HttpClient client, String url, Map<String, String> headers, StreamRDF dest) {
         HttpResponse<InputStream> response = execGetToInput(client, url, HttpLib.setHeaders(headers));
+        httpResponseToStreamRDF(url, response, dest);
+    }
+
+    public // for development
+    /*private*/ static void httpResponseToStreamRDF(String url, HttpResponse<InputStream> response, StreamRDF dest) {
         InputStream in = handleResponseInputStream(response);
         String base = determineBaseURI(url, response);
         Lang lang = determineSyntax(response, Lang.RDFXML);
@@ -122,7 +130,6 @@ public class HttpRDF {
                 .source(in)
                 .lang(lang)
                 .parse(dest);
-            finish(response);
         } catch (RiotParseException ex) {
             // We only read part of the input stream.
             throw ex;
@@ -139,7 +146,7 @@ public class HttpRDF {
     private static HttpResponse<InputStream> execGetToInput(HttpClient client, String url, Consumer<HttpRequest.Builder> modifier) {
         Objects.requireNonNull(client);
         Objects.requireNonNull(url);
-        HttpRequest requestData = HttpOp2.newGetRequest(client, url, modifier);
+        HttpRequest requestData = HttpLib.newGetRequest(client, url, modifier);
         HttpResponse<InputStream> response = HttpLib.execute(client, requestData);
         handleHttpStatusCode(response);
         return response;
@@ -182,13 +189,13 @@ public class HttpRDF {
     }
 
     /*package*/ static void putGraph(HttpClient httpClient, String url, Graph graph,
-                                 RDFFormat format, Map<String, String> httpHeaders) {
+                                     RDFFormat format, Map<String, String> httpHeaders) {
         BodyPublisher bodyPublisher = graphToHttpBody(graph, format);
         pushBody(httpClient, url, Push.PUT, bodyPublisher, format, httpHeaders);
     }
 
     /*package*/ static void putDataset(HttpClient httpClient, String url, DatasetGraph dataset,
-                                   RDFFormat format, Map<String, String> httpHeaders) {
+                                       RDFFormat format, Map<String, String> httpHeaders) {
         BodyPublisher bodyPublisher = datasetToHttpBody(dataset, format);
         pushBody(httpClient, url, Push.PUT, bodyPublisher, format, httpHeaders);
     }
@@ -219,7 +226,7 @@ public class HttpRDF {
     }
 
     /** RDF {@link Lang}. */
-    static <T> Lang determineSyntax(HttpResponse<T> response, Lang dftSyntax) {
+    /*package*/ static <T> Lang determineSyntax(HttpResponse<T> response, Lang dftSyntax) {
         String ctStr = response.headers().firstValue(HttpNames.hContentType).orElse(null);
         if ( ctStr != null ) {
             int i = ctStr.indexOf(';');
@@ -230,7 +237,7 @@ public class HttpRDF {
         return dft(lang, dftSyntax);
     }
 
-    static <T> String determineBaseURI(String url, HttpResponse<T> response) {
+    /*package*/ static <T> String determineBaseURI(String url, HttpResponse<T> response) {
         // RFC 7231: 3.1.4.2. and Appendix B: Content-Location does not affect base URI. // SKW.
         URI uri = response.uri();
         return uri.toString();
@@ -243,7 +250,7 @@ public class HttpRDF {
     // be reused (don't know when the request finishes, only closing the connection
     // indicates that).
 
-    static BodyPublisher graphToHttpBody(Graph graph, RDFFormat syntax) {
+    /*package*/ static BodyPublisher graphToHttpBody(Graph graph, RDFFormat syntax) {
         ByteArrayOutputStream out = new ByteArrayOutputStream(128*1024);
         RDFDataMgr.write(out, graph, syntax);
         byte[] bytes = out.toByteArray();
