@@ -22,13 +22,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.sparql.sse.SSE;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.seaborne.conn.EnvTest;
 
 public class TestHttpRDF {
     // The HttpRDF machinery (much of which is package visible) get tested by other

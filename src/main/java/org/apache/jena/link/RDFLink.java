@@ -28,9 +28,7 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.RowSet;
 import org.apache.jena.rdfconnection.JenaConnectionException;
-import org.apache.jena.rdfconnection.RDFConnectionFactory;
-import org.apache.jena.rdfconnection.RDFConnectionLocal;
-import org.apache.jena.rdfconnection.RDFConnectionRemote;
+import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.core.Transactional;
@@ -58,7 +56,7 @@ import org.apache.jena.update.UpdateRequest;
  * Protocol</a> for the graph operations and in addition, there are analogous
  * operations on datasets (fetch, load, put; but not delete).
  *
- * {@code RDFConnection} provides transaction boundaries. If not in a
+ * {@code RDFLink} provides transaction boundaries. If not in a
  * transaction, an implicit transactional wrapper is applied ("autocommit").
  *
  * Remote SPARQL operations are atomic but without additional capabilities from
@@ -68,9 +66,10 @@ import org.apache.jena.update.UpdateRequest;
  * Not all implementations may implement all operations.
  * See the implementation notes for details.
  *
- * @see RDFConnectionFactory
- * @see RDFConnectionLocal
- * @see RDFConnectionRemote
+ * @see RDFConnection
+ * @see RDFLinkFactory
+ * @see RDFLinkDataset
+ * @see RDFLinkRemote
  * @see LinkSparqlQuery
  * @see LinkSparqlUpdate
  * @see LinkDatasetGraph
@@ -80,17 +79,17 @@ public interface RDFLink extends
         LinkSparqlQuery, LinkSparqlUpdate, LinkDatasetGraph,
         Transactional, AutoCloseable {
     // Default implementations could be pushed up but then they can't be mentioned here
-    // and the javadoc for RDFConnection is not in one place.
+    // and the javadoc for RDFLink is not in one place.
     // Inheriting interfaces and re-mentioning gets the javadoc in one place.
 
     // ---- SparqlQueryConnection
     // Where the argument is a query string, this code avoids simply parsing it and calling
-    // the Query object form. This allows RDFConnectionRemote to pass the query string
+    // the Query object form. This allows RDFLinkRemote to pass the query string
     // untouched to the connection depending in the internal setting to parse/check
     // queries.
     // Java9 introduces private methods for interfaces which could clear the duplication up by passing in a Creator<QueryExecution>.
-    // (Alternatively, add RDFConnectionBase with protected query(String, Query)
-    // See RDFConnectionRemote.
+    // (Alternatively, add RDFLinkBase with protected query(String, Query)
+    // See RDFLinkRemote.
 
     /**
      * Execute a SELECT query and process the RowSet with the handler code.

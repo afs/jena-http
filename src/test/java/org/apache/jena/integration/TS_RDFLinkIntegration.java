@@ -18,7 +18,6 @@
 
 package org.apache.jena.integration;
 
-import org.apache.jena.http.TestBlankNodeBinary;
 import org.junit.runner.RunWith ;
 import org.junit.runners.Suite ;
 
@@ -28,14 +27,10 @@ import org.junit.runners.Suite ;
     //    TestRDFLinkLocalTxnMem
     //    TestRDFLinkLocalMRSW
 
-    TestBlankNodeBinary.class,
-
     // Addition tests added here.
-    TestRDFLinkLocalTDB.class,
     TestRDFLinkRemote.class,
     TestRDFLinkFuseki.class,
-    TestRDFLinkFusekiBinary.class,
-    TestAuthRemote.class
+    TestRDFLinkFusekiBinary.class
 })
 
 public class TS_RDFLinkIntegration {}

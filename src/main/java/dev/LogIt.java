@@ -49,6 +49,7 @@ public class LogIt {
 
     /** Response (do not touch the body!)  */
     private static void logResponse(HttpResponse<?> httpResponse) {
+//        httpResponse.request()
 //        httpResponse.uri();
 //        httpResponse.statusCode();
 //        httpResponse.headers();

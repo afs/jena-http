@@ -21,19 +21,8 @@ package org.apache.jena.http;
 import java.util.Map;
 
 /**
- * A service registry is a set of actions to take to modify an HTTP request before
- * sending it to a specific endpoint.
- *
- * The key can be a prefix which must end in "/"
+ * A {@code HttpRequestModifer} allows the application to HTTP query parameters and HTTP headers
+ * that will be used to create an {@link java.net.http.HttpRequest}.
  */
-public class RegistryServiceModifier extends RegistryByServiceURL<RegistryServiceModifier.RequestModifer> {
-
-    /** Query string parameters and HTTP headers for inspection and modification. */
-    @FunctionalInterface
-    public interface RequestModifer { void modify(Params params, Map<String, String> httpHeaders) ; }
-
-    private static RegistryServiceModifier singleton = new RegistryServiceModifier();
-    public static RegistryServiceModifier get() { return singleton; }
-
-    public RegistryServiceModifier() { }
-}
+@FunctionalInterface
+public interface HttpRequestModifer { void modify(Params params, Map<String, String> httpHeaders) ; }

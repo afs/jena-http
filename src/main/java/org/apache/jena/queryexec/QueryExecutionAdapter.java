@@ -52,7 +52,7 @@ public class QueryExecutionAdapter implements QueryExecution
         return new QueryExecutionAdapter(qExec);
     }
 
-    private QueryExecutionAdapter(QueryExec qExec) {
+    protected QueryExecutionAdapter(QueryExec qExec) {
         this.qExec = qExec;
         this.dataset = DatasetFactory.wrap(qExec.getDataset());
         this.varNames = qExec.getQuery().getResultVars();

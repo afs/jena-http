@@ -52,16 +52,16 @@ import org.apache.jena.sparql.graph.GraphFactory;
  * Examples:
  * <pre>
  *   // Get the default graph.
- *   Graph graph = GSP.service("http://example/dataset").GET();
+ *   Graph graph = GSP.request("http://example/dataset").defaultGraph().GET();
  * </pre>
  * <pre>
  *   // Get a named graph.
- *   Graph graph = GSP.service("http://example/dataset").GET("http://my/graph");
+ *   Graph graph = GSP.request("http://example/dataset").namedGraph("http://my/graph").GET();
  * </pre>
  * <pre>
  *   // POST (add) to a named graph.
  *   Graph myData = ...;
- *   GSP.service("http://example/dataset").POST("http://my/graph", myData);
+ *   GSP.request("http://example/dataset").namedGraph("http://my/graph").POST(myData);
  * </pre>
  */
 public class GSP {
@@ -155,17 +155,18 @@ public class GSP {
         return this;
     }
 
-//    /** Enable a request for compression on the request */
-//    public GSP allowCompression(boolean allowCompression) {
-//        this.allowCompression = allowCompression;
-//        return this;
-//    }
-
+    // Private - no getters.
     private String httpHeader(String header) {
         Objects.requireNonNull(header);
         if ( httpHeaders == null )
             return null;
         return httpHeaders.get(header);
+    }
+
+    /** Enable a request for compression on the request */
+    public GSP allowCompression(boolean allowCompression) {
+        this.allowCompression = allowCompression;
+        return this;
     }
 
     /** Send request for a named graph (used in {@code ?graph=}) */
@@ -210,6 +211,7 @@ public class GSP {
         return this;
     }
 
+    // No getters.
     private String acceptHeader() {
         return httpHeader(HttpNames.hAccept);
     }
@@ -232,6 +234,7 @@ public class GSP {
         return this;
     }
 
+    // No getters.
     private String contentType() {
         return httpHeader(HttpNames.hContentType);
     }

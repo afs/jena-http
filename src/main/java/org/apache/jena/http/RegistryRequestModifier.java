@@ -18,26 +18,18 @@
 
 package org.apache.jena.http;
 
-import java.net.http.HttpClient;
-
 import org.apache.jena.http.sys.AbstractRegistryByServiceURL;
 
 /**
- * A service registry is a collection of {@link HttpClient HttpClients} to use for
- * specific URLs.
- * <p>
- * The lookup ({@link #find}) is by longest prefix. e.g. a registration of
- * "http://someHost/" or "http://someHost/dataset" will apply to
- * "http://someHost/dataset/sparql" and "http://someHost/dataset/update" but not to
- * https://someHost/... which uses "https".
- * <p>
- * This is one way of managing authentication for particular remote services -
- * register a {@link HttpClient} with authentication credentials.
+ * A service registry is a set of actions to take to modify an HTTP request before
+ * sending it to a specific endpoint.
+ *
+ * The key can be a prefix which must end in "/"
  */
-public class RegistryHttpClient extends AbstractRegistryByServiceURL<HttpClient> {
+public class RegistryRequestModifier extends AbstractRegistryByServiceURL<HttpRequestModifer> {
 
-    private static RegistryHttpClient singleton = new RegistryHttpClient();
-    public static RegistryHttpClient get() { return singleton; }
+    private static RegistryRequestModifier singleton = new RegistryRequestModifier();
+    public static RegistryRequestModifier get() { return singleton; }
 
-    private RegistryHttpClient() { }
+    public RegistryRequestModifier() { }
 }

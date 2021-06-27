@@ -261,7 +261,6 @@ public class RDFLinkRemote implements RDFLink {
         if ( qt == null )
             qt = QueryType.UNKNOWN;
         // Set the accept header - use the most specific method.
-        // WHAT IS THIS AND WHY?
         String requestAcceptHeader = null;
         switch(qt) {
             case SELECT :

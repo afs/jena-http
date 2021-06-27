@@ -49,7 +49,6 @@ import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.lib.IRILib;
 import org.apache.jena.atlas.web.HttpException;
-import org.apache.jena.http.RegistryServiceModifier.RequestModifer;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
@@ -392,12 +391,14 @@ public class HttpLib {
             logResponse(httpResponse);
             return httpResponse;
         } catch (IOException | InterruptedException ex) {
-            // This is silly.
-            // Rather than an HTTP exception, bad authentication becomes IOException("too many authentication attempts");
-            // or IException("No credentials provided") is the authenticator decides to return null.
-            if ( ex.getMessage().contains("too many authentication attempts") ||
-                 ex.getMessage().contains("No credentials provided") ) {
-                throw new HttpException(401, HttpSC.getMessage(401), null);
+            if ( ex.getMessage() != null ) {
+                // This is silly.
+                // Rather than an HTTP exception, bad authentication becomes IOException("too many authentication attempts");
+                // or IException("No credentials provided") is the authenticator decides to return null.
+                if ( ex.getMessage().contains("too many authentication attempts") ||
+                     ex.getMessage().contains("No credentials provided") ) {
+                    throw new HttpException(401, HttpSC.getMessage(401), null);
+                }
             }
             throw new HttpException(httpRequest.method()+" "+httpRequest.uri().toString(), ex);
         }
@@ -431,10 +432,16 @@ public class HttpLib {
 
     // This is to allow setting additional/optional query parameters on a per remote service (including for SERVICE).
     /*package*/ public static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
-        // Old Constant.
-        RegistryServiceModifier srvReg = context.get(ARQ.serviceParams);
-        if ( srvReg != null ) {
-            RequestModifer mods = srvReg.find(serviceURI);
+        HttpRequestModifer modifier = context.get(ARQ.httpRequestModifer);
+        if ( modifier != null ) {
+            modifier.modify(params, httpHeaders);
+            return;
+        }
+        RegistryRequestModifier modifierRegistry = context.get(ARQ.httpRegistryRequestModifer);
+        if ( modifierRegistry == null )
+            modifierRegistry = RegistryRequestModifier.get();
+        if ( modifierRegistry != null ) {
+            HttpRequestModifer mods = modifierRegistry.find(serviceURI);
             if ( mods != null )
                 mods.modify(params, httpHeaders);
         }

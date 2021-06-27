@@ -23,13 +23,19 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses( {
-    TestHttpOp2.class
+    // Tests of this package are also in the integration tests where a test server is available.
+   TestBlankNodeBinary.class
+    , TestHttpOp2.class
     , TestHttpRDF.class
     , TestGSP.class
     , TestQueryExecHTTP.class
     , TestQueryExecCleanServer.class
-    , TestHttpQueryAuth.class
     , TestUpdateExecutionHTTP.class
+    , TestAuthRemote.class
+    , TestServiceFunctions.class
+    , TestService2.class
+    , TestServiceAuth.class
+
 })
 
 public class TS_JenaHttp { }

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.jena.http;
+package org.apache.jena.http.sys;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,19 +24,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.jena.atlas.lib.Trie;
 
 /**
- * Abstract base class for registries with exact and prefix mapping.
+ * Abstract base class for registries with exact and prefix lookup..
  * <p>
- * The lookup ({@link #find}) is by longest prefix. e.g. a registration of
+ * The lookup ({@link #find}) is by exact match then by longest prefix. e.g. a registration of
  * "http://someHost/" or "http://someHost/dataset" will apply to
  * "http://someHost/dataset/sparql" and "http://someHost/dataset/update" but not to
- * https://someHost/... which uses "https".
+ *  "https://someHost/..." which uses "https".
  */
-public abstract class RegistryByServiceURL<T> {
+public abstract class AbstractRegistryByServiceURL<T> {
 
     private final Map<String, T> exactMap = new ConcurrentHashMap<>();
     private final Trie<T> trie = new Trie<>();
 
-    protected RegistryByServiceURL() { }
+    protected AbstractRegistryByServiceURL() { }
 
     public void add(String key, T value) {
         exactMap.put(key, value);
@@ -68,6 +68,7 @@ public abstract class RegistryByServiceURL<T> {
     }
 
     public void remove(String key) {
+        exactMap.remove(key);
         trie.remove(key);
     }
 

@@ -37,15 +37,9 @@ public class DevQExec {
         FusekiLogging.setLogging();
     }
 
-    // See NotesQExec
-
     public static void main(String... args){
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
         Query query = QueryFactory.create("SELECT * { VALUES (?x ?y) { (1 2) (3 '4') } }");
-//        QueryExecution.create()
-//            .dataset(dsg)
-//            .query(query)
-//            .select(System.out::println);
 
         try ( QueryExecution qExec = QueryExecution.create()
                 .dataset(dsg)
@@ -56,11 +50,10 @@ public class DevQExec {
         }
 
         try ( RDFLink link = RDFLinkFactory.connect(dsg) ) {
-            link.queryRowSet(query,
-                             rowSet -> RowSetFormatter.out(rowSet));
+            link.queryRowSet(query, rowSet -> RowSetFormatter.out(rowSet));
         }
 
-        RowSet rowSet = QueryExec.create().dataset(dsg).query(query).select();
+        RowSet rowSet = QueryExec.newBuilder().dataset(dsg).query(query).select();
         RowSetFormatter.out(rowSet);
     }
 }

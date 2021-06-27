@@ -74,7 +74,13 @@ public class Params
     }
 
     /** Valueless parameter */
-    public void add(String name) { add(name, null); }
+    public Params add(String name) { return add(name, null); }
+
+    /** @deprecated Use {@link #add(String,String)} */
+    @Deprecated public Params addParam(String name, String value) { return add(name, value); }
+
+    /** @deprecated Use {@link #add(String)} */
+    @Deprecated public Params addParam(String name) { return add(name); }
 
     public boolean containsParam(String name) { return params.containsKey(name); }
 

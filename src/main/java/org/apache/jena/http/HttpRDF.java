@@ -103,8 +103,7 @@ public class HttpRDF {
     public static void httpGetToStream(HttpClient client, String url, String acceptHeader, StreamRDF dest) {
         if ( acceptHeader == null )
             acceptHeader = "*/*";
-        Map<String, String> headers = Collections.singletonMap(HttpNames.hAccept, acceptHeader);
-        httpGetToStream(client, url, headers, dest);
+        httpGetToStream(client, url, HttpLib.setAcceptHeader(acceptHeader), dest);
     }
 
     /**
@@ -115,12 +114,16 @@ public class HttpRDF {
      * @throws RiotException
      */
     public static void httpGetToStream(HttpClient client, String url, Map<String, String> headers, StreamRDF dest) {
-        HttpResponse<InputStream> response = execGetToInput(client, url, HttpLib.setHeaders(headers));
+        httpGetToStream(client, url, HttpLib.setHeaders(headers), dest);
+    }
+
+    // Worker
+    private static void httpGetToStream(HttpClient client, String url, Consumer<HttpRequest.Builder> modifier, StreamRDF dest) {
+        HttpResponse<InputStream> response = execGetToInput(client, url, modifier);
         httpResponseToStreamRDF(url, response, dest);
     }
 
-    public // for development
-    /*private*/ static void httpResponseToStreamRDF(String url, HttpResponse<InputStream> response, StreamRDF dest) {
+    /*package*/ static void httpResponseToStreamRDF(String url, HttpResponse<InputStream> response, StreamRDF dest) {
         InputStream in = handleResponseInputStream(response);
         String base = determineBaseURI(url, response);
         Lang lang = determineSyntax(response, Lang.RDFXML);

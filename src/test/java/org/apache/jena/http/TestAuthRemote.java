@@ -16,20 +16,14 @@
  * limitations under the License.
  */
 
-package org.apache.jena.integration;
+package org.apache.jena.http;
 
 import static org.junit.Assert.assertTrue;
 
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
-import java.net.http.HttpClient;
-import java.time.Duration;
-
+import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.fuseki.test.FusekiTest;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.http.*;
-import org.apache.jena.http.RegistryServiceModifier.RequestModifer;
 import org.apache.jena.link.RDFLink;
 import org.apache.jena.link.RDFLinkFactory;
 import org.apache.jena.link.RDFLinkRemote;
@@ -43,7 +37,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.seaborne.conn.EnvTest;
 
 /**
  * This is more than just RDFLinkRemote - it covers the components
@@ -66,54 +59,7 @@ public class TestAuthRemote {
         EnvTest.stop(env);
     }
 
-    // Can reuse this one.
-    private static Authenticator authenticatorGood() {
-        return new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(env.user(), env.password().toCharArray());
-            }
-        };
-    }
-
-    // Authenticator that returns a password once only then returns null.
-    private static Authenticator authenticatorBadOnce() {
-        return new Authenticator() {
-            boolean called = false;
-
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                if ( called )
-                    return null;
-                called = true;
-                return new PasswordAuthentication("u", "p".toCharArray());
-            }
-        };
-    }
-
-
-    // Authenticator that returns the same (wrong) password each time.
-    private static Authenticator authenticatorBadRetries() {
-        return new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication("u", "p".toCharArray());
-            }
-        };
-    }
-
-    private static HttpClient httpClientBad() { return httpClient(authenticatorBadOnce()); }
-
-    private static HttpClient httpClientGood() { return httpClient(authenticatorGood()); }
-
-    private static HttpClient httpClient(Authenticator authenticator) {
-        return  HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .authenticator(authenticator)
-            .build();
-    }
-
-    // ---- QueryExecutionHTTP
+    // ---- QueryExecHTTP
 
     @Test
     public void auth_qe_no_auth() {
@@ -131,7 +77,7 @@ public class TestAuthRemote {
     @Test
     public void auth_qe_good_auth() {
         try ( QueryExec qexec = QueryExecHTTP.newBuilder()
-                .httpClient(httpClientGood())
+                .httpClient(env.httpClientAuthGood())
                 .service(env.datasetURL())
                 .queryString("ASK{}")
                 .build()) {
@@ -143,7 +89,7 @@ public class TestAuthRemote {
     public void auth_qe_bad_auth() {
         FusekiTest.expect401(()->{
             try ( QueryExec qexec = QueryExecHTTP.newBuilder()
-                    .httpClient(httpClientBad())
+                    .httpClient(env.httpClientAuthBad())
                     .service(env.datasetURL())
                     .queryString("ASK{}")
                     .build()) {
@@ -158,7 +104,7 @@ public class TestAuthRemote {
         FusekiTest.expect401(()->{
             try ( QueryExec qexec = QueryExecHTTP.newBuilder()
                     // retry blindly.
-                    .httpClient(httpClient(authenticatorBadRetries()))
+                    .httpClient(EnvTest.httpClient(env.authenticatorBadRetries()))
                     .service(env.datasetURL())
                     .queryString("ASK{}")
                     .build()) {
@@ -183,7 +129,7 @@ public class TestAuthRemote {
     @Test
     public void auth_update_good_auth() {
         UpdateExecutionHTTP.newBuilder()
-            .httpClient(httpClientGood())
+            .httpClient(env.httpClientAuthGood())
             .service(env.datasetURL())
             .updateString("INSERT DATA { <x:s> <x:p> <x:o> }")
             .build()
@@ -194,7 +140,7 @@ public class TestAuthRemote {
     public void auth_update_bad_auth() {
         FusekiTest.expect401(()->
             UpdateExecutionHTTP.newBuilder()
-                .httpClient(httpClientBad())
+                .httpClient(env.httpClientAuthBad())
                 .service(env.datasetURL())
                 .updateString("INSERT DATA { <x:s> <x:p> <x:o> }")
                 .build()
@@ -213,14 +159,14 @@ public class TestAuthRemote {
 
     @Test
     public void auth_gsp_good_auth() {
-        GSP.request(env.datasetURL()).httpClient(httpClientGood()).defaultGraph().GET();
+        GSP.request(env.datasetURL()).httpClient(env.httpClientAuthGood()).defaultGraph().GET();
     }
 
     @Test
     public void auth_gsp_bad_auth() {
         // 401 because we didn't authenticate.
         FusekiTest.expect401(()->
-            GSP.request(env.datasetURL()).httpClient(httpClientBad()).defaultGraph().GET()
+            GSP.request(env.datasetURL()).httpClient(env.httpClientAuthBad()).defaultGraph().GET()
         );
     }
 
@@ -257,7 +203,7 @@ public class TestAuthRemote {
     public void auth_link_good_auth() {
         try ( RDFLink link = RDFLinkRemote.newBuilder()
                     .destination(env.datasetURL())
-                    .httpClient(httpClientGood())
+                    .httpClient(env.httpClientAuthGood())
                     .build()) {
             link.queryAsk("ASK{}");
             link.update("INSERT DATA { <x:s> <x:p> <x:o> }");
@@ -272,7 +218,7 @@ public class TestAuthRemote {
         FusekiTest.expect401(()->{
             try ( RDFLink link = RDFLinkRemote.newBuilder()
                     .destination(env.datasetURL())
-                    .httpClient(httpClientBad())
+                    .httpClient(env.httpClientAuthBad())
                     .build()) {
             link.queryAsk("ASK{}");
             }
@@ -285,7 +231,7 @@ public class TestAuthRemote {
         FusekiTest.expect401(()->{
             try ( RDFLink link = RDFLinkRemote.newBuilder()
                     .destination(env.datasetURL())
-                    .httpClient(httpClientBad())
+                    .httpClient(env.httpClientAuthBad())
                     .build()) {
             link.update("INSERT DATA { <x:s> <x:p> <x:o> }");
             }
@@ -298,7 +244,7 @@ public class TestAuthRemote {
         FusekiTest.expect401(()->{
             try ( RDFLink link = RDFLinkRemote.newBuilder()
                         .destination(env.datasetURL())
-                        .httpClient(httpClientBad())
+                        .httpClient(env.httpClientAuthBad())
                         .build()) {
                 link.fetch();
             }
@@ -308,13 +254,13 @@ public class TestAuthRemote {
     // RegistryHttpClient
 
     private void exec_auth_registry_exact(String key) {
-        RegistryHttpClient.get().add(key, httpClientGood());
+        RegistryHttpClient.get().add(key, env.httpClientAuthGood());
         try { exec_register_test(); }
         finally { RegistryHttpClient.get().clear(); }
     }
 
     private void exec_auth_registry_prefix(String key) {
-        RegistryHttpClient.get().addPrefix(key, httpClientGood());
+        RegistryHttpClient.get().addPrefix(key, env.httpClientAuthGood());
         try { exec_register_test(); }
         finally { RegistryHttpClient.get().clear(); }
     }
@@ -445,11 +391,12 @@ public class TestAuthRemote {
     // ServiceTuning
     @Test
     public void auth_service_tuning_1() {
-        RequestModifer mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
+        HttpRequestModifer mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
 
-        RegistryServiceModifier svcReg = new RegistryServiceModifier();
+        RegistryRequestModifier svcReg = new RegistryRequestModifier();
         svcReg.add(env.datasetURL(), mods);
         ARQ.getContext().put(ARQ.serviceParams, svcReg);
+
         try {
             UpdateExecutionHTTP.newBuilder()
                 .service(env.datasetURL())
@@ -471,9 +418,9 @@ public class TestAuthRemote {
 
     @Test
     public void auth_service_tuning_2() {
-        RequestModifer mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
+        HttpRequestModifer mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
 
-        RegistryServiceModifier svcReg = new RegistryServiceModifier();
+        RegistryRequestModifier svcReg = new RegistryRequestModifier();
         svcReg.add(env.datasetURL(), mods);
         ARQ.getContext().put(ARQ.serviceParams, svcReg);
         try {

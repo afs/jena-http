@@ -16,11 +16,8 @@
  * limitations under the License.
  */
 
-package org.apache.jena.integration;
+package org.apache.jena.link;
 
-import org.apache.jena.link.AbstractTestRDFLink;
-import org.apache.jena.link.RDFLink;
-import org.apache.jena.link.RDFLinkFactory;
 import org.apache.jena.rdfconnection.Isolation;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.tdb.TDBFactory ;

@@ -55,7 +55,7 @@ public class RowSetStream implements RowSet {
 
     @Override
     public RowSetRewindable rewindable() {
-        return null;
+        return RowSetMem.create(this);
     }
 
     @Override

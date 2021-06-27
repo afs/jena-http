@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.conn;
+package org.apache.jena.conn.test;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;

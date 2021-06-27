@@ -44,7 +44,8 @@ import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.junit.Test;
 
-/* Tests that blank nodes work over RDFLinkFuseki
+/*
+ * Tests that blank nodes work over RDFLinkFuseki
  * This consists of testing each of the necessary components,
  * and then a test of a connection itself.
  */

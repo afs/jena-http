@@ -26,10 +26,11 @@ import org.apache.jena.http.HttpEnv;
 import org.apache.jena.http.Params;
 import org.apache.jena.http.QuerySendMode;
 import org.apache.jena.query.Query;
+import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sys.JenaSystem;
 
 /** Execution builder for remote queries. */
-public abstract class ExecBuilderQueryHTTP<X, Y> {
+public abstract class ExecHTTPBuilder<X, Y> {
     // neutral superclass.
     // [QExec] Collapse if RDFConnection is an adapter over RDFLink.
     static { JenaSystem.init(); }
@@ -38,11 +39,12 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
     protected Query query = null;
     protected String queryString = null;
     protected HttpClient httpClient = null;
+    protected Map<String, String> httpHeaders = new HashMap<>();
     protected Params params = Params.create();
+    protected Context context = null;
     // Accept: Handled as special case because the defaults varies by query type.
     protected String acceptHeader;
-    protected boolean allowCompression;
-    protected Map<String, String> httpHeaders = new HashMap<>();
+    protected boolean allowCompression = true;
     protected long timeout = -1;
     protected TimeUnit timeoutUnit = null;
 
@@ -51,7 +53,7 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
     protected List<String> defaultGraphURIs = new ArrayList<>();
     protected List<String> namedGraphURIs = new ArrayList<>();
 
-    public ExecBuilderQueryHTTP() {}
+    public ExecHTTPBuilder() {}
 
     protected abstract Y thisBuilder();
 
@@ -94,6 +96,7 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
         return thisBuilder();
     }
 
+    // Prefer sendMode
 //    /**
 //     * Send the query using HTTP POST with HTML form-encoded data.
 //     * If set false, the URL limit still applies.
@@ -116,7 +119,6 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
         this.sendMode = mode;
         return thisBuilder();
     }
-
 
     /**
      * Send the query using HTTP GET and the HTTP URL query string,
@@ -173,6 +175,13 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
         return thisBuilder();
     }
 
+    /** Merge in {@link Params} from another object. */
+    public Y params(Params other) {
+        if ( other != null )
+            this.params.merge(other);
+        return thisBuilder();
+    }
+
     public Y param(String name) {
         Objects.requireNonNull(name);
         this.params.add(name);
@@ -201,6 +210,11 @@ public abstract class ExecBuilderQueryHTTP<X, Y> {
 
     public Y allowCompression(boolean allowCompression) {
         this.allowCompression = allowCompression;
+        return thisBuilder();
+    }
+
+    public Y context(Context context) {
+        this.context = context;
         return thisBuilder();
     }
 

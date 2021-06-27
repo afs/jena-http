@@ -39,7 +39,7 @@ import org.apache.jena.sparql.util.Context;
  */
 public interface QueryExec extends AutoCloseable
 {
-    public static QueryExecBuilder create() { return QueryExecBuilder.newBuilder(); }
+    public static QueryExecBuilder newBuilder() { return QueryExecBuilder.newBuilder(); }
 
     /**
      * The dataset against which the query will execute.

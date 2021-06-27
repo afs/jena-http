@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.StringReader;
 
 import org.apache.jena.atlas.web.HttpException;
+import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -44,7 +45,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.seaborne.conn.EnvTest;
 
 public class TestGSP {
 
@@ -68,13 +68,12 @@ public class TestGSP {
 
     private String url(String path) { return env.datasetPath(path); }
 
-    // -- rewrite for GSP
-
     static String gspServiceURL()   { return env.datasetPath("/data"); }
 
     static String defaultGraphURL() { return gspServiceURL()+"?default"; }
     static String namedGraphURL()   { return gspServiceURL()+"?graph=http://example/g"; }
 
+    // Graph, with one triple in it.
     static Graph graph = makeGraph();
     static Graph makeGraph() {
         Graph graph = GraphFactory.createDefaultGraph();

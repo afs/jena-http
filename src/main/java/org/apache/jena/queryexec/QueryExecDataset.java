@@ -158,7 +158,7 @@ public class QueryExecDataset implements QueryExec
     public RowSet select() {
         checkNotClosed();
         if ( !query.isSelectType() )
-            throw new QueryExecException("Attempt to have ResultSet from a " + labelForQuery(query) + " query");
+            throw new QueryExecException("Attempt to have RowSet from a " + labelForQuery(query) + " query");
         RowSet rowSet = execute();
         return rowSet;
     }

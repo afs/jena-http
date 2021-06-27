@@ -34,11 +34,21 @@ public interface RowSet extends Iterator<Binding> {
     public List<Var> getResultVars() ;
 
     /**
-     *  Create a {@link RowSetRewindable} from the current position to the end.
-     *  This consumes this RowSet - the iterator wil have ended after a call to this method.
+     * Create a {@link RowSetRewindable} from the current position to the end.
+     * This consumes this RowSet - the iterator will have ended after a call to this method.
      */
     public default RowSetRewindable rewindable() {
         return RowSetMem.create(this);
+    }
+
+    /**
+     * Return a {@code RowSet} that is not connected to the original source.
+     * This consumes this RowSet - the iterator will have ended after a call to this method.
+     */
+    public default RowSet materialize() {
+//        Iterator<Binding> bindings = Iter.materialize(this);
+//        return new RowSetStream(bindings, getResultVars());
+        return rewindable();
     }
 
     /** Return the row number. The first row is row 1. */

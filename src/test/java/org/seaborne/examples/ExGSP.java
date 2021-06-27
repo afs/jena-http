@@ -72,7 +72,7 @@ public class ExGSP {
             ex.printStackTrace();
         } finally {
             server.stop();
-            System.exit(0);;
+            System.exit(0);
         }
     }
 

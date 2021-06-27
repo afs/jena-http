@@ -33,6 +33,7 @@ import java.net.http.HttpResponse;
 
 import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.lib.IRILib;
+import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
@@ -41,7 +42,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.seaborne.conn.EnvTest;
 
 /**
  * {@link HttpOp2} testing, and including {@link HttpOp2} used directly for SPARQL operations.

@@ -124,6 +124,10 @@ public class RowSetFormatter {
         }
     }
 
+//    public static long count(RowSet rowSet) {
+//        return Iter.count(rowSet);
+//    }
+
     // ---- SSE
 
 

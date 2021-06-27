@@ -33,7 +33,6 @@ import org.apache.jena.fuseki.jetty.JettyLib;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.http.*;
-import org.apache.jena.http.RegistryServiceModifier.RequestModifer;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.QueryExecutionAdapter;
@@ -105,11 +104,12 @@ public class DevAuthHTTP {
         // -- --
         LOG.info("-- Update with service tuning");
         auth(()->{
-            RequestModifer mods = (params, headers) ->
+            HttpRequestModifer mods = (params, headers) ->
                 headers.put(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"));
 
+                // [QExec] Wrong.
             // Need to do that for update.
-            RegistryServiceModifier svcReg = new RegistryServiceModifier();
+            RegistryRequestModifier svcReg = new RegistryRequestModifier();
             svcReg.add("http://localhost:3030/ds", mods);
             ARQ.getContext().put(ARQ.serviceParams, svcReg);
 

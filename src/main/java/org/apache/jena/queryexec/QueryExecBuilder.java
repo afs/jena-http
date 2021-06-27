@@ -53,6 +53,8 @@ public class QueryExecBuilder {
         return builder;
     }
 
+    public QueryExecBuilder() {}
+
     private static final long UNSET         = -1;
 
     private DatasetGraph dataset            = null;
@@ -121,25 +123,29 @@ public class QueryExecBuilder {
 
     // Set times from context if not set directly.
     private static void defaultTimeoutsFromContext(QueryExecBuilder builder, Context cxt) {
-        if ( cxt.isDefined(ARQ.queryTimeout) ) {
-            Object obj = cxt.get(ARQ.queryTimeout);
-            try {
-                if ( obj instanceof Number ) {
-                    long x = ((Number)obj).longValue();
-                    if ( builder.timeout2 < 0 )
-                        builder.overallTimeout(x, TimeUnit.MILLISECONDS);
-                } else if ( obj instanceof String ) {
-                    String str = obj.toString();
-                    Pair<Long, Long> pair = EngineLib.parseTimoutStr(str, TimeUnit.MILLISECONDS);
-                    if ( builder.timeout1 < 0 )
-                        builder.initialTimeout(pair.getLeft(), TimeUnit.MILLISECONDS);
-                    if ( builder.timeout2 < 0 )
-                        builder.overallTimeout(pair.getRight(), TimeUnit.MILLISECONDS);
-                } else
-                    Log.warn(builder, "Can't interpret timeout: " + obj);
-            } catch (Exception ex) {
-                Log.warn(builder, "Exception setting timeouts (context) from: "+obj);
-            }
+        applyTimeouts(builder, cxt.get(ARQ.queryTimeout));
+    }
+
+    /** Take obj, find the timeout(s) and apply to the builder */
+    public static void applyTimeouts(QueryExecBuilder builder, Object obj) {
+        if ( obj == null )
+            return ;
+        try {
+            if ( obj instanceof Number ) {
+                long x = ((Number)obj).longValue();
+                if ( builder.timeout2 < 0 )
+                    builder.overallTimeout(x, TimeUnit.MILLISECONDS);
+            } else if ( obj instanceof String ) {
+                String str = obj.toString();
+                Pair<Long, Long> pair = EngineLib.parseTimoutStr(str, TimeUnit.MILLISECONDS);
+                if ( builder.timeout1 < 0 )
+                    builder.initialTimeout(pair.getLeft(), TimeUnit.MILLISECONDS);
+                if ( builder.timeout2 < 0 )
+                    builder.overallTimeout(pair.getRight(), TimeUnit.MILLISECONDS);
+            } else
+                Log.warn(builder, "Can't interpret timeout: " + obj);
+        } catch (Exception ex) {
+            Log.warn(builder, "Exception setting timeouts (context) from: "+obj);
         }
     }
 

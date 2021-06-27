@@ -26,7 +26,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.query.*;
 import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.rdfconnection.Isolation;
-import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
@@ -41,10 +40,10 @@ import org.apache.jena.update.UpdateExecutionFactory;
 import org.apache.jena.update.UpdateRequest;
 
 /**
- * Implement of {@link RDFConnection} over a {@link Dataset} in the same JVM.
+ * Implement of {@link RDFLink} over a {@link Graph} in the same JVM.
  * <p>
  * Multiple levels of {@link Isolation} are provided, The default {@code COPY} level makes a local
- * {@link RDFConnection} behave like a remote connection. This should be the normal use in
+ * {@link RDFLink} behave like a remote connection. This should be the normal use in
  * testing.
  * <ul>
  * <li>{@code COPY} &ndash; {@code Graph}s and {@code Dataset}s are copied.
@@ -58,14 +57,18 @@ import org.apache.jena.update.UpdateRequest;
 public class RDFLinkDataset implements RDFLink {
     private ThreadLocal<Boolean> transactionActive = ThreadLocal.withInitial(()->false);
 
+    // [QExec] Builderize
+    public static RDFLink connect(DatasetGraph dsg) { return new RDFLinkDataset(dsg); }
+    public static RDFLink connect(DatasetGraph dsg, Isolation isolation) { return new RDFLinkDataset(dsg, isolation); }
+
     private DatasetGraph dataset;
     private final Isolation isolation;
 
-    public RDFLinkDataset(DatasetGraph dataset) {
+    private RDFLinkDataset(DatasetGraph dataset) {
         this(dataset, Isolation.NONE);
     }
 
-    public RDFLinkDataset(DatasetGraph dataset, Isolation isolation) {
+    private RDFLinkDataset(DatasetGraph dataset, Isolation isolation) {
         this.dataset = dataset;
         this.isolation = isolation;
     }
@@ -73,8 +76,7 @@ public class RDFLinkDataset implements RDFLink {
     @Override
     public QueryExec query(Query query) {
         checkOpen();
-        // There is no point doing this in a transaction because the QueryExecution is passed out.
-        return QueryExec.create().query(query).dataset(dataset).build();
+        return QueryExec.newBuilder().query(query).dataset(dataset).build();
     }
 
     @Override

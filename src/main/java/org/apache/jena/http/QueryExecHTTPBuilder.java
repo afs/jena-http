@@ -24,11 +24,11 @@ import java.net.http.HttpClient;
 import java.util.HashMap;
 import java.util.Objects;
 
-import org.apache.jena.http.sys.ExecBuilderQueryHTTP;
+import org.apache.jena.http.sys.ExecHTTPBuilder;
 import org.apache.jena.query.QueryException;
 import org.apache.jena.queryexec.QueryExec;
 
-public class QueryExecHTTPBuilder extends ExecBuilderQueryHTTP<QueryExec, QueryExecHTTPBuilder> {
+public class QueryExecHTTPBuilder extends ExecHTTPBuilder<QueryExec, QueryExecHTTPBuilder> {
 
     public static QueryExecHTTPBuilder newBuilder() { return new QueryExecHTTPBuilder(); }
 
@@ -41,11 +41,11 @@ public class QueryExecHTTPBuilder extends ExecBuilderQueryHTTP<QueryExec, QueryE
           throw new QueryException("No query for QueryExecHTTP");
       HttpClient hClient = HttpEnv.getHttpClient(serviceURL, httpClient);
       return new QueryExecHTTP(serviceURL, query, queryString, urlLimit,
-                           hClient, new HashMap<>(httpHeaders), Params.create(params),
-                           copyArray(defaultGraphURIs),
-                           copyArray(namedGraphURIs),
-                           sendMode, acceptHeader, allowCompression,
-                           timeout, timeoutUnit);
+                               hClient, new HashMap<>(httpHeaders), Params.create(params), context,
+                               copyArray(defaultGraphURIs),
+                               copyArray(namedGraphURIs),
+                               sendMode, acceptHeader, allowCompression,
+                               timeout, timeoutUnit);
     }
 
 //    private QueryExecutionHTTP build2() {

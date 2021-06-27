@@ -24,7 +24,6 @@ import static org.apache.jena.riot.web.HttpNames.METHOD_PUT;
 
 /** Enum for HTTP push operations */
 enum Push {
-    // Less use of Strings in method arguments.
     PUT(METHOD_PUT), POST(METHOD_POST), PATCH(METHOD_PATCH);
     private final String method;
 

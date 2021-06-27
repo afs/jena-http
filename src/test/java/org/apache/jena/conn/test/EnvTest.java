@@ -16,12 +16,18 @@
  * limitations under the License.
  */
 
-package org.seaborne.conn;
+package org.apache.jena.conn.test;
+
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
+import java.net.http.HttpClient;
+import java.time.Duration;
 
 import org.apache.jena.atlas.web.AuthScheme;
 import org.apache.jena.fuseki.auth.Auth;
 import org.apache.jena.fuseki.jetty.JettyLib;
 import org.apache.jena.fuseki.main.FusekiServer;
+import org.apache.jena.fuseki.system.FusekiLogging;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.system.Txn;
@@ -64,26 +70,34 @@ public class EnvTest {
         EnvTest.stop(env);
     }
 */
+    static { FusekiLogging.setLogging(); }
+
+
     public  final FusekiServer server;
     private final String dsName;
     private final DatasetGraph dataset;
     private final StringHolderServlet holder;
+    private final String badUser = "bad-u";
+    private final String badPassword = "bad-p";
     private final String user;
     private final String password;
 
     public static EnvTest create(String dsName) {
-        return new EnvTest(dsName, null, null, null);
+        return create(dsName, null);
     }
 
     public static EnvTest create(String dsName, DatasetGraph dsg) {
-        return new EnvTest(dsName, dsg, null, null);
+        return new EnvTest(dsName, dsg, false, null, null);
     }
 
     public static EnvTest createAuth(String dsName, DatasetGraph dsg, String user, String password) {
-        return new EnvTest(dsName, dsg, user, password);
+        return new EnvTest(dsName, dsg, false, user, password);
     }
 
-    private EnvTest(String path, DatasetGraph dsg, String user, String password) {
+    // verbose - development debugging aid for individual tests.
+    // When run in the full Jena suite, logging from Fuseki is off
+    // so no verbose output will be seen.
+    private EnvTest(String path, DatasetGraph dsg, boolean verbose, String user, String password) {
         if ( ! path.startsWith("/") )
             path = "/"+path;
         if ( dsg == null )
@@ -91,14 +105,16 @@ public class EnvTest {
         this.dsName = path;
         this.dataset = dsg;
         this.holder = new StringHolderServlet();
+        if ( badUser.equals(user) && badPassword.equals(password) )
+            System.err.println("WARNING: Auth set to the built-in for testing bad user/password");
         this.user = user;
         this.password = password;
-        server = startServer(dsName, dsg, holder, user, password);
+        server = startServer(dsName, dsg, holder, verbose, user, password);
     }
 
     //static { FusekiLogging.setLogging(); }
 
-    private static FusekiServer startServer(String dsName, DatasetGraph dsg, StringHolderServlet holder, String user, String password) {
+    private static FusekiServer startServer(String dsName, DatasetGraph dsg, StringHolderServlet holder, boolean verbose, String user, String password) {
         if ( user != null && password == null )
             throw new IllegalArgumentException("User, not null, but  password null");
         if ( user != null ) {}
@@ -106,7 +122,7 @@ public class EnvTest {
         String data = "/data";
         FusekiServer.Builder builder = FusekiServer.create()
             .port(0)
-            //.verbose(true)
+            .verbose(verbose)
             .enablePing(true)
             .addServlet(data, holder)
             .add(dsName, dsg);
@@ -159,9 +175,69 @@ public class EnvTest {
         stringHolder().clear();
     }
 
-    /** Stop a test evironment - can pass a null as env */
+    /** Stop a test environment - can pass a null as env */
     public static void stop(EnvTest env) {
-        if ( env != null && env.server != null )
-            env.server.stop();
+        if ( env != null )
+            env.stop();
     }
+
+    public void stop() {
+        if ( server != null )
+            server.stop();
+    }
+
+    // Can reuse this one.
+    public Authenticator authenticatorGood() {
+        if ( user == null )
+            return null;
+        return new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(user(), password().toCharArray());
+            }
+        };
+    }
+
+    // Authenticator that returns a bad password once only then returns null.
+    public Authenticator authenticatorBadOnce() {
+        if ( user == null )
+            return null;
+        return new Authenticator() {
+            boolean called = false;
+
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                if ( called )
+                    return null;
+                called = true;
+                return new PasswordAuthentication(badUser, badPassword.toCharArray());
+            }
+        };
+    }
+
+    // Authenticator that returns the same (wrong) password each time.
+    public Authenticator authenticatorBadRetries() {
+        if ( user == null )
+            return null;
+        return new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(badUser, badPassword.toCharArray());
+            }
+        };
+    }
+
+    public HttpClient httpClientAuthBad() { return httpClient(authenticatorBadOnce()); }
+
+    public HttpClient httpClientAuthBadRetry() { return httpClient(authenticatorBadRetries()); }
+
+    public HttpClient httpClientAuthGood() { return httpClient(authenticatorGood()); }
+
+    public static HttpClient httpClient(Authenticator authenticator) {
+        return HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .authenticator(authenticator)
+            .build();
+    }
+
 }
