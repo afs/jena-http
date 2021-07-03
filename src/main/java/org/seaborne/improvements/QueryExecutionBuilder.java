@@ -49,6 +49,7 @@ public class QueryExecutionBuilder {
     // Had been migrated.
     // May have evolved.
     // Improvements to QueryExecutionBuilder
+    // ==> QueryExecBuilder
 
     /** Create a new builder of {@link QueryExecution} for a local dataset. */
     public static QueryExecutionBuilder newBuilder() {
@@ -86,13 +87,21 @@ public class QueryExecutionBuilder {
     }
 
     public QueryExecutionBuilder dataset(Dataset dataset) {
+        if ( context == null )
+            return this;
         this.dataset = dataset.asDatasetGraph();
         return this;
     }
 
     public QueryExecutionBuilder context(Context context) {
-        this.context = context;
+        ensureContext();
+        this.context.putAll(context);
         return this;
+    }
+
+    private void ensureContext() {
+        if ( context == null )
+            context = new Context();
     }
 
     public QueryExecutionBuilder initialBinding(Binding binding) {

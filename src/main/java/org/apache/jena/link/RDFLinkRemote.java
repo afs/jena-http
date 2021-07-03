@@ -354,13 +354,13 @@ public class RDFLinkRemote implements RDFLink {
 
     /** {@inheritDoc} */
     @Override
-    public Graph fetch(Node graphName) {
+    public Graph get(Node graphName) {
         checkGSP();
         return gsp(graphName).acceptHeader(acceptGraph).GET();
     }
 
     @Override
-    public Graph fetch() {
+    public Graph get() {
         checkGSP();
         return gsp().acceptHeader(acceptGraph).GET();
     }
@@ -449,7 +449,7 @@ public class RDFLinkRemote implements RDFLink {
     }
 
     @Override
-    public DatasetGraph fetchDataset() {
+    public DatasetGraph getDataset() {
         checkDataset();
         return gspRequest().dataset().acceptHeader(acceptDataset).getDataset();
     }

@@ -78,7 +78,6 @@ public class AsyncHttpRDF {
     public static CompletableFuture<DatasetGraph> asyncGetDatasetGraph(HttpClient httpClient, String url) {
         Objects.requireNonNull(httpClient, "HttpClient");
         Objects.requireNonNull(url, "URL");
-        Objects.requireNonNull(httpClient, "HttpClient");
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
         StreamRDF dest = StreamRDFLib.dataset(dsg);
         CompletableFuture<Void> cf = asyncGetToStream(httpClient, url, acceptHeaderDatasetGraph, dest, dsg);
@@ -87,7 +86,15 @@ public class AsyncHttpRDF {
 
     /**
      * Load a DatasetGraph asynchronously.
-     * The dataset is updates inside a transaction.
+     * The dataset is updated inside a transaction.
+     */
+    public static CompletableFuture<Void> asyncLoadDatasetGraph(String url, DatasetGraph dsg) {
+        return asyncLoadDatasetGraph(HttpEnv.getDftHttpClient(), url, dsg);
+    }
+    
+    /**
+     * Load a DatasetGraph asynchronously.
+     * The dataset is updated inside a transaction.
      */
     public static CompletableFuture<Void> asyncLoadDatasetGraph(HttpClient httpClient, String url, DatasetGraph dsg) {
         Objects.requireNonNull(httpClient, "HttpClient");
@@ -99,7 +106,7 @@ public class AsyncHttpRDF {
 
     /**
      * Load a DatasetGraph asynchronously.
-     * The dataset is updates inside a transaction.
+     * The dataset is updated inside a transaction.
      */
     public static CompletableFuture<Void> asyncLoadDatasetGraph(HttpClient httpClient, String url, Map<String, String> headers, DatasetGraph dsg) {
         Objects.requireNonNull(httpClient, "HttpClient");

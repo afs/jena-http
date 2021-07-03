@@ -20,6 +20,7 @@ package org.seaborne.improvements;
 
 import java.util.Objects;
 
+import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Syntax;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.engine.binding.Binding;
@@ -46,30 +47,53 @@ public class UpdateExecutionBuilder {
     public UpdateExecutionBuilder() {}
 
     public UpdateExecutionBuilder add(UpdateRequest update) {
-        this.updateRequest = update;
+        Objects.requireNonNull(update);
+        return  add$(update);
+    }
+
+    private UpdateExecutionBuilder add$(UpdateRequest update) {
+        Objects.requireNonNull(update);
         update.forEach(updateRequest::add);
         return this;
     }
 
     public UpdateExecutionBuilder add(Update update) {
+        Objects.requireNonNull(update);
         this.updateRequest.add(update);
         return this;
     }
 
-    public UpdateExecutionBuilder set(String updateStr) {
+    /** Add an update - one or more SPARQL Update operations - provided in string form. */
+    public UpdateExecutionBuilder add(String updateStr) {
+        Objects.requireNonNull(updateStr);
         UpdateRequest req = UpdateFactory.create(updateStr, Syntax.syntaxARQ);
-        add(req);
+        add$(req);
         return this;
     }
 
     public UpdateExecutionBuilder dataset(DatasetGraph dataset) {
+        Objects.requireNonNull(dataset);
         this.dataset = dataset;
         return this;
     }
 
-    public UpdateExecutionBuilder context(Context context) {
-        this.context = context;
+    public UpdateExecutionBuilder dataset(Dataset dataset) {
+        Objects.requireNonNull(dataset);
+        dataset(dataset.asDatasetGraph());
         return this;
+    }
+
+    public UpdateExecutionBuilder context(Context context) {
+        if ( context == null )
+            return this;
+        ensureContext();
+        this.context.putAll(context);
+        return this;
+    }
+
+    private void ensureContext() {
+        if ( context == null )
+            context = new Context();
     }
 
     public UpdateProcessor build() {
@@ -80,4 +104,17 @@ public class UpdateExecutionBuilder {
     public void execute() {
         build().execute();
     }
+
+    // Abbreviated forms.
+
+    public void execute(Dataset dataset) {
+        Objects.requireNonNull(dataset);
+        dataset(dataset).build().execute();
+    }
+
+    public void execute(DatasetGraph dataset) {
+        Objects.requireNonNull(dataset);
+        dataset(dataset).build().execute();
+    }
+
 }

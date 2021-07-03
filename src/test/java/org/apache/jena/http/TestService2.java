@@ -20,7 +20,10 @@ package org.apache.jena.http;
 
 import static org.junit.Assert.*;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.jena.atlas.iterator.Iter;
@@ -210,6 +213,61 @@ public class TestService2 {
         }
     }
 
+    // Uses a HttpRequestModifier to check the changes.
+    @Test public void service_query_extra_params_oldstyle_by_context_1() {
+
+        Map<String, Map<String, List<String>>> testServiceParams = new HashMap<>();
+        Map<String, List<String>> settings =  new HashMap<>();
+        settings.put("apikey", List.of("BristolCallingToTheFarAwayTowns"));
+        testServiceParams.put(SERVICE, settings);
+
+        DatasetGraph clientDGS = localDataset();
+        clientDGS.getContext().set(ARQ.serviceParams, testServiceParams);
+
+        AtomicBoolean seen = new AtomicBoolean(false);
+        HttpRequestModifer inspector = (params, header) -> {
+            seen.set(params.containsParam("apikey"));
+        };
+
+        runWithModifier(SERVICE, inspector, ()->{
+            String queryString = "ASK { SERVICE <"+SERVICE+"> { BIND(now() AS ?now) } }";
+            try ( QueryExec qExec = QueryExec.newBuilder().query(queryString).dataset(clientDGS).build() ) {
+                boolean b = qExec.ask();
+                assertTrue(b);
+            }
+        });
+        assertTrue(seen.get());
+    }
+
+    // Uses a HttpRequestModifier to check the changes.
+    @Test public void service_query_extra_params_oldstyle_by_context_2() {
+
+        Map<String, Map<String, List<String>>> testServiceParams = new HashMap<>();
+        Map<String, List<String>> settings =  new HashMap<>();
+        settings.put("apikey", List.of("BristolCallingToTheFarAwayTowns"));
+        testServiceParams.put(SERVICE, settings);
+
+        DatasetGraph clientDGS = localDataset();
+        clientDGS.getContext().set(ARQ.serviceParams, testServiceParams);
+
+        AtomicBoolean seen = new AtomicBoolean(false);
+        HttpRequestModifer inspector = (params, header) -> {
+            seen.set(params.containsParam("apikey"));
+        };
+
+        runWithModifier(SERVICE, inspector, ()->{
+            String queryString = "ASK { SERVICE <"+SERVICE+"> { BIND(now() AS ?now) } }";
+            try ( QueryExec qExec = QueryExec.newBuilder().query(queryString).dataset(clientDGS).build() ) {
+                boolean b = qExec.ask();
+                assertTrue(b);
+            }
+        });
+        assertTrue(seen.get());
+    }
+
+
+    // Same except set the QExec context.
+
     @Test (expected=QueryExecException.class)
     public void service_query_disabled_local_dataset() {
         String queryString = "ASK { SERVICE <"+SERVICE+"?format=json> { BIND(now() AS ?now) } }";
@@ -237,17 +295,8 @@ public class TestService2 {
     public void service_query_disabled_queryexec() {
         String queryString = "ASK { SERVICE <"+SERVICE+"?format=json> { BIND(now() AS ?now) } }";
         Context context = Context.create().set(Service2.httpServiceAllowed, false);
-        QueryExec qExec = QueryExec.newBuilder().query(queryString).dataset(localDataset()).context(context).build();
-        qExec.ask();
-    }
-
-    // Using builder with params; variable headers not supported.
-    private static void runWithModifier(String key, HttpRequestModifer modifier, Runnable action) {
-        RegistryRequestModifier.get().add(SERVICE, modifier);
-        try {
-            action.run();
-        } finally {
-            RegistryRequestModifier.get().remove(SERVICE);
+        try ( QueryExec qExec = QueryExec.newBuilder().query(queryString).dataset(localDataset()).context(context).build() ) {
+            qExec.ask();
         }
     }
 
@@ -291,12 +340,10 @@ public class TestService2 {
         runWithModifier(SERVICE, testModifier, ()->{
             // Via RDFLink(local) and QueryExec
             // Connect to local, unused, permanently empty dataset
-            try ( link ) {
-                try ( QueryExec qExec = link.query(queryString) ) {
-                    RowSet rs = qExec.select();
-                    long x = Iter.count(rs);
-                    assertEquals(1, x);
-                }
+            try ( QueryExec qExec = QueryExec.newBuilder().dataset(localDataset()).query(queryString).build() ) {
+                RowSet rs = qExec.select();
+                long x = Iter.count(rs);
+                assertEquals(1, x);
             }
         });
         assertEquals("Modifier did not run", 1, COUNTER.get());
@@ -362,6 +409,15 @@ public class TestService2 {
                 rs.hasNext();
                 fail("Should not get here");
             }
+        }
+    }
+
+    private static void runWithModifier(String key, HttpRequestModifer modifier, Runnable action) {
+        RegistryRequestModifier.get().add(SERVICE, modifier);
+        try {
+            action.run();
+        } finally {
+            RegistryRequestModifier.get().remove(SERVICE);
         }
     }
 }

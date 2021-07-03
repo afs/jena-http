@@ -102,7 +102,7 @@ public abstract class AbstractTestRDFLink {
         try ( RDFLink link = link() ) {
             link.loadDataset(testDataFile);
             DatasetGraph ds0 = RDFDataMgr.loadDatasetGraph(testDataFile);
-            DatasetGraph ds = link.fetchDataset();
+            DatasetGraph ds = link.getDataset();
             assertTrue("Datasets not isomorphic", isomorphic(ds0, ds));
         }
     }
@@ -110,7 +110,7 @@ public abstract class AbstractTestRDFLink {
     @Test public void dataset_put_1() {
         try ( RDFLink link = link() ) {
             link.putDataset(dsg);
-            DatasetGraph dsg1 = link.fetchDataset();
+            DatasetGraph dsg1 = link.getDataset();
             assertTrue("Datasets not isomorphic", isomorphic(dsg, dsg1));
         }
     }
@@ -119,7 +119,7 @@ public abstract class AbstractTestRDFLink {
         try ( RDFLink link = link() ) {
             link.putDataset(dsg);
             link.putDataset(dsg2);
-            DatasetGraph dsg1 = link.fetchDataset();
+            DatasetGraph dsg1 = link.getDataset();
             assertTrue("Datasets not isomorphic", isomorphic(dsg2, dsg1));
         }
     }
@@ -127,7 +127,7 @@ public abstract class AbstractTestRDFLink {
     @Test public void dataset_post_1() {
         try ( RDFLink link = link() ) {
             link.loadDataset(dsg);
-            DatasetGraph dsg1 = link.fetchDataset();
+            DatasetGraph dsg1 = link.getDataset();
             assertTrue("Datasets not isomorphic", isomorphic(dsg, dsg1));
         }
     }
@@ -136,7 +136,7 @@ public abstract class AbstractTestRDFLink {
         try ( RDFLink link = link() ) {
             link.loadDataset(dsg);
             link.loadDataset(dsg2);
-            DatasetGraph dsg1 = link.fetchDataset();
+            DatasetGraph dsg1 = link.getDataset();
             long x = Iter.count(dsg1.listGraphNodes());
             assertEquals("NG count", 3, x);
             assertFalse("Datasets are isomorphic", isomorphic(dsg, dsg1));
@@ -148,12 +148,12 @@ public abstract class AbstractTestRDFLink {
         try ( RDFLink link = link() ) {
             link.loadDataset(dsg);
             {
-                DatasetGraph dsg1 = link.fetchDataset();
+                DatasetGraph dsg1 = link.getDataset();
                 assertFalse(dsg1.isEmpty());
             }
             link.clearDataset();
             {
-                DatasetGraph dsg2 = link.fetchDataset();
+                DatasetGraph dsg2 = link.getDataset();
                 assertTrue(dsg2.isEmpty());
             }
         }
@@ -167,7 +167,7 @@ public abstract class AbstractTestRDFLink {
         Graph g0 = RDFDataMgr.loadGraph(testDataFile);
         try ( RDFLink link = link() ) {
             link.load(testDataFile);
-            Graph g1 = link.fetch();
+            Graph g1 = link.get();
             assertTrue("Graphs not isomorphic", isomorphic(g0, g1));
         }
     }
@@ -175,10 +175,10 @@ public abstract class AbstractTestRDFLink {
     @Test public void graph_put_1() {
         try ( RDFLink link = link() ) {
             link.put(graph1);
-            DatasetGraph dsg1 = link.fetchDataset();
-            Graph g0 = link.fetch();
+            DatasetGraph dsg1 = link.getDataset();
+            Graph g0 = link.get();
             assertTrue("Graphs not isomorphic", isomorphic(graph1, dsg1.getDefaultGraph()));
-            Graph g1 = link.fetch();
+            Graph g1 = link.get();
             assertTrue("Graphs not isomorphic", isomorphic(graph1, g1));
         }
     }
@@ -187,7 +187,7 @@ public abstract class AbstractTestRDFLink {
         try ( RDFLink link = link() ) {
             link.put(graph1);
             link.put(graph2);
-            Graph g = link.fetch();
+            Graph g = link.get();
             assertTrue("Graphs not isomorphic", isomorphic(g, graph2));
             assertFalse("Graphs not isomorphic", isomorphic(g, graph1));
         }
@@ -196,7 +196,7 @@ public abstract class AbstractTestRDFLink {
     @Test public void graph_post_1() {
         try ( RDFLink link = link() ) {
             link.load(graph1);
-            Graph g = link.fetch();
+            Graph g = link.get();
             assertTrue("Graphs not isomorphic", isomorphic(g, graph1));
         }
     }
@@ -205,7 +205,7 @@ public abstract class AbstractTestRDFLink {
         try ( RDFLink link = link() ) {
             link.load(graph1);
             link.load(graph2);
-            Graph g = link.fetch();
+            Graph g = link.get();
             Graph g0 = new Union( graph2, graph1);
             assertTrue("Graphs are not isomorphic", isomorphic(g0, g));
         }
@@ -216,10 +216,10 @@ public abstract class AbstractTestRDFLink {
         Graph g0 = RDFDataMgr.loadGraph(testDataFile);
         try ( RDFLink link = link() ) {
             link.load(testDataFile);
-            Graph g1 = link.fetch();
+            Graph g1 = link.get();
             assertFalse(g1.isEmpty());
             link.delete();
-            Graph g2 = link.fetch();
+            Graph g2 = link.get();
             assertTrue(g2.isEmpty());
         }
     }
@@ -231,9 +231,9 @@ public abstract class AbstractTestRDFLink {
         Graph g0 = RDFDataMgr.loadGraph(testDataFile);
         try ( RDFLink link = link() ) {
             link.load(graphName, testDataFile);
-            Graph g = link.fetch(graphName);
+            Graph g = link.get(graphName);
             assertTrue("Graphs not isomorphic", isomorphic(g0, g));
-            Graph gDft = link.fetch();
+            Graph gDft = link.get();
             assertTrue(gDft.isEmpty());
         }
     }
@@ -241,10 +241,10 @@ public abstract class AbstractTestRDFLink {
     @Test public void named_graph_put_1() {
         try ( RDFLink link = link() ) {
             link.put(graphName, graph1);
-            DatasetGraph dsg1 = link.fetchDataset();
-            Graph g0 = link.fetch(graphName);
+            DatasetGraph dsg1 = link.getDataset();
+            Graph g0 = link.get(graphName);
             assertTrue("Graphs not isomorphic", isomorphic(graph1, dsg1.getGraph(graphName)));
-            Graph g = link.fetch(graphName);
+            Graph g = link.get(graphName);
             assertTrue("Graphs not isomorphic", isomorphic(graph1, g));
         }
     }
@@ -253,7 +253,7 @@ public abstract class AbstractTestRDFLink {
         try ( RDFLink link = link() ) {
             link.put(graphName, graph1);
             link.put(graphName, graph2);
-            Graph g = link.fetch(graphName);
+            Graph g = link.get(graphName);
             assertTrue("Graphs not isomorphic", isomorphic(g, graph2));
             assertFalse("Graphs not isomorphic", isomorphic(g, graph1));
         }
@@ -263,8 +263,8 @@ public abstract class AbstractTestRDFLink {
         try ( RDFLink link = link() ) {
             link.put(graphName, graph1);
             link.put(graphName2, graph2);
-            Graph g1 = link.fetch(graphName);
-            Graph g2 = link.fetch(graphName2);
+            Graph g1 = link.get(graphName);
+            Graph g2 = link.get(graphName2);
             assertTrue("Graphs not isomorphic", isomorphic(g1, graph1));
             assertTrue("Graphs not isomorphic", isomorphic(g2, graph2));
         }
@@ -273,7 +273,7 @@ public abstract class AbstractTestRDFLink {
     @Test public void named_graph_post_1() {
         try ( RDFLink link = link() ) {
             link.load(graphName, graph1);
-            Graph g = link.fetch(graphName);
+            Graph g = link.get(graphName);
             assertTrue("Graphs not isomorphic", isomorphic(g, graph1));
         }
     }
@@ -282,7 +282,7 @@ public abstract class AbstractTestRDFLink {
         try ( RDFLink link = link() ) {
             link.load(graphName, graph1);
             link.load(graphName, graph2);
-            Graph g = link.fetch(graphName);
+            Graph g = link.get(graphName);
             Graph g0 = new Union(graph2, graph1);
             assertTrue("Graphs are not isomorphic", isomorphic(g0, g));
         }
@@ -298,13 +298,13 @@ public abstract class AbstractTestRDFLink {
         Graph g0 = RDFDataMgr.loadGraph(testDataFile);
         try ( RDFLink link = link() ) {
             link.load(graphName, testDataFile);
-            Graph g1 = link.fetch(graphName);
+            Graph g1 = link.get(graphName);
             assertFalse(g1.isEmpty());
             link.delete(graphName);
             // either isEmpty (local-all graph "exist"), null (general dataset,
             // or fixed set of graphs) or 404 (remote);
             try {
-                Graph g2 = link.fetch(graphName);
+                Graph g2 = link.get(graphName);
                 if ( g2 != null )
                     assertTrue(g2.isEmpty());
             } catch (HttpException ex) {
@@ -444,7 +444,7 @@ public abstract class AbstractTestRDFLink {
             link.end();
 
             link.begin(ReadWrite.READ);
-            Graph g = link.fetch();
+            Graph g = link.get();
             assertTrue(isomorphic(g, dsg.getDefaultGraph()));
             link.end();
         }
@@ -462,7 +462,7 @@ public abstract class AbstractTestRDFLink {
             link.end();
 
             link.begin(ReadWrite.READ);
-            Graph g = link.fetch();
+            Graph g = link.get();
             assertTrue(g.isEmpty());
             link.end();
         }

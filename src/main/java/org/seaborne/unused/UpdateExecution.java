@@ -16,12 +16,10 @@
  * limitations under the License.
  */
 
-package org.seaborne.improvements;
+package org.seaborne.unused;
 
-public class QE {
-
-    public static QueryExecutionBuilder local() {
-        return QueryExecutionBuilder.newBuilder();
-    }
+public interface UpdateExecution {
+    /** Execute */
+    public void execute() ;
 }
 

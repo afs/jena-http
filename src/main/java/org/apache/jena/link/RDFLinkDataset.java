@@ -112,7 +112,7 @@ public class RDFLinkDataset implements RDFLink {
     }
 
     @Override
-    public Graph fetch(Node graphName) {
+    public Graph get(Node graphName) {
         return Txn.calculateRead(dataset, ()-> {
             Graph graph = graphFor(graphName);
             return isolate(graph);
@@ -120,9 +120,9 @@ public class RDFLinkDataset implements RDFLink {
     }
 
     @Override
-    public Graph fetch() {
+    public Graph get() {
         checkOpen();
-        return fetch(null);
+        return get(null);
     }
 
     @Override
@@ -241,7 +241,7 @@ public class RDFLinkDataset implements RDFLink {
     }
 
     @Override
-    public DatasetGraph fetchDataset() {
+    public DatasetGraph getDataset() {
         checkOpen();
         return Txn.calculateRead(dataset,() -> isolate(dataset));
     }

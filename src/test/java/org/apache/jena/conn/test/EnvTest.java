@@ -73,6 +73,8 @@ public class EnvTest {
     static { FusekiLogging.setLogging(); }
 
 
+    public static boolean VERBOSE = false;
+
     public  final FusekiServer server;
     private final String dsName;
     private final DatasetGraph dataset;
@@ -87,17 +89,17 @@ public class EnvTest {
     }
 
     public static EnvTest create(String dsName, DatasetGraph dsg) {
-        return new EnvTest(dsName, dsg, false, null, null);
+        return new EnvTest(dsName, dsg, null, null);
     }
 
     public static EnvTest createAuth(String dsName, DatasetGraph dsg, String user, String password) {
-        return new EnvTest(dsName, dsg, false, user, password);
+        return new EnvTest(dsName, dsg, user, password);
     }
 
     // verbose - development debugging aid for individual tests.
     // When run in the full Jena suite, logging from Fuseki is off
     // so no verbose output will be seen.
-    private EnvTest(String path, DatasetGraph dsg, boolean verbose, String user, String password) {
+    private EnvTest(String path, DatasetGraph dsg, String user, String password) {
         if ( ! path.startsWith("/") )
             path = "/"+path;
         if ( dsg == null )
@@ -109,7 +111,7 @@ public class EnvTest {
             System.err.println("WARNING: Auth set to the built-in for testing bad user/password");
         this.user = user;
         this.password = password;
-        server = startServer(dsName, dsg, holder, verbose, user, password);
+        server = startServer(dsName, dsg, holder, VERBOSE, user, password);
     }
 
     //static { FusekiLogging.setLogging(); }

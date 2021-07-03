@@ -27,6 +27,7 @@ import org.junit.runners.Suite;
    TestBlankNodeBinary.class
     , TestHttpOp2.class
     , TestHttpRDF.class
+    , TestAsyncHttpRDF.class
     , TestGSP.class
     , TestQueryExecHTTP.class
     , TestQueryExecCleanServer.class
@@ -35,7 +36,6 @@ import org.junit.runners.Suite;
     , TestServiceFunctions.class
     , TestService2.class
     , TestServiceAuth.class
-
 })
 
 public class TS_JenaHttp { }

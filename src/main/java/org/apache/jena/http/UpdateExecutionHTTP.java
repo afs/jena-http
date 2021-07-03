@@ -36,7 +36,7 @@ import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.engine.http.HttpParams;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.update.UpdateRequest;
-import org.seaborne.improvements.UpdateExecution;
+import org.seaborne.unused.UpdateExecution;
 
 public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ UpdateExecution {
 

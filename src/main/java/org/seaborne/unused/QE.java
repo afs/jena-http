@@ -16,10 +16,8 @@
  * limitations under the License.
  */
 
-package org.seaborne.improvements;
+package org.seaborne.unused;
 
-public interface UpdateExecution {
-    /** Execute */
-    public void execute() ;
+public class QE {
 }
 

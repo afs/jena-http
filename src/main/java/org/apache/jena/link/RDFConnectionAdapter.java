@@ -115,12 +115,12 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public Model fetch() {
-        return graph2model(get().fetch());
+        return graph2model(get().get());
     }
 
     @Override
     public Model fetch(String graphName) {
-        return graph2model(get().fetch(name(graphName)));
+        return graph2model(get().get(name(graphName)));
     }
 
     @Override
@@ -175,7 +175,7 @@ public class RDFConnectionAdapter implements RDFConnection {
 
     @Override
     public Dataset fetchDataset() {
-        return LibRDFLink.asDataset(get().fetchDataset());
+        return LibRDFLink.asDataset(get().getDataset());
     }
 
     @Override

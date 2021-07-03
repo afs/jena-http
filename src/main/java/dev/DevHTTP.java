@@ -21,58 +21,72 @@ package dev;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.fuseki.main.FusekiServer;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.http.GSP;
-import org.apache.jena.http.HttpOp2;
+import org.apache.jena.fuseki.system.FusekiLogging;
 import org.apache.jena.http.QueryExecHTTP;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.QueryExecutionAdapter;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.riot.web.HttpOp;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.util.QueryExecUtils;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 
 public class DevHTTP {
-    static { LogCtl.setLog4j2(); }
+    static {
+        FusekiLogging.setLogging();
+        //LogCtl.setLog4j2();
+    }
 
     public static void main(String...args) {
+        FusekiLogging.setLogging();
 
+        DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
+        int port = 3330;   // Default port.
         FusekiServer server = FusekiServer.create()
-            //.parseConfigFile("/home/afs/tmp/config.ttl")
-            .add("/ds", DatasetGraphFactory.createTxnMem())
-            .port(3030)
-            //.verbose(true)
-            .build();
+                .add("/ds", dsg)
+                .verbose(true)
+                .build();
         server.start();
-        //server.start().join();
+        String URL = "http://localhost:"+port+"/ds/query";
+        String queryString = "SELECT * { ?s ?p ?o }";
 
         try {
-            //clientBasic();
-            //clientQueryExec();
+//            // Polling client - Transfer-encoding: chunked.
+//            //HttpOp.getDefaultHttpClient();
+//
+//            HttpClient hc = HttpClient.
+//                    .chunkedTransfer(false)
+//                    .build();
+//            hc.getConnectionManager().c
+//            HttpOp.setDefaultHttpClient(hc);
 
-            GSP.request("http://localhost:3030/ds")
-                .defaultGraph()
-                .POST("/home/afs/tmp/D.ttl");
-            Graph graph = GSP.request("http://localhost:3030/ds")
-                .defaultGraph()
-                .GET();
-            RDFDataMgr.write(System.out, graph, Lang.TTL);
-            GSP.request("http://localhost:3030/ds")
-                .graphName("http;//graph/")
-                .POST("/home/afs/tmp/D.ttl");
-            String x = HttpOp2.httpGetString("http://localhost:3030/ds");
-            System.out.print(x);
+            // Transfer-encoding: chunked because of streaming.
+            // But does not work (easily) with gzip.
+            // so don't.
+
+            // ** Disable compression in old QueryEngineHTTP
+            // ** Disable compression output in Fuseki + HTTP 1.1
+            try (QueryExecution qExec = QueryExecutionFactory.sparqlService(URL, queryString) ) {
+                ResultSet rs = qExec.execSelect();
+                ResultSetFormatter.consume(rs);
         }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        } finally  { server.stop(); }
+
+        // OK
+//        QueryExec qExec = QueryExecHTTP.newBuilder()
+//                .service("http://localhost:"+port+"/ds/query")
+//                .queryString( "SELECT * { ?s ?p ?o}")
+//                .build();
+        } finally {
+            server.stop();
+        }
     }
 
     private static void clientQueryExec() {

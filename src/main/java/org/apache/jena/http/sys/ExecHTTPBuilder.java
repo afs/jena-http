@@ -213,9 +213,21 @@ public abstract class ExecHTTPBuilder<X, Y> {
         return thisBuilder();
     }
 
+    /** Set the {@link Context}.
+     *  This defaults to the global settings of {@code ARQ.getContext()}.
+     *  If there was a previous call of {@code context} the multiple contexts are merged.
+     * */
     public Y context(Context context) {
-        this.context = context;
+        if ( context == null )
+            return thisBuilder();
+        ensureContext();
+        this.context.putAll(context);
         return thisBuilder();
+    }
+
+    private void ensureContext() {
+        if ( context == null )
+            context = new Context();
     }
 
     /**

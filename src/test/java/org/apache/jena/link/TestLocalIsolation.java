@@ -69,7 +69,7 @@ public class TestLocalIsolation {
         RDFLink link1 = RDFLinkFactory.connect(base, isolation);
         Quad quad = SSE.parseQuad("(:g :s :p :o)") ;
         try (RDFLink link2 = link1;) {
-            DatasetGraph dsg = link2.fetchDataset();
+            DatasetGraph dsg = link2.getDataset();
             dsg.add(quad);
         }
         assertEquals(expected, base.contains(quad));
@@ -80,7 +80,7 @@ public class TestLocalIsolation {
         Triple triple = Triple.create(subject, property, object);
         RDFLink link1 = RDFLinkFactory.connect(base, level);
         try (RDFLink link2 = link1;) {
-            Graph m = link2.fetch();
+            Graph m = link2.get();
             m.add(triple);
         }
         assertEquals(expected, base.getDefaultGraph().contains(triple));

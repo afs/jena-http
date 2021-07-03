@@ -40,16 +40,16 @@ public interface LinkDatasetGraphAccess extends Transactional, AutoCloseable
      * @param graphName URI string for the graph name (null or {@link Quad#defaultGraphIRI} for the default graph)
      * @return Graph
      */
-    public Graph fetch(Node graphName);
+    public Graph get(Node graphName);
 
     /** Fetch the default graph.
      * This is SPARQL Graph Store Protocol HTTP GET or equivalent.
      * @return Graph
      */
-    public Graph fetch();
+    public Graph get();
 
     /** Fetch the contents of the dataset */
-    public DatasetGraph fetchDataset();
+    public DatasetGraph getDataset();
 
     /** Test whether this connection is closed or not */
     public boolean isClosed();

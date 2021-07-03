@@ -163,7 +163,7 @@ public class GSP {
         return httpHeaders.get(header);
     }
 
-    /** Enable a request for compression on the request */
+    /** Enable a request for compression to be used for the response (i.e. Accept-Encoding)*/
     public GSP allowCompression(boolean allowCompression) {
         this.allowCompression = allowCompression;
         return this;

@@ -194,7 +194,7 @@ public class TestAuthRemote {
     public void auth_link_no_auth_3() {
         FusekiTest.expect401(()->{
             try ( RDFLink link = RDFLinkFactory.connect(env.datasetURL()) ) {
-                link.fetch();
+                link.get();
             }
         });
     }
@@ -207,7 +207,7 @@ public class TestAuthRemote {
                     .build()) {
             link.queryAsk("ASK{}");
             link.update("INSERT DATA { <x:s> <x:p> <x:o> }");
-            link.fetch();
+            link.get();
         }
     }
 
@@ -246,7 +246,7 @@ public class TestAuthRemote {
                         .destination(env.datasetURL())
                         .httpClient(env.httpClientAuthBad())
                         .build()) {
-                link.fetch();
+                link.get();
             }
         });
     }

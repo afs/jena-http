@@ -92,8 +92,16 @@ public class QueryExecBuilder {
 //    }
 
     public QueryExecBuilder context(Context context) {
-        this.context = context;
+        if ( context == null )
+            return this;
+        ensureContext();
+        this.context.putAll(context);
         return this;
+    }
+
+    private void ensureContext() {
+        if ( context == null )
+            context = new Context();
     }
 
     public QueryExecBuilder initialBinding(Binding binding) {

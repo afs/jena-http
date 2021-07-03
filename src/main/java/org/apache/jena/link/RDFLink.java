@@ -306,7 +306,7 @@ public interface RDFLink extends
 
     // ---- RDFDatasetConnection
 
-    /** Load (add, append) RDF into the default graph of a dataset.
+    /** Send file - this merges the file RDF into the default graph of a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.
      * <p>
      * If this is a remote connection:

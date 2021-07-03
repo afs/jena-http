@@ -16,8 +16,28 @@
  * limitations under the License.
  */
 
-package org.seaborne.improvements;
+package dev;
 
-public class Adapt {
+public class NotesJetty {
+  //EG:
+ // // The HTTP configuration object.
+//     HttpConfiguration httpConfig = new HttpConfiguration();
+ //
+//     // The ConnectionFactory for HTTP/1.1.
+//     HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
+ //
+//     // The ConnectionFactory for clear-text HTTP/2.
+//     HTTP2CServerConnectionFactory h2c = new HTTP2CServerConnectionFactory(httpConfig);
+
+     // PROXY
+  // // The ConnectionFactory for the PROXY protocol.
+ //  ProxyConnectionFactory proxy = new ProxyConnectionFactory(http11.getProtocol());
+
+
+ //
+//     // The ServerConnector instance.
+//     ServerConnector connector = new ServerConnector(server, http11, h2c);
+//     connector.setPort(8080);
+
 
 }

@@ -40,6 +40,20 @@ import org.apache.jena.sparql.core.Prologue ;
 public class RowSetFormatter {
 
     private RowSetFormatter() {}
+
+    /**
+     * This operation faithfully walks the rowSet but does nothing with the rows.
+     */
+    public static void consume(RowSet rowSet)
+    { count(rowSet); }
+
+    /**
+     * Count the rows in the RowSet (from the current point of RowSet).
+     * This operation consumes the RowSet.
+     */
+    public static long count(RowSet rowSet)
+    { return rowSet.rewindable().size(); }
+
     /**
      * Output a result set in a text format.  The result set is consumed.
      * Use @see{ResultSetFactory.makeRewindable(ResultSet)} for a rewindable one.

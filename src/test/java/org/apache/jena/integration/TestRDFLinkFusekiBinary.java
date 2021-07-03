@@ -97,7 +97,7 @@ public class TestRDFLinkFusekiBinary {
     }
 
     private void checkGraph(RDFLinkFuseki link, String label) {
-        Graph graph2 = link.fetch();
+        Graph graph2 = link.get();
         checkGraph(graph2, label);
     }
 
