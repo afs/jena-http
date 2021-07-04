@@ -81,7 +81,14 @@ Params
 
 ## Authentication
 
+ARQ.httpRequestModifer
+
+
+
+Old still supported:
 source/documentation/query/http-auth.md
+
+
 
 ## @@
 

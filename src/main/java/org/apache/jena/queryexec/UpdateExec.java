@@ -16,10 +16,10 @@
  * limitations under the License.
  */
 
-package org.seaborne.unused;
+package org.apache.jena.queryexec;
 
-public interface UpdateExecution {
+public interface UpdateExec {
     /** Execute */
-    public void execute() ;
+    public void execute();
 }
 

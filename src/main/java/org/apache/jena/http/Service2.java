@@ -57,7 +57,6 @@ public class Service2 {
 //    public static final Symbol queryClient = SystemARQ.allocSymbol(baseOld, "queryClient");
     public static final Symbol oldQueryClient = SystemARQ.allocSymbol(baseOld, "queryClient");
 
-
 //    // [QExec]
 //    public static final Symbol serviceContext = SystemARQ.allocSymbol(baseOld, "serviceContext");
 //    public static final Symbol serviceAllowed = SystemARQ.allocSymbol(baseOld, "serviceAllowed");

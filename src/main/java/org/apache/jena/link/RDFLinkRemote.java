@@ -28,7 +28,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.http.GSP;
 import org.apache.jena.http.HttpEnv;
 import org.apache.jena.http.QueryExecHTTPBuilder;
-import org.apache.jena.http.UpdateExecutionHTTP;
+import org.apache.jena.http.UpdateExecHTTP;
 import org.apache.jena.query.*;
 import org.apache.jena.queryexec.QueryExec;
 import org.apache.jena.queryexec.RowSet;
@@ -320,13 +320,14 @@ public class RDFLinkRemote implements RDFLink {
         checkUpdate();
         if ( update == null && updateString == null )
             throw new InternalErrorException("Both update request and update string are null");
+        UpdateRequest actual = null;
         if ( update == null ) {
             if ( parseCheckUpdates )
-                UpdateFactory.create(updateString);
+                actual = UpdateFactory.create(updateString);
         }
         // Use the update string as provided if possible, otherwise serialize the update.
         String updateStringToSend = ( updateString != null ) ? updateString  : update.toString();
-        UpdateExecutionHTTP.newBuilder()
+        UpdateExecHTTP.newBuilder()
             .service(svcUpdate)
             .httpClient(httpClient)
             .updateString(updateStringToSend)

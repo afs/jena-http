@@ -30,21 +30,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.jena.query.ARQ;
+import org.apache.jena.queryexec.UpdateExec;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.engine.http.HttpParams;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.update.UpdateRequest;
-import org.seaborne.unused.UpdateExecution;
 
-public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ UpdateExecution {
+public class UpdateExecHTTP implements UpdateExec {
 
-    public static UpdateExecutionHTTPBuilder newBuilder() { return new UpdateExecutionHTTPBuilder(); }
+    public static UpdateExecHTTPBuilder newBuilder() { return new UpdateExecHTTPBuilder(); }
 
     private final Context context;
     private final String service;
-    private final UpdateRequest update;
+    // Not used private final UpdateRequest update;
     private final String updateString;
     private final Map<String, String> httpHeaders;
     private final HttpClient httpClient;
@@ -53,15 +52,17 @@ public class UpdateExecutionHTTP implements /* UpdateProcessor old world, */ Upd
     private final List<String> usingGraphURIs;
     private final List<String> usingNamedGraphURIs;
 
-    /*package*/ UpdateExecutionHTTP(String serviceURL, UpdateRequest update, String updateString,
-                                    HttpClient httpClient, Params params,
-                                    List<String> usingGraphURIs,
-                                    List<String> usingNamedGraphURIs,
-                                    Map<String, String> httpHeaders, UpdateSendMode sendMode) {
-        this.context = ARQ.getContext().copy();
+    /*package*/ UpdateExecHTTP(String serviceURL, UpdateRequest update, String updateString,
+                               HttpClient httpClient, Params params,
+                               List<String> usingGraphURIs,
+                               List<String> usingNamedGraphURIs,
+                               Map<String, String> httpHeaders, UpdateSendMode sendMode,
+                               Context context) {
+        this.context = context;
         this.service = serviceURL;
-        this.update = update;
-        this.updateString = updateString;
+        //this.update = update;
+        // Builder ensures one or the other is set.
+        this.updateString = ( updateString != null ) ? updateString : update.toString();
         this.httpClient = dft(httpClient, HttpEnv.getDftHttpClient());
         this.params = params;
         this.usingGraphURIs = usingGraphURIs;

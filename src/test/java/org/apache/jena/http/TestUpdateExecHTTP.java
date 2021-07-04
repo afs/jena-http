@@ -33,7 +33,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TestUpdateExecutionHTTP {
+public class TestUpdateExecHTTP {
 
     private static FusekiServer server = null;
     private static String URL;
@@ -68,7 +68,7 @@ public class TestUpdateExecutionHTTP {
     }
 
     private static void clear() {
-        UpdateExecutionHTTP.newBuilder()
+        UpdateExecHTTP.newBuilder()
             .service(service())
             .updateString("CLEAR ALL")
             .build()
@@ -80,7 +80,7 @@ public class TestUpdateExecutionHTTP {
 
 
     @Test public void update_1() {
-        UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
+        UpdateExecHTTP uExec = UpdateExecHTTP.newBuilder()
             .service(service())
             .updateString("INSERT DATA { <x:s> <x:p> 234 } ")
             .build();
@@ -96,9 +96,9 @@ public class TestUpdateExecutionHTTP {
 
     @Test public void update_form_2() {
         UpdateRequest req = UpdateFactory.create("INSERT DATA { <x:s> <x:p> 567 } ");
-        UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
+        UpdateExecHTTP uExec = UpdateExecHTTP.newBuilder()
             .service(service())
-            .sendMode(UpdateSendMode.asPostForm)
+            //.sendMode(UpdateSendMode.asPostForm)
             .update(req)
             .build();
         uExec.execute();
@@ -125,15 +125,15 @@ public class TestUpdateExecutionHTTP {
     private void update_using_1_test() {
         {
             UpdateRequest req1 = UpdateFactory.create("INSERT DATA { GRAPH <http://example/gg> { <x:s> <x:p> 567 } }");
-            UpdateExecutionHTTP uExec1 = UpdateExecutionHTTP.newBuilder()
+            UpdateExecHTTP uExec1 = UpdateExecHTTP.newBuilder()
                 .service(service()).update(req1)
                 .build();
             uExec1.execute();
         }
         {
-            // Should apply the
+            // Should apply the change because USING = http://example/gg
             UpdateRequest req2 = UpdateFactory.create("INSERT { <x:s1> <x:p1> ?o } WHERE { ?s ?p ?o }");
-            UpdateExecutionHTTP uExec2 = UpdateExecutionHTTP.newBuilder()
+            UpdateExecHTTP uExec2 = UpdateExecHTTP.newBuilder()
                 .service(service()).update(req2)
                 .addUsingGraphURI("http://example/gg")
                 .build();

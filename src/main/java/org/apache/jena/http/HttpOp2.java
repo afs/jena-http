@@ -31,7 +31,6 @@ import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
@@ -45,6 +44,8 @@ import org.apache.jena.riot.web.HttpNames;
  * @see GSP
  */
 public class HttpOp2 {
+
+    private HttpOp2() {}
 
     public static String httpGetString(String url) {
         return httpGetString(HttpEnv.getDftHttpClient(), url, null);
@@ -159,27 +160,14 @@ public class HttpOp2 {
         httpPushData(httpClient, PATCH, url, contentType, body);
     }
 
-    private static void httpPushData(HttpClient httpClient, Push style, String url, String contentType, BodyPublisher body) {
-        httpPushData(httpClient, style, url, setContentTypeHeader(contentType), body);
-    }
-
     /** Push data. POST, PUT, PATCH request with no response body data. */
-    /*package*/ static void httpPushData(HttpClient httpClient, Push style, String url, Consumer<HttpRequest.Builder> modifier, BodyPublisher body) {
-        URI uri = toRequestURI(url);
-        HttpRequest.Builder builder = HttpRequest.newBuilder();
-        builder.uri(uri);
-        builder.method(style.method(), body);
-        if ( modifier != null )
-            modifier.accept(builder);
-        HttpRequest request = builder.build();
-        HttpResponse<InputStream> response = execute(httpClient, request);
-        handleResponseNoBody(response);
+    private static void httpPushData(HttpClient httpClient, Push style, String url, String contentType, BodyPublisher body) {
+        HttpLib.httpPushData(httpClient, style, url, setContentTypeHeader(contentType), body);
     }
 
     // POST form - probably not needed in this convenience class.
     // Retain for reference.
-
-    static HttpResponse<InputStream> httpPostForm(String url, Params params, String acceptString) {
+    /*package*/ static HttpResponse<InputStream> httpPostForm(String url, Params params, String acceptString) {
         return httpPostForm(HttpEnv.getDftHttpClient(), url, params, acceptString);
     }
 

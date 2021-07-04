@@ -23,48 +23,76 @@ import static org.apache.jena.http.HttpLib.copyArray;
 import java.net.http.HttpClient;
 import java.util.*;
 
+import org.apache.jena.atlas.lib.InternalErrorException;
+import org.apache.jena.query.ARQ;
 import org.apache.jena.query.QueryException;
+import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sys.JenaSystem;
+import org.apache.jena.update.Update;
+import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 
-public class UpdateExecutionHTTPBuilder {
+public class UpdateExecHTTPBuilder {
 
     static { JenaSystem.init(); }
 
     private String serviceURL;
-    private UpdateRequest update;
     private String updateString;
     private Params params = Params.create();
     private boolean allowCompression;
     private Map<String, String> httpHeaders = new HashMap<>();
     private HttpClient httpClient;
     private UpdateSendMode sendMode = UpdateSendMode.systemtDefault;
-    private UpdateRequest updateRequest;
-
+    private UpdateRequest updateOperations = null;
     private List<String> usingGraphURIs = null;
     private List<String> usingNamedGraphURIs = null;
+    private Context context = null;
 
-    public UpdateExecutionHTTPBuilder() {}
+    public UpdateExecHTTPBuilder() {}
 
-    public UpdateExecutionHTTPBuilder service(String serviceURL) {
+    public UpdateExecHTTPBuilder service(String serviceURL) {
         this.serviceURL = serviceURL;
         return this;
     }
 
-    /** Set the update - this also sets the update string to agree with the setting. */
-    public UpdateExecutionHTTPBuilder update(UpdateRequest updateRequest) {
-        this.updateRequest = Objects.requireNonNull(updateRequest);
-        this.updateString = updateRequest.toString();
+    public UpdateExecHTTPBuilder update(UpdateRequest updateRequest) {
+        Objects.requireNonNull(updateRequest);
+        ensureUpdateRequest();
+        updateRequest.getOperations().forEach(this::update);
+        this.updateString = null;
         return this;
     }
 
-    public UpdateExecutionHTTPBuilder updateString(String updateRequestString) {
-        this.updateRequest = null;
-        this.updateString = Objects.requireNonNull(updateRequestString);
+    public UpdateExecHTTPBuilder update(String updateRequestString) {
+        ensureUpdateRequest();
+        UpdateRequest more = UpdateFactory.create(updateRequestString);
+        more.getOperations().forEach(this::update);
+        this.updateString = null;
         return this;
     }
 
-    public UpdateExecutionHTTPBuilder httpClient(HttpClient httpClient) {
+    /** Add the update. */
+    public UpdateExecHTTPBuilder update(Update update) {
+        Objects.requireNonNull(update);
+        ensureUpdateRequest();
+        this.updateOperations.add(update);
+        this.updateString = null;
+        return this;
+    }
+
+    /**
+     * Set the update - this replaces any previous updates added. The update string
+     * is used as given including nonstandard syntax features offered by the remote
+     * SPARQL system.
+     */
+    public UpdateExecHTTPBuilder updateString(String updateString) {
+        Objects.requireNonNull(updateString);
+        this.updateOperations = null;
+        this.updateString = updateString;
+        return this;
+    }
+
+    public UpdateExecHTTPBuilder httpClient(HttpClient httpClient) {
         this.httpClient = Objects.requireNonNull(httpClient);
         return this;
     }
@@ -84,7 +112,7 @@ public class UpdateExecutionHTTPBuilder {
      * Choose whether to send using POST as "application/sparql-update" (preferred) or
      * as an HTML form, content type "application/x-www-form-urlencoded".
      */
-    public UpdateExecutionHTTPBuilder sendMode(UpdateSendMode mode) {
+    public UpdateExecHTTPBuilder sendMode(UpdateSendMode mode) {
         this.sendMode = mode;
         return this;
     }
@@ -93,49 +121,74 @@ public class UpdateExecutionHTTPBuilder {
     // The old code, UpdateProcessRemote, didn't support this so may be not
     // provide it as its not being used.
 
-    public UpdateExecutionHTTPBuilder addUsingGraphURI(String uri) {
+    public UpdateExecHTTPBuilder addUsingGraphURI(String uri) {
         if (this.usingGraphURIs == null)
             this.usingGraphURIs = new ArrayList<>();
         this.usingGraphURIs.add(uri);
         return this;
     }
 
-    public UpdateExecutionHTTPBuilder addUsingNamedGraphURI(String uri) {
+    public UpdateExecHTTPBuilder addUsingNamedGraphURI(String uri) {
         if (this.usingNamedGraphURIs == null)
             this.usingNamedGraphURIs = new ArrayList<>();
         this.usingNamedGraphURIs.add(uri);
         return this;
     }
 
-    public UpdateExecutionHTTPBuilder param(String name) {
+    public UpdateExecHTTPBuilder param(String name) {
         Objects.requireNonNull(name);
         this.params.add(name);
         return this;
     }
 
-    public UpdateExecutionHTTPBuilder param(String name, String value) {
+    public UpdateExecHTTPBuilder param(String name, String value) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(value);
         this.params.add(name, value);
         return this;
     }
 
-    public UpdateExecutionHTTPBuilder httpHeader(String headerName, String headerValue) {
+    public UpdateExecHTTPBuilder httpHeader(String headerName, String headerValue) {
         Objects.requireNonNull(headerName);
         Objects.requireNonNull(headerValue);
         this.httpHeaders.put(headerName, headerValue);
         return this;
     }
 
-    public UpdateExecutionHTTP build() {
+    /** Set the {@link Context}.
+     *  This defaults to the global settings of {@code ARQ.getContext()}.
+     *  If there was a previous call of {@code context} the multiple contexts are merged.
+     * */
+    public UpdateExecHTTPBuilder context(Context context) {
+        if ( context == null )
+            return this;
+        ensureContext();
+        this.context.putAll(context);
+        return this;
+    }
+
+    private void ensureContext() {
+        if ( context == null )
+            context = new Context();
+    }
+
+    private void ensureUpdateRequest() {
+        if ( updateOperations == null )
+            updateOperations = new UpdateRequest();
+    }
+
+    public UpdateExecHTTP build() {
         Objects.requireNonNull(serviceURL, "No service URL");
-        if ( update == null && updateString == null )
+        if ( updateOperations == null && updateString == null )
             throw new QueryException("No update for UpdateExecutionHTTP");
+        if ( updateOperations != null && updateString != null )
+            throw new InternalErrorException("UpdateRequest and update string");
         HttpClient hClient = HttpEnv.getHttpClient(serviceURL, httpClient);
-        return new UpdateExecutionHTTP(serviceURL, update, updateString, hClient, params,
-                                       copyArray(usingGraphURIs),
-                                       copyArray(usingNamedGraphURIs),
-                                       new HashMap<>(httpHeaders),
-                                       sendMode);
+        Context cxt = (context!=null) ? context : ARQ.getContext().copy();
+        return new UpdateExecHTTP(serviceURL, updateOperations, updateString, hClient, params,
+                                  copyArray(usingGraphURIs),
+                                  copyArray(usingNamedGraphURIs),
+                                  new HashMap<>(httpHeaders),
+                                  sendMode, cxt);
     }
 }

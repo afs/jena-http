@@ -590,7 +590,7 @@ public class GSP {
             //if ( ! httpHeaders.containsKey(HttpNames.hContentType) )
                 httpHeaders.put(HttpNames.hContentType, fileContentType);
             BodyPublisher body = BodyPublishers.ofFile(path);
-            HttpOp2.httpPushData(httpClient, style, endpoint, HttpLib.setHeaders(httpHeaders), body);
+            HttpLib.httpPushData(httpClient, style, endpoint, HttpLib.setHeaders(httpHeaders), body);
         } catch (FileNotFoundException ex) {
             throw new NotFoundException(file);
         }

@@ -113,7 +113,7 @@ public class DevAuthHTTP {
             svcReg.add("http://localhost:3030/ds", mods);
             ARQ.getContext().put(ARQ.serviceParams, svcReg);
 
-            UpdateExecutionHTTP uExec = UpdateExecutionHTTP.newBuilder()
+            UpdateExecHTTP uExec = UpdateExecHTTP.newBuilder()
                 .service("http://localhost:3030/ds")
                 .updateString("INSERT DATA { <x:s> <x:q> 123}")
                 //.httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))

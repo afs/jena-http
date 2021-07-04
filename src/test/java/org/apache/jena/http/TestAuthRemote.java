@@ -113,12 +113,12 @@ public class TestAuthRemote {
         });
     }
 
-    // ---- UpdateExecutionHTTP
+    // ---- UpdateExecHTTP
 
     @Test
     public void auth_update_no_auth() {
         FusekiTest.expect401(()->
-            UpdateExecutionHTTP.newBuilder()
+            UpdateExecHTTP.newBuilder()
                 .service(env.datasetURL())
                 .updateString("INSERT DATA { <x:s> <x:p> <x:o> }")
                 .build()
@@ -128,7 +128,7 @@ public class TestAuthRemote {
 
     @Test
     public void auth_update_good_auth() {
-        UpdateExecutionHTTP.newBuilder()
+        UpdateExecHTTP.newBuilder()
             .httpClient(env.httpClientAuthGood())
             .service(env.datasetURL())
             .updateString("INSERT DATA { <x:s> <x:p> <x:o> }")
@@ -139,7 +139,7 @@ public class TestAuthRemote {
     @Test
     public void auth_update_bad_auth() {
         FusekiTest.expect401(()->
-            UpdateExecutionHTTP.newBuilder()
+            UpdateExecHTTP.newBuilder()
                 .httpClient(env.httpClientAuthBad())
                 .service(env.datasetURL())
                 .updateString("INSERT DATA { <x:s> <x:p> <x:o> }")
@@ -390,15 +390,17 @@ public class TestAuthRemote {
 
     // ServiceTuning
     @Test
-    public void auth_service_tuning_1() {
+    public void auth_service_tuning_1_RegistryRequestModifier() {
+        // using RegistryRequestModifier
         HttpRequestModifer mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
 
         RegistryRequestModifier svcReg = new RegistryRequestModifier();
         svcReg.add(env.datasetURL(), mods);
-        ARQ.getContext().put(ARQ.serviceParams, svcReg);
+        ARQ.getContext().put(ARQ.httpRegistryRequestModifer, svcReg);
 
         try {
-            UpdateExecutionHTTP.newBuilder()
+            // Component level
+            UpdateExecHTTP.newBuilder()
                 .service(env.datasetURL())
                 .updateString("INSERT DATA { <x:s> <x:p> <x:o> }")
                 .build()
@@ -412,17 +414,15 @@ public class TestAuthRemote {
             }
         } finally {
             // clear up
-            ARQ.getContext().remove(ARQ.serviceParams);
+            ARQ.getContext().remove(ARQ.httpRegistryRequestModifer);
         }
     }
 
     @Test
-    public void auth_service_tuning_2() {
+    public void auth_service_tuning_2_HttpRequestModifer() {
+        // As HttpRequestModifer
         HttpRequestModifer mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
-
-        RegistryRequestModifier svcReg = new RegistryRequestModifier();
-        svcReg.add(env.datasetURL(), mods);
-        ARQ.getContext().put(ARQ.serviceParams, svcReg);
+        ARQ.getContext().put(ARQ.httpRequestModifer, mods);
         try {
             try ( RDFLink link = RDFLinkRemote.newBuilder()
                     .destination(env.datasetURL())
@@ -433,7 +433,7 @@ public class TestAuthRemote {
             }
         } finally {
             // clear up
-            ARQ.getContext().remove(ARQ.serviceParams);
+            ARQ.getContext().remove(ARQ.httpRequestModifer);
         }
     }
 

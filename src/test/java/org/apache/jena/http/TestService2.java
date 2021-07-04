@@ -27,8 +27,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.jena.atlas.iterator.Iter;
+import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.conn.test.EnvTest;
-import org.apache.jena.fuseki.system.FusekiLogging;
+import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.graph.Node ;
 import org.apache.jena.graph.NodeFactory ;
 import org.apache.jena.link.RDFLink;
@@ -46,6 +47,7 @@ import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.apache.jena.sparql.engine.http.Service;
+import org.apache.jena.sparql.engine.main.iterator.QueryIterService;
 import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
@@ -102,8 +104,12 @@ public class TestService2 {
         return opService;
     }
 
+    // Remember the initial settings.
+    static String logLevelQueryIterService = LogCtl.getLevel(QueryIterService.class);
+    static String logLevelFuseki = LogCtl.getLevel(Fuseki.class);
+
     @BeforeClass public static void beforeClass() {
-        FusekiLogging.setLogging();
+        //FusekiLogging.setLogging();
         env = EnvTest.create("/ds");
         SERVICE = env.datasetURL();
     }
@@ -175,34 +181,36 @@ public class TestService2 {
         }
     }
 
-    @Test public void service_query_silent_1() {
-        DatasetGraph dsg = env.dsg();
-
-        String queryString = "SELECT * { SERVICE SILENT <"+SERVICE+"JUNK> { VALUES ?X { 1 2 } }} ";
-        try ( RDFLink link = RDFLinkFactory.connect(localDataset()) ) {
-            try ( QueryExec qExec = link.query(queryString) ) {
-                RowSet rs = qExec.select();
-                assertTrue(rs.hasNext());
-                Binding binding = rs.next();
-                assertFalse(rs.hasNext());
-                assertTrue(binding.isEmpty());
+    @Test public void service_query_silent_no_service() {
+        logOnlyErrors(QueryIterService.class, ()->{
+            DatasetGraph dsg = env.dsg();
+            String queryString = "SELECT * { SERVICE SILENT <"+SERVICE+"JUNK> { VALUES ?X { 1 2 } }} ";
+            try ( RDFLink link = RDFLinkFactory.connect(localDataset()) ) {
+                try ( QueryExec qExec = link.query(queryString) ) {
+                    RowSet rs = qExec.select();
+                    assertTrue(rs.hasNext());
+                    Binding binding = rs.next();
+                    assertFalse(rs.hasNext());
+                    assertTrue(binding.isEmpty());
+                }
             }
-        }
+        });
     }
 
-    @Test public void service_query_silent_2() {
-        DatasetGraph dsg = env.dsg();
-
-        String queryString = "SELECT * { SERVICE SILENT <http://nosuchsite/> { VALUES ?X { 1 2 } }} ";
-        try ( RDFLink link = RDFLinkFactory.connect(localDataset()) ) {
-            try ( QueryExec qExec = link.query(queryString) ) {
-                RowSet rs = qExec.select();
-                assertTrue(rs.hasNext());
-                Binding binding = rs.next();
-                assertFalse(rs.hasNext());
-                assertTrue(binding.isEmpty());
+    @Test public void service_query_silent_nosite() {
+        logOnlyErrors(QueryIterService.class, ()->{
+            DatasetGraph dsg = env.dsg();
+            String queryString = "SELECT * { SERVICE SILENT <http://nosuchsite/> { VALUES ?X { 1 2 } }} ";
+            try ( RDFLink link = RDFLinkFactory.connect(localDataset()) ) {
+                try ( QueryExec qExec = link.query(queryString) ) {
+                    RowSet rs = qExec.select();
+                    assertTrue(rs.hasNext());
+                    Binding binding = rs.next();
+                    assertFalse(rs.hasNext());
+                    assertTrue(binding.isEmpty());
+                }
             }
-        }
+        });
     }
 
     @Test public void service_query_extra_params() {
@@ -213,12 +221,22 @@ public class TestService2 {
         }
     }
 
+    private static void logOnlyErrors(Class<?> logClass, Runnable action) {
+        String original = LogCtl.getLevel(logClass);
+        try {
+            LogCtl.setLevel(logClass, "ERROR");
+            action.run();
+        } finally {
+            LogCtl.setLevel(logClass, original);
+        }
+    }
+
     // Uses a HttpRequestModifier to check the changes.
     @Test public void service_query_extra_params_oldstyle_by_context_1() {
 
         Map<String, Map<String, List<String>>> testServiceParams = new HashMap<>();
         Map<String, List<String>> settings =  new HashMap<>();
-        settings.put("apikey", List.of("BristolCallingToTheFarAwayTowns"));
+        settings.put("apikey", List.of("BristolCalling"));
         testServiceParams.put(SERVICE, settings);
 
         DatasetGraph clientDGS = localDataset();
@@ -229,12 +247,14 @@ public class TestService2 {
             seen.set(params.containsParam("apikey"));
         };
 
-        runWithModifier(SERVICE, inspector, ()->{
-            String queryString = "ASK { SERVICE <"+SERVICE+"> { BIND(now() AS ?now) } }";
-            try ( QueryExec qExec = QueryExec.newBuilder().query(queryString).dataset(clientDGS).build() ) {
-                boolean b = qExec.ask();
-                assertTrue(b);
-            }
+        logOnlyErrors(Fuseki.class, ()->{
+            runWithModifier(SERVICE, inspector, ()->{
+                String queryString = "ASK { SERVICE <"+SERVICE+"> { BIND(now() AS ?now) } }";
+                try ( QueryExec qExec = QueryExec.newBuilder().query(queryString).dataset(clientDGS).build() ) {
+                    boolean b = qExec.ask();
+                    assertTrue(b);
+                }
+            });
         });
         assertTrue(seen.get());
     }
@@ -244,7 +264,7 @@ public class TestService2 {
 
         Map<String, Map<String, List<String>>> testServiceParams = new HashMap<>();
         Map<String, List<String>> settings =  new HashMap<>();
-        settings.put("apikey", List.of("BristolCallingToTheFarAwayTowns"));
+        settings.put("apikey", List.of("BristolCallingToTheFarawayTowns"));
         testServiceParams.put(SERVICE, settings);
 
         DatasetGraph clientDGS = localDataset();
@@ -255,12 +275,14 @@ public class TestService2 {
             seen.set(params.containsParam("apikey"));
         };
 
-        runWithModifier(SERVICE, inspector, ()->{
-            String queryString = "ASK { SERVICE <"+SERVICE+"> { BIND(now() AS ?now) } }";
-            try ( QueryExec qExec = QueryExec.newBuilder().query(queryString).dataset(clientDGS).build() ) {
-                boolean b = qExec.ask();
-                assertTrue(b);
-            }
+        logOnlyErrors(Fuseki.class, ()->{
+            runWithModifier(SERVICE, inspector, ()->{
+                String queryString = "ASK { SERVICE <"+SERVICE+"> { BIND(now() AS ?now) } }";
+                try ( QueryExec qExec = QueryExec.newBuilder().query(queryString).dataset(clientDGS).build() ) {
+                    boolean b = qExec.ask();
+                    assertTrue(b);
+                }
+            });
         });
         assertTrue(seen.get());
     }
@@ -351,7 +373,7 @@ public class TestService2 {
 
 
     @Test(expected=QueryExceptionHTTP.class)
-    public void service_query_bad_1() {
+    public void service_query_bad_no_service() {
         DatasetGraph dsg = env.dsg();
         dsg.executeWrite(()->dsg.add(SSE.parseQuad("(_ :s :p :o)")));
 
@@ -371,7 +393,7 @@ public class TestService2 {
     }
 
     @Test(expected=QueryExceptionHTTP.class)
-    public void service_query_bad_2() {
+    public void service_query_bad_no_dataset() {
         DatasetGraph dsg = env.dsg();
         dsg.executeWrite(()->dsg.add(SSE.parseQuad("(_ :s :p :o)")));
 

@@ -27,7 +27,6 @@ import org.apache.jena.atlas.web.AuthScheme;
 import org.apache.jena.fuseki.auth.Auth;
 import org.apache.jena.fuseki.jetty.JettyLib;
 import org.apache.jena.fuseki.main.FusekiServer;
-import org.apache.jena.fuseki.system.FusekiLogging;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.system.Txn;
@@ -58,7 +57,7 @@ public class EnvTest {
 /* Cut&Paste
     private static EnvTest env;
     @BeforeClass public static void beforeClass() {
-        //FusekiLogging.setLogging();
+        //FusekiLogging.setLogging(); -- development only
         env = EnvTest.create("/ds");
     }
 
@@ -70,7 +69,6 @@ public class EnvTest {
         EnvTest.stop(env);
     }
 */
-    static { FusekiLogging.setLogging(); }
 
 
     public static boolean VERBOSE = false;
@@ -113,8 +111,6 @@ public class EnvTest {
         this.password = password;
         server = startServer(dsName, dsg, holder, VERBOSE, user, password);
     }
-
-    //static { FusekiLogging.setLogging(); }
 
     private static FusekiServer startServer(String dsName, DatasetGraph dsg, StringHolderServlet holder, boolean verbose, String user, String password) {
         if ( user != null && password == null )

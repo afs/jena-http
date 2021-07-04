@@ -150,12 +150,22 @@ public class TestGSP {
         GSP.request(gspServiceURL())
             .defaultGraph()
             .PUT(graph);
+        Graph g1 = GSP.request(gspServiceURL())
+             .defaultGraph()
+             .GET();
+        assertFalse(g1.isEmpty());
 
         GSP.request(gspServiceURL())
             .defaultGraph()
             .DELETE();
+        Graph g2 = GSP.request(gspServiceURL())
+            .defaultGraph()
+            .GET();
+        assertTrue(g2.isEmpty());
 
+        // And just to make sure ...
         String s2 = HttpOp2.httpGetString(defaultGraphURL(), WebContent.contentTypeNTriples);
+        // Default always exists so this is the empty graph in N-triples.
         assertTrue(s2.isEmpty());
     }
 

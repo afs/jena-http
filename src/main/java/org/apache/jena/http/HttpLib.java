@@ -60,6 +60,9 @@ import org.apache.jena.web.HttpSC;
  */
 public class HttpLib {
 
+    private HttpLib() {}
+
+
     public static BodyHandler<Void> noBody() { return BodyHandlers.discarding(); }
 
     public static BodyPublisher stringBody(String str) { return BodyPublishers.ofString(str); }
@@ -93,6 +96,7 @@ public class HttpLib {
      * Get the InputStream from an HttpResponse, handling possible compression settings.
      * The application must consume or close the {@code InputStream} (see {@link #finish(InputStream)}).
      * Closing the InputStream may close the HTTP connection.
+     * Assumes the status code has been handled e.g. {@link #handleHttpStatusCode} has been called.
      */
     private static InputStream getInputStream(HttpResponse<InputStream> httpResponse) {
         String encoding = httpResponse.headers().firstValue("Content-Encoding").orElse("");
@@ -160,8 +164,7 @@ public class HttpLib {
     }
 
     /**
-     * Handle the HTTP response and return the body {@code InputStream} if a 200.
-     * Otherwise, throw an {@link HttpException}.
+     * Handle the HTTP response and return the InputStream if a 200.
      * @param httpResponse
      * @return InputStream
      */
@@ -394,7 +397,7 @@ public class HttpLib {
             if ( ex.getMessage() != null ) {
                 // This is silly.
                 // Rather than an HTTP exception, bad authentication becomes IOException("too many authentication attempts");
-                // or IException("No credentials provided") is the authenticator decides to return null.
+                // or IOException("No credentials provided") if the authenticator decides to return null.
                 if ( ex.getMessage().contains("too many authentication attempts") ||
                      ex.getMessage().contains("No credentials provided") ) {
                     throw new HttpException(401, HttpSC.getMessage(401), null);
@@ -407,6 +410,19 @@ public class HttpLib {
     /*package*/ static CompletableFuture<HttpResponse<InputStream>> asyncExecute(HttpClient httpClient, HttpRequest httpRequest) {
         logAsyncRequest(httpRequest);
         return httpClient.sendAsync(httpRequest, BodyHandlers.ofInputStream());
+    }
+
+    /** Push data. POST, PUT, PATCH request with no response body data. */
+    /*package*/ static void httpPushData(HttpClient httpClient, Push style, String url, Consumer<HttpRequest.Builder> modifier, BodyPublisher body) {
+        URI uri = toRequestURI(url);
+        HttpRequest.Builder builder = HttpRequest.newBuilder();
+        builder.uri(uri);
+        builder.method(style.method(), body);
+        if ( modifier != null )
+            modifier.accept(builder);
+        HttpRequest request = builder.build();
+        HttpResponse<InputStream> response = execute(httpClient, request);
+        handleResponseNoBody(response);
     }
 
     /** Request */
@@ -430,7 +446,13 @@ public class HttpLib {
 //        httpResponse.previousResponse();
     }
 
-    // This is to allow setting additional/optional query parameters on a per remote service (including for SERVICE).
+    /**
+     * Allow setting additional/optional query parameters on a per remote service (including for SERVICE).
+     * <ul>
+     * <li>ARQ.httpRequestModifer - the specific modifier</li>
+     * <li>ARQ.httpRegistryRequestModifer - the registry, keyed by service URL.</li>
+     * </ul>
+     */
     /*package*/ public static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
         HttpRequestModifer modifier = context.get(ARQ.httpRequestModifer);
         if ( modifier != null ) {

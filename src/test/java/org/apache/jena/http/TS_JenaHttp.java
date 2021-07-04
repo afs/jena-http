@@ -31,7 +31,7 @@ import org.junit.runners.Suite;
     , TestGSP.class
     , TestQueryExecHTTP.class
     , TestQueryExecCleanServer.class
-    , TestUpdateExecutionHTTP.class
+    , TestUpdateExecHTTP.class
     , TestAuthRemote.class
     , TestServiceFunctions.class
     , TestService2.class

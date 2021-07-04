@@ -25,8 +25,8 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.http.GSP;
-import org.apache.jena.http.UpdateExecutionHTTP;
-import org.apache.jena.http.UpdateExecutionHTTPBuilder;
+import org.apache.jena.http.UpdateExecHTTP;
+import org.apache.jena.http.UpdateExecHTTPBuilder;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.core.DatasetGraph;
@@ -39,7 +39,7 @@ public class ExGSP {
 
     public static String URL;
 
-    public static UpdateExecutionHTTPBuilder factoryClearAll;
+    public static UpdateExecHTTPBuilder factoryClearAll;
 
     public static void main(String ...a) {
         FusekiLogging.setLogging();
@@ -51,7 +51,7 @@ public class ExGSP {
         // Find port allocated by OS
         int port = WebLib.choosePort();
         URL = "http://localhost:"+port+dsPath;
-        factoryClearAll = UpdateExecutionHTTP.newBuilder().service(URL).updateString("CLEAR ALL");
+        factoryClearAll = UpdateExecHTTP.newBuilder().service(URL).updateString("CLEAR ALL");
 
         try {
             ExGSP_addTriple();

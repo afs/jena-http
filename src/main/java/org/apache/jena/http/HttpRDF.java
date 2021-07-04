@@ -211,7 +211,7 @@ public class HttpRDF {
             httpHeaders = Collections.singletonMap(HttpNames.hContentType, contentType);
         else
             httpHeaders.put(HttpNames.hContentType, contentType);
-        HttpOp2.httpPushData(httpClient, style, url, HttpLib.setHeaders(httpHeaders), bodyPublisher);
+        HttpLib.httpPushData(httpClient, style, url, HttpLib.setHeaders(httpHeaders), bodyPublisher);
     }
 
     public static void httpDeleteGraph(String url) {
@@ -241,7 +241,8 @@ public class HttpRDF {
     }
 
     /*package*/ static <T> String determineBaseURI(String url, HttpResponse<T> response) {
-        // RFC 7231: 3.1.4.2. and Appendix B: Content-Location does not affect base URI. // SKW.
+        // RFC 7231: 3.1.4.2. and Appendix B: Content-Location does not affect base URI.
+        // With help from Stuart Williams.
         URI uri = response.uri();
         return uri.toString();
     }

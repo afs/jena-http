@@ -63,7 +63,6 @@ public class NotesQExec {
     }
 
     void compression() {
-        // == Compression
         // [ ] Off for responses in Fuseki. On for sending?
         //     Compression settings:
         //     HttpQuery, HttpOp.
@@ -74,10 +73,13 @@ public class NotesQExec {
     }
 
     void GSP() {
-        // [ ] Remove DatasetAccessor
-        // [ ] Compression options? PUT, POST? HTTP/2 only?
+        // [x] Compression options? PUT, POST? HTTP/2 only?
+        //     HttpLib body subscriber ->
+        //     Done in HttpLib.handleResponseInputStream/getInputStream.
+        //     But google for examples for jena.net.http
         // [ ] HTTP version
-        // [ ] Always handle compressed responses.
+        // [ ] Always handle compressed responses (Content-Encoding)
+        // [ ] Remove DatasetAccessor
     }
 
     void HttpOp2() {
@@ -96,6 +98,7 @@ public class NotesQExec {
         // [ ] Undo BraveNewWorld.
         // [ ] Do not optimize SERVICE - substitution only.
         // [ ] Context symbols: Old and new
+        // [ ] Clean Service2
     }
 
     void RDFConnection() {
@@ -109,6 +112,7 @@ public class NotesQExec {
         // [ ] RDFLink .allowCompression does nothing. Remove
         //     Rename. .compressRespones(true), .compressDataSent(true)
         // [ ] Builders for RDFLinkDataset, RDFConnectionDataset
+        // [ ] Use UpdateExecBuilder.
     }
 
     void RowSet() {
@@ -143,14 +147,21 @@ public class NotesQExec {
     }
 
     void update() {
-        // [ ] rename UpdateExecution -> UpdateExec.
         // [ ] UpdateExecutionFactory
-        // == UpdateProcessor
-        // [ ] It's called UpdateExecutionHTTP
+        // [ ] UpdateProcessorBase becomes "UpdateExecDataset (keep UpdateProcessor interface)
+        // [-] UpdateProcessor for resource level.
+        // [x] UpdateExec for graph level inc builder.
+        // [ ] It's called UpdateExecHTTP
+        // [ ] UpdateExecutionHTTP - same except Dataset
         // [ ] UpdateProcessor(migrate name) -> UpdateExecution, UpdateExecutionHTTP, UpdateExecutionHTTPBuilder
         // [?] UpdateProcessorBase -> UpdateExecutionDataset
         // [?] UpdateProcessorRemoteBase -> UpdateExecutionDataset
         // [ ] UpdateProcessRemote, leave but deprecate - put UpdateExecutionHTTP along side + builder.
+    }
+
+    void tests() {
+        // UpdateExecBuilder
+        // UpdateExecHTTPBuilder
     }
 
     void examples() {
