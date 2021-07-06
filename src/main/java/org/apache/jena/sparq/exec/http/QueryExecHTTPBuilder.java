@@ -45,7 +45,7 @@ public class QueryExecHTTPBuilder extends ExecHTTPBuilder<QueryExec, QueryExecHT
                                hClient, new HashMap<>(httpHeaders), Params.create(params), context,
                                copyArray(defaultGraphURIs),
                                copyArray(namedGraphURIs),
-                               sendMode, acceptHeader, allowCompression,
+                               sendMode, acceptHeader,
                                timeout, timeoutUnit);
     }
 

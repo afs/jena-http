@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNotNull;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jena.conn.test.EnvTest;
-import org.apache.jena.fuseki.system.FusekiLogging;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.link.RDFLink;
@@ -57,13 +56,13 @@ public class TestUsageHTTP {
     static {
         JenaSystem.init();
         RIOT.getContext().set(RIOT.symTurtleDirectiveStyle, "sparql");
-        FusekiLogging.setLogging();
     }
 
     public static EnvTest env;
 
     @BeforeClass public static void beforeClass() {
-        EnvTest.VERBOSE = true;
+        //FusekiLogging.setLogging();
+        //EnvTest.VERBOSE = true;
         env = EnvTest.create("/ds");
         Graph data = SSE.parseGraph("(graph (:s :p :o))");
         GraphUtil.addInto(env.dsg().getDefaultGraph(), data);
@@ -153,8 +152,6 @@ public class TestUsageHTTP {
         QueryExec qExec =
                 QueryExecHTTP.newBuilder()
                 .service(env.datasetURL())
-                // [QExec] Does nothing?
-                .allowCompression(true)
                 .queryString("SELECT * {}")
                 .build();
 
@@ -166,7 +163,7 @@ public class TestUsageHTTP {
 
     @Test
     public void gsp(){
-        Graph graph = GSP.request(env.datasetURL()).defaultGraph().allowCompression(true).GET();
+        Graph graph = GSP.request(env.datasetURL()).defaultGraph().GET();
         assertNotNull(graph);
     }
 }

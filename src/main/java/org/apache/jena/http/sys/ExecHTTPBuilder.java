@@ -44,7 +44,6 @@ public abstract class ExecHTTPBuilder<X, Y> {
     protected Context context = null;
     // Accept: Handled as special case because the defaults varies by query type.
     protected String acceptHeader;
-    protected boolean allowCompression = true;
     protected long timeout = -1;
     protected TimeUnit timeoutUnit = null;
 
@@ -205,11 +204,6 @@ public abstract class ExecHTTPBuilder<X, Y> {
         Objects.requireNonNull(headerName);
         Objects.requireNonNull(headerValue);
         this.httpHeaders.put(headerName, headerValue);
-        return thisBuilder();
-    }
-
-    public Y allowCompression(boolean allowCompression) {
-        this.allowCompression = allowCompression;
         return thisBuilder();
     }
 

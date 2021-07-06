@@ -27,7 +27,7 @@ import org.apache.jena.sparq.exec.QueryExecutionAdapter;
  */
 public class QueryExecutionHTTP extends QueryExecutionAdapter {
     // To give a clean class name to object and not "QueryExecutionAdapter"
-    protected QueryExecutionHTTP(QueryExec qExec) {
+    public QueryExecutionHTTP(QueryExec qExec) {
         super(qExec);
     }
 }

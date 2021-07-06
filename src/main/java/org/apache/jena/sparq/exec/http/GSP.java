@@ -113,7 +113,6 @@ public class GSP {
     private RDFFormat           rdfFormat       = null;
     private HttpClient          httpClient      = null;
     private Map<String, String> httpHeaders     = new HashMap<>();
-    private boolean             allowCompression = false;
 
     // One, and only one of these, must be set at the point the terminating operation is called.
     private boolean             datasetGraph    = false;
@@ -165,12 +164,6 @@ public class GSP {
         if ( httpHeaders == null )
             return null;
         return httpHeaders.get(header);
-    }
-
-    /** Enable a request for compression to be used for the response (i.e. Accept-Encoding)*/
-    public GSP allowCompression(boolean allowCompression) {
-        this.allowCompression = allowCompression;
-        return this;
     }
 
     /** Send request for a named graph (used in {@code ?graph=}) */
@@ -308,7 +301,6 @@ public class GSP {
     public Graph GET() {
         validateGraphOperation();
         ensureAcceptHeader(WebContent.defaultGraphAcceptHeader);
-        requestCompression();
         String url = HttpLib.requestURL(serviceEndpoint, queryStringForGraph(graphName));
         Graph graph = GraphFactory.createDefaultGraph();
         HttpClient hc = requestHttpClient(serviceEndpoint, url);
@@ -454,7 +446,6 @@ public class GSP {
         internalDataset();
         validateDatasetOperation();
         ensureAcceptHeader(WebContent.defaultRDFAcceptHeader);
-        requestCompression();
         DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
         HttpClient hc = requestHttpClient(serviceEndpoint, serviceEndpoint);
         HttpRDF.httpGetToStream(hc, serviceEndpoint, httpHeaders, StreamRDFLib.dataset(dsg));
@@ -464,11 +455,6 @@ public class GSP {
     private void ensureAcceptHeader(String dftAcceptheader) {
         String requestAccept = header(acceptHeader(), WebContent.defaultRDFAcceptHeader);
         acceptHeader(requestAccept);
-    }
-
-    private void requestCompression() {
-        if ( allowCompression )
-            httpHeader(HttpNames.hAcceptEncoding, WebContent.acceptEncoding);
     }
 
     /**

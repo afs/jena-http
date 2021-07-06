@@ -47,7 +47,7 @@ public class QueryExecutionHTTPBuilder extends ExecHTTPBuilder<QueryExecution, Q
         QueryExec qExec = new QueryExecHTTP(serviceURL, query, queryString, urlLimit,
                                             hClient, new HashMap<>(httpHeaders), Params.create(params), context,
                                             copyArray(defaultGraphURIs), copyArray(namedGraphURIs),
-                                            sendMode, acceptHeader, allowCompression,
+                                            sendMode, acceptHeader,
                                             timeout, timeoutUnit);
         return new QueryExecutionHTTP(qExec);
     }

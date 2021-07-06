@@ -118,7 +118,7 @@ public class Service2 {
             query = OpAsQuery.asQuery(opRemote);
 
         // -- Setup
-        boolean withCompression = context.isTrueOrUndef(httpQueryCompression);
+        //boolean withCompression = context.isTrueOrUndef(httpQueryCompression);
         long timeoutMillis = timeoutFromContext(context);
 
         // RegistryServiceModifier is applied by QueryExecHTTP
@@ -130,7 +130,6 @@ public class Service2 {
         // Build the execution
         QueryExecHTTP qExec = QueryExecHTTP.newBuilder()
                 .service(serviceURL)
-                .allowCompression(withCompression)
                 .timeout(timeoutMillis, TimeUnit.MILLISECONDS)
                 .query(query)
                 .params(serviceParams)

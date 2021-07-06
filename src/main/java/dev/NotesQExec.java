@@ -73,6 +73,12 @@ public class NotesQExec {
     }
 
     void compression() {
+        // allowCompression in
+        //    HttpLib
+        //    GSP
+        //    QueryExecHTTP (QueryExecutuionHTTP_Standalone)
+
+
         // [x] Off for responses in Fuseki. On for sending?
         //     Compression settings:
         //       HttpQuery, HttpOp. Update?
@@ -88,6 +94,7 @@ public class NotesQExec {
     }
 
     void HTTP() {
+        // [ ] Digest auth
         // [ ] Run some integration tests in HTTP 1.1 mode
         // [ ] See what headers are not allowed in HTTP/2.
         // [ ] TestUsageHTTP : compression and no compression

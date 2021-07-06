@@ -50,7 +50,6 @@ import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.lib.IRILib;
 import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.query.ARQ;
-import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparq.exec.http.HttpRequestModifer;
 import org.apache.jena.sparq.exec.http.Params;
@@ -102,8 +101,10 @@ public class HttpLib {
      * Assumes the status code has been handled e.g. {@link #handleHttpStatusCode} has been called.
      */
     private static InputStream getInputStream(HttpResponse<InputStream> httpResponse) {
-        String encoding = httpResponse.headers().firstValue("Content-Encoding").orElse("");
+        String encoding = httpResponse.headers().firstValue(HttpNames.hContentEncoding).orElse("");
         InputStream responseInput = httpResponse.body();
+        // Only support "Content-Encoding: <compression>" and not
+        // "Content-Encoding: chunked, <compression>"
         try {
             switch (encoding) {
                 case "" :
@@ -318,19 +319,12 @@ public class HttpLib {
         return requestURL;
     }
 
-//    /*package*/ static Builder xnewBuilder(String url, boolean allowCompression, long readTimeout, TimeUnit readTimeoutUnit) {
-//        return newBuilder(url, null, allowCompression, readTimeout, readTimeoutUnit);
-//    }
-
-    public
-    /*package*/ static Builder newBuilder(String url, Map<String, String> httpHeaders, boolean allowCompression, long readTimeout, TimeUnit readTimeoutUnit) {
+    public static Builder newBuilder(String url, Map<String, String> httpHeaders, long readTimeout, TimeUnit readTimeoutUnit) {
         HttpRequest.Builder builder = HttpRequest.newBuilder();
         headers(builder, httpHeaders);
         builder.uri(toRequestURI(url));
         if ( readTimeout >= 0 )
             builder.timeout(Duration.ofMillis(readTimeoutUnit.toMillis(readTimeout)));
-        if ( allowCompression )
-            builder.header(HttpNames.hAcceptEncoding, WebContent.acceptEncoding);
         return builder;
     }
 
@@ -358,15 +352,15 @@ public class HttpLib {
         return builder;
     }
 
-    /**
-     * Set the "Accept-Encoding" header. Returns the builder.
-     * See {@link #getInputStream(HttpResponse)}.
-     */
-    public
-    /*package*/ static Builder acceptEncoding(Builder builder) {
-        builder.header(HttpNames.hAcceptEncoding, "gzip,inflate");
-        return builder;
-    }
+//    /**
+//     * Set the "Accept-Encoding" header. Returns the builder.
+//     * See {@link #getInputStream(HttpResponse)}.
+//     */
+//    public
+//    /*package*/ static Builder acceptEncodingCompressed(Builder builder) {
+//        builder.header(HttpNames.hAcceptEncoding, WebContent.acceptEncodingCompressed);
+//        return builder;
+//    }
 
     /** Execute a request, return a {@code HttpResponse<InputStream>} which can be passed to
      * {@link #handleHttpStatusCode(HttpResponse)}.

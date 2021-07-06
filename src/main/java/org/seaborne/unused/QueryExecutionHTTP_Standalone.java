@@ -97,9 +97,6 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
     private long readTimeout = -1;
     private TimeUnit readTimeoutUnit = TimeUnit.MILLISECONDS;
 
-    // Compression for response
-    private boolean allowCompression = false;
-
     // Content Types: these list the standard formats and also include */*.
     private String selectAcceptheader    = WebContent.defaultSparqlResultsHeader;
     private String askAcceptHeader       = WebContent.defaultSparqlAskHeader;
@@ -125,7 +122,7 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
     QueryExecutionHTTP_Standalone(String serviceURL, Query query, String queryString, int urlLimit,
                                    HttpClient httpClient, Map<String, String> httpHeaders, Params params,
                                    List<String> defaultGraphURIs, List<String> namedGraphURIs,
-                                   QuerySendMode sendMode, String acceptHeader, boolean allowCompression,
+                                   QuerySendMode sendMode, String acceptHeader,
                                    long timeout, TimeUnit timeoutUnit) {
         this.context = ARQ.getContext().copy();
         this.service = serviceURL;
@@ -143,7 +140,6 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
             this.httpHeaders.remove(HttpNames.hAccept);
         }
         this.httpHeaders = httpHeaders;
-        //this.allowCompression = false;
         this.params = params;
         this.readTimeout = timeout;
         this.readTimeoutUnit = timeoutUnit;
@@ -494,16 +490,6 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
         return asMillis(connectTimeout, connectTimeoutUnit);
     }
 
-    /**
-     * Gets whether HTTP requests will indicate to the remote server that
-     * compressed encoding of responses is accepted
-     *
-     * @return True if compressed encoding will be accepted
-     */
-    public boolean getAllowCompression() {
-        return allowCompression;
-    }
-
     private static long asMillis(long duration, TimeUnit timeUnit) {
         return (duration < 0) ? duration : timeUnit.toMillis(duration);
     }
@@ -546,8 +532,6 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
                 throw new HttpException("Send mode not recognized for query request: "+sendMode);
         }
 
-        if ( allowCompression )
-            acceptEncoding(builder);
         HttpRequest request = builder.build();
         // Status code has not been processed on the return from execute*
         return executeQuery(request);
@@ -593,7 +577,7 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
         thisParams.add(HttpParams.pQuery, queryString);
         String qs = params.httpString();
 
-        HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
+        HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, readTimeout, readTimeoutUnit);
         acceptHeader(builder, acceptHeader);
         return builder.GET();
     }
@@ -603,7 +587,7 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
         thisParams.add(HttpParams.pQuery, queryString);
         String qs = params.httpString();
 
-        HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
+        HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, readTimeout, readTimeoutUnit);
         acceptHeader(builder, acceptHeader);
         // Use an HTML form.
         contentTypeHeader(builder, WebContent.contentTypeHTMLForm);
@@ -621,9 +605,7 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
         if ( thisParams.count() > 0 )
             url = url + "&"+thisParams.httpString();
 
-        HttpRequest.Builder builder = HttpLib.newBuilder(service, httpHeaders, allowCompression, readTimeout, readTimeoutUnit);
-        if ( allowCompression )
-            acceptEncoding(builder);
+        HttpRequest.Builder builder = HttpLib.newBuilder(service, httpHeaders, readTimeout, readTimeoutUnit);
         contentTypeHeader(builder, WebContent.contentTypeSPARQLQuery);
         acceptHeader(builder, acceptHeader);
         return builder.POST(BodyPublishers.ofString(queryString));
