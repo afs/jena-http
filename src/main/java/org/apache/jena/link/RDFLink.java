@@ -304,7 +304,22 @@ public interface RDFLink extends
         update(UpdateFactory.create(updateString));
     }
 
-    // ---- RDFDatasetConnection
+    /** Fetch the default graph.
+     * This is SPARQL Graph Store Protocol HTTP GET or equivalent.
+     * @return Graph
+     */
+    @Override
+    public Graph get();
+
+    /** Fetch a named graph.
+     * This is SPARQL Graph Store Protocol HTTP GET or equivalent.
+     *
+     * @param graphName URI string for the graph name (null or {@link Quad#defaultGraphIRI} for the default graph)
+     * @return Graph
+     */
+    @Override
+    public Graph get(Node graphName);
+
 
     /** Send file - this merges the file RDF into the default graph of a dataset.
      * This is SPARQL Graph Store Protocol HTTP POST or equivalent.

@@ -25,15 +25,15 @@ public class NotesQExec {
         // G2 merge to G etc
         /*
         Packages:
-        Radical:
         1:: jena-arq: org.apache.jena.sparql.queryexec
           Ready
             QueryExec, QueryExecBuilder, QueryExecAdpater, QueryExecDataset
             RowSet (ResultSetAdapter?)
           org.apache.jena.http - HttpEnv, HttpLib, HttpOp2 (rename, moved), old HttpOp->HttpOp1 - call through to HttpOp2.
              ==> org.apache.jena.riot.web == org.apache.jena.http
-          org.apache.jena.sparql.http  - execHTTP, GSP registries., HttpRDF?
+          org.apache.jena.sparql.http  - execHTTP, GSP registries, HttpRDF?
 
+        Alt:
           org.apache.jena.queryexec
           org.apache.jena.engine.http
 
@@ -41,78 +41,68 @@ public class NotesQExec {
             org.apache.jena.rdflink
             Alt: org.apache.jena.rdfconnection.link
          */
+        // [ ] Remove DatasetAccessor!
     }
 
     void misc() {
+        // [ ] *Remote vs *HTTP
+        // [ ] Where do builders come from? Factory?
+        //     QueryExec.newLocalBuilder newRemoteBuilder?
+        //     SPARQL.newQueryExec()?
+        //     Local.newQueryBuilder, HTTP.newBuilder.
+
         //Misc
-        // EnvTest to org.apache.jena.test (integration testing)
+        // [-] EnvTest to org.apache.jena.test (integration testing)
         // [ ] QueryExecUtils.executeQuery to work on GPI. Deprecate rest. Redo.
-        // [ ] Move builders into classes?? Or move all out
-        // [ ] HttpLib : former "package" scope.
+        // [-] Move builders into classes?? Or move all out
         // [ ] RequestLogging : See LogIt
-        // [ ] create() vs newBuilder(). "localBuilder()", "remoteBuilder" / "newBuilder", "newBuilderHTTP"
+
         // 1 - make new world client work with compression (send only)
-        // 2 - are the added "close" need? or is it a jetty buglet?
-        // 3 - No default compression
         // 5 - Consider Content-Length calculation form.
     }
 
     void documentation() {
         // [ ] Document!
         //     Global -> dataset -> [fuseki service?] -> execution -> freeze
+        //     StreamRDF
     }
 
     void compression() {
-        // [ ] Off for responses in Fuseki. On for sending?
+        // [x] Off for responses in Fuseki. On for sending?
         //     Compression settings:
-        //     HttpQuery, HttpOp.
-        // [ ] Compression class of system constants
+        //       HttpQuery, HttpOp. Update?
+        // [?] Compression class of system constants
         //     Compression QueryEngineHTTP (pass through) and HttpQuery (decide here)
         // [ ] TestUsageHTTP
-        // [ ] Then turn off in Fuseki (output stream never compressed)
     }
 
     void GSP() {
-        // [x] Compression options? PUT, POST? HTTP/2 only?
-        //     HttpLib body subscriber ->
-        //     Done in HttpLib.handleResponseInputStream/getInputStream.
-        //     But google for examples for jena.net.http
-        // [ ] HTTP version
-        // [ ] Always handle compressed responses (Content-Encoding)
-        // [ ] Remove DatasetAccessor
     }
 
     void HttpOp2() {
-        // [ ] Compression off (check)
-        // [ ] Default configuration.
     }
 
     void HTTP() {
         // [ ] Run some integration tests in HTTP 1.1 mode
         // [ ] See what headers are not allowed in HTTP/2.
         // [ ] TestUsageHTTP : compression and no compression
+        // [ ] HTTP version
     }
 
     void SERVICE() {
-        // No first timeout (now in HttpClient)
         // [ ] Undo BraveNewWorld.
-        // [ ] Do not optimize SERVICE - substitution only.
+        // [-] Do not optimize SERVICE - substitution only.
         // [ ] Context symbols: Old and new
         // [ ] Clean Service2
     }
 
     void RDFConnection() {
-        // [ ] Adapter
+        // [x] Adapter : link/RDFConnectionAdapter
         // [ ] RDFConnectionFactory - de-emphasise - refer to builders
-        // [ ] RDFConnectionDatasetBuilder
+        // [?] RDFConnectionDatasetBuilder
     }
 
     void RDFLink() {
-        // [ ] fetch -> GET etc
-        // [ ] RDFLink .allowCompression does nothing. Remove
-        //     Rename. .compressRespones(true), .compressDataSent(true)
-        // [ ] Builders for RDFLinkDataset, RDFConnectionDataset
-        // [ ] Use UpdateExecBuilder.
     }
 
     void RowSet() {
@@ -129,9 +119,9 @@ public class NotesQExec {
         // [ ] ResultsWriter.builder.prefixMap(PrefixMap) - only needed for text
     }
 
-    void queryExecution() {
-        // [ ] QueryExecutionFactory
-        // [ ] ?leave/deprecate QueryEngineHttp using ApcheHttpClient for one or two releases?
+    void query() {
+        // [ ] QueryExecutionFactory -> deprecate and refer to builder.
+        // [ ] Leave/deprecate QueryEngineHttp using ApcheHttpClient for one or two releases?
         // [ ] Deprecation of QueryExecution.setTimeout (use a builder). QueryExecutionBuilder
         // [-] Old use of QueryEngineHTTP, HttpQuery (leave, inc Apache HttpClient4 - deprecate - delete)
         // [ ] Deprecate all QueryExecutionFactory.sparqlService, createServiceRequest - reference builders.
@@ -143,10 +133,15 @@ public class NotesQExec {
     }
 
     void HttpOp() {
-        // HttpOp : Direct use of java.net.http covers the complex cases so new HttpOp is smaller
     }
 
     void update() {
+        // Is there an abstraction for a "ready to run" UpdateExecBuilder - only has ".execute(dsg)"
+        // [ ] UpdateProc or UpdateExec
+        // [-] Later
+
+        // Modified UpdateProcessor? UpdateProc?
+
         // [ ] UpdateExecutionFactory
         // [ ] UpdateProcessorBase becomes "UpdateExecDataset (keep UpdateProcessor interface)
         // [-] UpdateProcessor for resource level.
@@ -160,8 +155,8 @@ public class NotesQExec {
     }
 
     void tests() {
-        // UpdateExecBuilder
-        // UpdateExecHTTPBuilder
+        // [ ] UpdateExecBuilder
+        // [x] UpdateExecHTTPBuilder
     }
 
     void examples() {

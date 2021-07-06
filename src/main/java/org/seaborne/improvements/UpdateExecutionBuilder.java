@@ -33,6 +33,8 @@ import org.apache.jena.update.*;
  */
 public class UpdateExecutionBuilder {
 
+    // [QExec] retired.
+
     static { JenaSystem.init(); }
 
     private UpdateRequest updateRequest = new UpdateRequest();

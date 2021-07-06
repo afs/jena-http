@@ -16,22 +16,18 @@
  * limitations under the License.
  */
 
-package org.seaborne;
+package org.seaborne.improvements;
 
-import org.apache.jena.http.TS_JenaHttp;
-import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-import org.seaborne.improvements.TS_Improvements;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses( {
-    TS_RDFLink.class
-    , TS_RDFLinkIntegration.class
-    , TS_JenaHttp.class
-    , TS_Improvements.class
+      TestExecutionBuilders.class
+    , TestUpdateBuilder.class
+
 })
-public class TC_NewLink {
+
+public class TS_Improvements {
 
 }

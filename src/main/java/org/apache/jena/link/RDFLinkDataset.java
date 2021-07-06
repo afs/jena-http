@@ -23,8 +23,11 @@ import java.util.Objects;
 import org.apache.jena.atlas.lib.InternalErrorException;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.query.*;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.ReadWrite;
+import org.apache.jena.query.TxnType;
 import org.apache.jena.queryexec.QueryExec;
+import org.apache.jena.queryexec.UpdateExecBuilder;
 import org.apache.jena.rdfconnection.Isolation;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -36,7 +39,6 @@ import org.apache.jena.sparql.core.DatasetGraphReadOnly;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.graph.GraphReadOnly;
 import org.apache.jena.system.Txn;
-import org.apache.jena.update.UpdateExecutionFactory;
 import org.apache.jena.update.UpdateRequest;
 
 /**
@@ -57,10 +59,6 @@ import org.apache.jena.update.UpdateRequest;
 public class RDFLinkDataset implements RDFLink {
     private ThreadLocal<Boolean> transactionActive = ThreadLocal.withInitial(()->false);
 
-    // [QExec] Builderize
-    public static RDFLink connect(DatasetGraph dsg) { return new RDFLinkDataset(dsg); }
-    public static RDFLink connect(DatasetGraph dsg, Isolation isolation) { return new RDFLinkDataset(dsg, isolation); }
-
     private DatasetGraph dataset;
     private final Isolation isolation;
 
@@ -68,7 +66,7 @@ public class RDFLinkDataset implements RDFLink {
         this(dataset, Isolation.NONE);
     }
 
-    private RDFLinkDataset(DatasetGraph dataset, Isolation isolation) {
+    /*package*/ RDFLinkDataset(DatasetGraph dataset, Isolation isolation) {
         this.dataset = dataset;
         this.isolation = isolation;
     }
@@ -82,7 +80,7 @@ public class RDFLinkDataset implements RDFLink {
     @Override
     public void update(UpdateRequest update) {
         checkOpen();
-        Txn.executeWrite(dataset, ()->UpdateExecutionFactory.create(update, dataset).execute() );
+        Txn.executeWrite(dataset, ()->UpdateExecBuilder.newBuilder().update(update).execute(dataset));
     }
 
     @Override

@@ -91,7 +91,7 @@ public class AsyncHttpRDF {
     public static CompletableFuture<Void> asyncLoadDatasetGraph(String url, DatasetGraph dsg) {
         return asyncLoadDatasetGraph(HttpEnv.getDftHttpClient(), url, dsg);
     }
-    
+
     /**
      * Load a DatasetGraph asynchronously.
      * The dataset is updated inside a transaction.

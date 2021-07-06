@@ -95,8 +95,7 @@ public class UpdateExecBuilder {
 
     // [QExec] Becomes UpdateExec
     private UpdateProcessor build(DatasetGraph dsg) {
-        if ( dsg == null )
-            throw null;
+        Objects.requireNonNull(dsg, "No datset for update");
         Context cxt = Context.setupContextForDataset(context, dsg);
         UpdateEngineFactory f = UpdateEngineRegistry.get().find(dsg, cxt);
         if ( f == null )
