@@ -23,7 +23,7 @@ import static org.apache.jena.riot.web.HttpNames.METHOD_POST;
 import static org.apache.jena.riot.web.HttpNames.METHOD_PUT;
 
 /** Enum for HTTP push operations */
-enum Push {
+public enum Push {
     PUT(METHOD_PUT), POST(METHOD_POST), PATCH(METHOD_PATCH);
     private final String method;
 

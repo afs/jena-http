@@ -29,7 +29,6 @@ import org.junit.runners.Suite;
     , TestRDFLinkLocalMRSW.class
     , TestLibRDFLink.class
     , TestRDFLinkLocalTDB.class
-
 })
 
 public class TS_RDFLink {}

@@ -28,7 +28,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.link.RDFLinkFuseki;
 import org.apache.jena.link.RDFLinkRemoteBuilder;
-import org.apache.jena.queryexec.QueryExec;
+import org.apache.jena.sparq.exec.QueryExec;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Var;

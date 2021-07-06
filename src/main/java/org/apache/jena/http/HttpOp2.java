@@ -24,6 +24,7 @@ import static org.apache.jena.http.Push.POST;
 import static org.apache.jena.http.Push.PUT;
 
 import java.io.InputStream;
+import java.net.Authenticator;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -34,11 +35,16 @@ import java.util.Objects;
 
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
+import org.apache.jena.sparq.exec.http.GSP;
+import org.apache.jena.sparq.exec.http.Params;
 
 /**
  * This is a collection of convenience operations for HTTP requests,
  * mostly in support of RDF handling and common, basic use cases for HTTP.
- * It is not comprehensive.
+ * It is not comprehensive
+ * <p>
+ * Authentication is handled by supplying a {@link java.net.http.HttpClient}
+ * which has been built with an {@link Authenticator}.
  *
  * @see HttpRDF
  * @see GSP
@@ -61,12 +67,12 @@ public class HttpOp2 {
         return handleResponseRtnString(response);
     }
 
-    /** POST - like httpGetString but uses POST - expects a response */
+    /** POST (without a body) - like httpGetString but uses POST - expects a response */
     public static String httpPostRtnString(String url) {
         return httpPostRtnString(HttpEnv.getDftHttpClient(), url);
     }
 
-    /** POST - like httpGetString but uses POST - expects a response */
+    /** POST (without a body) - like httpGetString but uses POST - expects a response */
     public static String httpPostRtnString(HttpClient httpClient, String url) {
         HttpRequest requestData = HttpRequest.newBuilder()
             .POST(BodyPublishers.noBody())
@@ -76,22 +82,22 @@ public class HttpOp2 {
         return handleResponseRtnString(response);
     }
 
-    /** MUST close the InputStream */
+    /** Perform an HTTP GET to a URL, with "Accept" header "*{@literal /}*". The application MUST close the InputStream. */
     public static InputStream httpGet(String url) {
         return httpGet(HttpEnv.getDftHttpClient(), url);
     }
 
-    /** MUST consume or close the InputStream */
+    /** Perform an HTTP GET to a URL. The application MUST close the InputStream. */
     public static InputStream httpGet(String url, String acceptHeader) {
         return httpGet(HttpEnv.getDftHttpClient(), url, acceptHeader);
     }
 
-    /** MUST consume or close the InputStream */
+    /** Perform an HTTP GET to a URL. The application MUST close the InputStream. */
     public static InputStream httpGet(HttpClient httpClient, String url) {
         return httpGet(httpClient, url, null);
     }
 
-    /** MUST consume or close the InputStream */
+    /** Perform an HTTP GET to a URL. The application MUST close the InputStream. */
     public static InputStream httpGet(HttpClient httpClient, String url, String acceptHeader) {
         return execGet(httpClient, url, acceptHeader);
     }

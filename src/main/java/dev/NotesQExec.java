@@ -25,16 +25,21 @@ public class NotesQExec {
         // G2 merge to G etc
         /*
         Packages:
-        1:: jena-arq: org.apache.jena.sparql.queryexec
-          Ready
+        1:: jena-arq
+
+        org.apache.jena.sparql.exec
             QueryExec, QueryExecBuilder, QueryExecAdpater, QueryExecDataset
             RowSet (ResultSetAdapter?)
-          org.apache.jena.http - HttpEnv, HttpLib, HttpOp2 (rename, moved), old HttpOp->HttpOp1 - call through to HttpOp2.
-             ==> org.apache.jena.riot.web == org.apache.jena.http
-          org.apache.jena.sparql.http  - execHTTP, GSP registries, HttpRDF?
+
+        org.apache.jena.riot.web == org.apache.jena.http
+              - HttpEnv, HttpLib, HttpOp2 (rename, moved), old HttpOp->HttpOp1 - call through to HttpOp2.
+
+        org.apache.jena.sparql.exec.http (or org.apache.jena.riot.http)
+            GSP?
+            HTTP variants.
 
         Alt:
-          org.apache.jena.queryexec
+          org.apache.jena.queryexec (no)
           org.apache.jena.engine.http
 
         4:: jena-rdfconnection:
@@ -92,8 +97,6 @@ public class NotesQExec {
     void SERVICE() {
         // [ ] Undo BraveNewWorld.
         // [-] Do not optimize SERVICE - substitution only.
-        // [ ] Context symbols: Old and new
-        // [ ] Clean Service2
     }
 
     void RDFConnection() {

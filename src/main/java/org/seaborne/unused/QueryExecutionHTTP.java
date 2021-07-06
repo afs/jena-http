@@ -18,8 +18,8 @@
 
 package org.seaborne.unused;
 
-import org.apache.jena.queryexec.QueryExec;
-import org.apache.jena.queryexec.QueryExecutionAdapter;
+import org.apache.jena.sparq.exec.QueryExec;
+import org.apache.jena.sparq.exec.QueryExecutionAdapter;
 
 /**
  * A query execution implementation where queries are executed against a remote

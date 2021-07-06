@@ -23,6 +23,7 @@ import java.net.http.HttpClient.Redirect;
 import java.time.Duration;
 
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.sparq.exec.http.RegistryHttpClient;
 
 /**
  * JVM wide settings.

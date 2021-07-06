@@ -44,6 +44,8 @@ import org.apache.jena.sys.JenaSystem;
  */
 public class QueryExecutionBuilder {
 
+    // [QExec] retired.
+
     static { JenaSystem.init(); }
 
     // Had been migrated.

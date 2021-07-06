@@ -26,10 +26,10 @@ import static org.apache.jena.link.LibRDFLink.name;
 import java.util.function.Consumer;
 
 import org.apache.jena.query.*;
-import org.apache.jena.queryexec.QueryExecutionAdapter;
-import org.apache.jena.queryexec.ResultSetAdapter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.sparq.exec.QueryExecutionAdapter;
+import org.apache.jena.sparq.exec.ResultSetAdapter;
 import org.apache.jena.update.UpdateRequest;
 
 /** Provide {@link RDFConnection} using a {@link RDFLink} */

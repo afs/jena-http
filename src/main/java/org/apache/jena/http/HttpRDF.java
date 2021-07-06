@@ -40,6 +40,7 @@ import org.apache.jena.riot.*;
 import org.apache.jena.riot.system.StreamRDF;
 import org.apache.jena.riot.system.StreamRDFLib;
 import org.apache.jena.riot.web.HttpNames;
+import org.apache.jena.sparq.exec.http.GSP;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.graph.GraphFactory;
 
@@ -160,21 +161,21 @@ public class HttpRDF {
     }
 
     public static void httpPostGraph(HttpClient httpClient, String url, Graph graph, RDFFormat format) {
-        postGraph(httpClient, url, graph, format, null);
+        httpPostGraph(httpClient, url, graph, format, null);
     }
 
-    public static void httpPostDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
-        postDataset(httpClient, url, dataset, format, null);
-    }
-
-    /*package*/ static void postGraph(HttpClient httpClient, String url, Graph graph,
-                                      RDFFormat format, Map<String, String> httpHeaders) {
+    public static void httpPostGraph(HttpClient httpClient, String url, Graph graph,
+                                     RDFFormat format, Map<String, String> httpHeaders) {
         BodyPublisher bodyPublisher = graphToHttpBody(graph, format);
         pushBody(httpClient, url, Push.POST, bodyPublisher, format, httpHeaders);
     }
 
-    /*package*/ static void postDataset(HttpClient httpClient, String url, DatasetGraph dataset,
-                                        RDFFormat format, Map<String, String> httpHeaders) {
+    public static void httpPostDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
+        httpPostDataset(httpClient, url, dataset, format, null);
+    }
+
+    public static void httpPostDataset(HttpClient httpClient, String url, DatasetGraph dataset,
+                                       RDFFormat format, Map<String, String> httpHeaders) {
         BodyPublisher bodyPublisher = datasetToHttpBody(dataset, format);
         pushBody(httpClient, url, Push.POST, bodyPublisher, format, httpHeaders);
     }
@@ -184,21 +185,21 @@ public class HttpRDF {
     }
 
     public static void httpPutGraph(HttpClient httpClient, String url, Graph graph, RDFFormat fmt) {
-        putGraph(httpClient, url, graph, fmt, null);
+        httpPutGraph(httpClient, url, graph, fmt, null);
     }
 
-    public static void httpPutDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
-        putDataset(httpClient, url, dataset, format, null);
-    }
-
-    /*package*/ static void putGraph(HttpClient httpClient, String url, Graph graph,
-                                     RDFFormat format, Map<String, String> httpHeaders) {
+    public static void httpPutGraph(HttpClient httpClient, String url, Graph graph,
+                                    RDFFormat format, Map<String, String> httpHeaders) {
         BodyPublisher bodyPublisher = graphToHttpBody(graph, format);
         pushBody(httpClient, url, Push.PUT, bodyPublisher, format, httpHeaders);
     }
 
-    /*package*/ static void putDataset(HttpClient httpClient, String url, DatasetGraph dataset,
-                                       RDFFormat format, Map<String, String> httpHeaders) {
+    public static void httpPutDataset(HttpClient httpClient, String url, DatasetGraph dataset, RDFFormat format) {
+        httpPutDataset(httpClient, url, dataset, format, null);
+    }
+
+    public static void httpPutDataset(HttpClient httpClient, String url, DatasetGraph dataset,
+                                      RDFFormat format, Map<String, String> httpHeaders) {
         BodyPublisher bodyPublisher = datasetToHttpBody(dataset, format);
         pushBody(httpClient, url, Push.PUT, bodyPublisher, format, httpHeaders);
     }

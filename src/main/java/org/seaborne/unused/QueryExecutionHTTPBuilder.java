@@ -25,12 +25,12 @@ import java.util.HashMap;
 import java.util.Objects;
 
 import org.apache.jena.http.HttpEnv;
-import org.apache.jena.http.Params;
-import org.apache.jena.http.QueryExecHTTP;
 import org.apache.jena.http.sys.ExecHTTPBuilder;
 import org.apache.jena.query.QueryException;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.queryexec.QueryExec;
+import org.apache.jena.sparq.exec.QueryExec;
+import org.apache.jena.sparq.exec.http.Params;
+import org.apache.jena.sparq.exec.http.QueryExecHTTP;
 
 public class QueryExecutionHTTPBuilder extends ExecHTTPBuilder<QueryExecution, QueryExecutionHTTPBuilder> {
 

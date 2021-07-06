@@ -22,8 +22,8 @@ import java.util.function.Consumer;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.query.Query;
-import org.apache.jena.queryexec.QueryExec;
-import org.apache.jena.queryexec.RowSet;
+import org.apache.jena.sparq.exec.QueryExec;
+import org.apache.jena.sparq.exec.RowSet;
 import org.apache.jena.sparql.core.Transactional;
 import org.apache.jena.sparql.engine.binding.Binding;
 

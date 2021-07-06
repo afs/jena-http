@@ -52,6 +52,9 @@ import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
+import org.apache.jena.sparq.exec.http.HttpRequestModifer;
+import org.apache.jena.sparq.exec.http.Params;
+import org.apache.jena.sparq.exec.http.RegistryRequestModifier;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.web.HttpSC;
 
@@ -176,21 +179,21 @@ public class HttpLib {
 
     /**
      * Handle the HTTP response and consume the body if a 200.
-     * Otherwise, throw an {@link HttpExpection}.
+     * Otherwise, throw an {@link HttpException}.
      * @param response
      */
-    static void handleResponseNoBody(HttpResponse<InputStream> response) {
+    public static void handleResponseNoBody(HttpResponse<InputStream> response) {
         handleHttpStatusCode(response);
         finish(response);
     }
 
     /**
      * Handle the HTTP response and read the body to produce a string if a 200.
-     * Otherwise, throw an {@link HttpExpection}.
+     * Otherwise, throw an {@link HttpException}.
      * @param response
      * @return String
      */
-    static String handleResponseRtnString(HttpResponse<InputStream> response) {
+    public static String handleResponseRtnString(HttpResponse<InputStream> response) {
         InputStream input = handleResponseInputStream(response);
         try {
             String string = IO.readWholeFileAsUTF8(input);
@@ -224,7 +227,7 @@ public class HttpLib {
      * {@code close} may close the underlying HTTP connection.
      *  See {@link BodySubscribers#ofInputStream()}.
      */
-    /*package*/ static void finish(HttpResponse<InputStream> response) {
+    public static void finish(HttpResponse<InputStream> response) {
         finish(response.body());
     }
 
@@ -232,7 +235,7 @@ public class HttpLib {
      *  {@code close} may close the underlying HTTP connection.
      *  See {@link BodySubscribers#ofInputStream()}.
      */
-    /*package*/ static void finish(InputStream input) {
+    public static void finish(InputStream input) {
         consume(input);
     }
 
@@ -413,7 +416,7 @@ public class HttpLib {
     }
 
     /** Push data. POST, PUT, PATCH request with no response body data. */
-    /*package*/ static void httpPushData(HttpClient httpClient, Push style, String url, Consumer<HttpRequest.Builder> modifier, BodyPublisher body) {
+    public static void httpPushData(HttpClient httpClient, Push style, String url, Consumer<HttpRequest.Builder> modifier, BodyPublisher body) {
         URI uri = toRequestURI(url);
         HttpRequest.Builder builder = HttpRequest.newBuilder();
         builder.uri(uri);
@@ -473,7 +476,7 @@ public class HttpLib {
      * Return a modifier that will set the Accept header to the value.
      * An argument of "null" means "no action".
      */
-    static Consumer<HttpRequest.Builder> setHeaders(Map<String, String> headers) {
+    public static Consumer<HttpRequest.Builder> setHeaders(Map<String, String> headers) {
         if ( headers == null )
             return (x)->{};
         return x->headers.forEach(x::header);

@@ -23,7 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.jena.atlas.iterator.Iter;
-import org.apache.jena.queryexec.UpdateExecBuilder;
+import org.apache.jena.sparq.exec.UpdateExecBuilder;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.update.UpdateFactory;
