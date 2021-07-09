@@ -20,6 +20,11 @@ package dev;
 
 public class NotesQExec {
 
+    // Merge
+    // [ ] Old params, new params
+    // [ ] G2
+    // [ ]Tests
+
     void migration() {
         // Delete DatasetAccessor
         // G2 merge to G etc
@@ -56,14 +61,18 @@ public class NotesQExec {
         //     SPARQL.newQueryExec()?
         //     Local.newQueryBuilder, HTTP.newBuilder.
 
-        //Misc
+
+        // [ ] TestUsage.
         // [-] EnvTest to org.apache.jena.test (integration testing)
         // [ ] QueryExecUtils.executeQuery to work on GPI. Deprecate rest. Redo.
         // [-] Move builders into classes?? Or move all out
         // [ ] RequestLogging : See LogIt
 
+
         // 1 - make new world client work with compression (send only)
         // 5 - Consider Content-Length calculation form.
+
+        //UrlBuilder
     }
 
     void documentation() {
@@ -73,18 +82,26 @@ public class NotesQExec {
     }
 
     void compression() {
-        // allowCompression in
-        //    HttpLib
-        //    GSP
-        //    QueryExecHTTP (QueryExecutuionHTTP_Standalone)
 
+        // Fuseki : Off for responses. On for receiving.
+        //   Could make it version dependent. HTTP/2 -> on for responses.
+        // Client:
+        //   Support "Content-Encoding: gzip" receipt
+        //   Does not send "Accept-Encoding".
+        // Not fully working in Fuseki due to Jetty custom code needed for HTTP 1.1, streaming and gzip.
 
-        // [x] Off for responses in Fuseki. On for sending?
-        //     Compression settings:
-        //       HttpQuery, HttpOp. Update?
-        // [?] Compression class of system constants
-        //     Compression QueryEngineHTTP (pass through) and HttpQuery (decide here)
-        // [ ] TestUsageHTTP
+        // Problem:
+        //   (HTTP/1.1) streaming and gzip => "Content-Encoding: chunked, gzip"
+        //   Needs special handling in Jetty (GzipHttpOutputInterceptor depends on Content-Length)
+        //   Naively done, then Jetty drops the "Content-Encoding: gzip" and only sends "Content-Encoding: chunked"
+        // Not handled by java.net.http.HttpClient (only chunked?)
+        // HTTP/2 does not have chunked at all, and "Content-Encoding: gzip" will work on receipt.
+        // And is such one time compression worth it?
+        // Jetty:
+        //   GzipHandler
+        //   GzipHttpInputInterceptor - then no special handling (server)
+        //   GzipHttpOutputInterceptor
+        // What does java.net.http handle?
     }
 
     void GSP() {
@@ -96,9 +113,11 @@ public class NotesQExec {
     void HTTP() {
         // [ ] Digest auth
         // [ ] Run some integration tests in HTTP 1.1 mode
-        // [ ] See what headers are not allowed in HTTP/2.
+        // [ ] HTTP/2 RFC 7540: Not Keep-Alive, Proxy-Connection, Transfer-Encoding, and Upgrade,
+        //     Also - Content-Encoding chunked (pointless)
+        //     "However, header field names MUST be converted to lowercase prior to their encoding in HTTP/2."
         // [ ] TestUsageHTTP : compression and no compression
-        // [ ] HTTP version
+        // [ ] HTTP version (Fuseki issue?)
     }
 
     void SERVICE() {
@@ -116,14 +135,14 @@ public class NotesQExec {
     }
 
     void RowSet() {
-        // [ ] reader, writer
+        // [ ] reader, writer (cheat with adapters for now?)
         // [ ] SSE : RowSetformatter
         // [ ] SPARQLResult
         // [ ] ResultSet as adapter : resultSetTream goes away
-        //   Deprecate -- ResultSetReader.read -> ResultSet
-        //   Add -- ResultSetReader.readRowSet
-        //   Add -- ResultSetWriter.write(,RowSet,)
-        //   Deprecate -- ResultSetWriter.write(,ResultSet,)
+        //     Deprecate -- ResultSetReader.read -> ResultSet
+        //     Add -- ResultSetReader.readRowSet
+        //     Add -- ResultSetWriter.write(,RowSet,)
+        //     Deprecate -- ResultSetWriter.write(,ResultSet,)
         // [ ] RowSetFormatter => RowSetOps
         // [ ] ResultSetReader -> RowSetReader, RowSetWriter
         // [ ] ResultsWriter.builder.prefixMap(PrefixMap) - only needed for text
@@ -135,8 +154,8 @@ public class NotesQExec {
         // [ ] Deprecation of QueryExecution.setTimeout (use a builder). QueryExecutionBuilder
         // [-] Old use of QueryEngineHTTP, HttpQuery (leave, inc Apache HttpClient4 - deprecate - delete)
         // [ ] Deprecate all QueryExecutionFactory.sparqlService, createServiceRequest - reference builders.
-        // [ ]  Deprecate of QueryExecution.setTimeout (leave for now) setIntialBindings
-        //      T there is a QueryExecutionBuilder for local datasets
+        // [ ] Deprecate of QueryExecution.setTimeout (leave for now) setIntialBindings
+        //     There is a QueryExecutionBuilder for local datasets
         // [ ] javadoc of QueryExecutionFactory to refer to builders.
         // [ ] javadoc of UpdateExecutionFactory to refer to builders.
         // [ ] QueryExecutionBase -> QueryExecutionDataset (?? too late ??)
@@ -150,7 +169,7 @@ public class NotesQExec {
         // [ ] UpdateProc or UpdateExec
         // [-] Later
 
-        // Modified UpdateProcessor? UpdateProc?
+        // [ ] UpdateProcessorAdapter
 
         // [ ] UpdateExecutionFactory
         // [ ] UpdateProcessorBase becomes "UpdateExecDataset (keep UpdateProcessor interface)
@@ -165,6 +184,7 @@ public class NotesQExec {
     }
 
     void tests() {
+        // [ ] DevAuthHTTP as tests
         // [ ] UpdateExecBuilder
         // [x] UpdateExecHTTPBuilder
     }
@@ -175,7 +195,6 @@ public class NotesQExec {
         // [ ] Survey examples.
         // [ ] Modification - RegistryByServiceURL
         // [ ] See ExGSP
-
     }
 
     void jetty() {

@@ -26,12 +26,12 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.sparq.exec.http.GSP;
-import org.apache.jena.sparq.exec.http.UpdateExecHTTP;
-import org.apache.jena.sparq.exec.http.UpdateExecHTTPBuilder;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.exec.http.GSP;
+import org.apache.jena.sparql.exec.http.UpdateExecHTTP;
+import org.apache.jena.sparql.exec.http.UpdateExecHTTPBuilder;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.sse.SSE;
 

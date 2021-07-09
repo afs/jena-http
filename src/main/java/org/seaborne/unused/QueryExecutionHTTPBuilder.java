@@ -28,9 +28,9 @@ import org.apache.jena.http.HttpEnv;
 import org.apache.jena.http.sys.ExecHTTPBuilder;
 import org.apache.jena.query.QueryException;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.sparq.exec.QueryExec;
-import org.apache.jena.sparq.exec.http.Params;
-import org.apache.jena.sparq.exec.http.QueryExecHTTP;
+import org.apache.jena.sparql.exec.QueryExec;
+import org.apache.jena.sparql.exec.http.Params;
+import org.apache.jena.sparql.exec.http.QueryExecHTTP;
 
 public class QueryExecutionHTTPBuilder extends ExecHTTPBuilder<QueryExecution, QueryExecutionHTTPBuilder> {
 

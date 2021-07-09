@@ -35,8 +35,8 @@ import java.util.Objects;
 
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.riot.web.HttpNames;
-import org.apache.jena.sparq.exec.http.GSP;
-import org.apache.jena.sparq.exec.http.Params;
+import org.apache.jena.sparql.exec.http.GSP;
+import org.apache.jena.sparql.exec.http.Params;
 
 /**
  * This is a collection of convenience operations for HTTP requests,

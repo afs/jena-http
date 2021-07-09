@@ -26,24 +26,27 @@ import java.net.http.HttpRequest.BodyPublishers;
 import java.time.Duration;
 
 import org.apache.jena.atlas.lib.DateTimeUtils;
-import org.apache.jena.atlas.logging.LogCtl;
 import org.apache.jena.atlas.web.AuthScheme;
 import org.apache.jena.fuseki.auth.Auth;
 import org.apache.jena.fuseki.jetty.JettyLib;
 import org.apache.jena.fuseki.main.FusekiServer;
+import org.apache.jena.fuseki.system.FusekiLogging;
 import org.apache.jena.graph.Graph;
-import org.apache.jena.http.*;
+import org.apache.jena.http.HttpLib;
+import org.apache.jena.http.HttpOp2;
+import org.apache.jena.http.HttpRDF;
+import org.apache.jena.http.sys.HttpRequestModifer;
+import org.apache.jena.http.sys.RegistryRequestModifier;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.web.HttpNames;
-import org.apache.jena.sparq.exec.QueryExec;
-import org.apache.jena.sparq.exec.QueryExecutionAdapter;
-import org.apache.jena.sparq.exec.http.HttpRequestModifer;
-import org.apache.jena.sparq.exec.http.QueryExecHTTP;
-import org.apache.jena.sparq.exec.http.RegistryRequestModifier;
-import org.apache.jena.sparq.exec.http.UpdateExecHTTP;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.exec.QueryExec;
+import org.apache.jena.sparql.exec.QueryExecutionAdapter;
+import org.apache.jena.sparql.exec.UpdateExec;
+import org.apache.jena.sparql.exec.http.QueryExecHTTP;
+import org.apache.jena.sparql.exec.http.UpdateExecHTTP;
 import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.sparql.util.QueryExecUtils;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -53,7 +56,8 @@ import org.slf4j.LoggerFactory;
 
 public class DevAuthHTTP {
     static {
-        LogCtl.setLog4j2();
+        FusekiLogging.setLogging();
+        //LogCtl.setLog4j2();
     }
 
     public static void main(String...args) throws IOException, InterruptedException {
@@ -93,7 +97,6 @@ public class DevAuthHTTP {
         } finally  { server.stop(); }
     }
 
-
     static Logger LOG = LoggerFactory.getLogger("APP");
 
     private static void clientQueryExec() {
@@ -111,21 +114,22 @@ public class DevAuthHTTP {
             HttpRequestModifer mods = (params, headers) ->
                 headers.put(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"));
 
-                // [QExec] Wrong.
+            // [QExec] Wrong.
             // Need to do that for update.
             RegistryRequestModifier svcReg = new RegistryRequestModifier();
             svcReg.add("http://localhost:3030/ds", mods);
-            ARQ.getContext().put(ARQ.serviceParams, svcReg);
+            ARQ.getContext().put(ARQ.httpRegistryRequestModifer, svcReg);
 
-            UpdateExecHTTP uExec = UpdateExecHTTP.newBuilder()
+            try {
+            UpdateExec uExec = UpdateExecHTTP.newBuilder()
                 .service("http://localhost:3030/ds")
                 .updateString("INSERT DATA { <x:s> <x:q> 123}")
                 //.httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
                 //.httpClient(hc)
                 .build();
             uExec.execute();
+            } finally { ARQ.getContext().remove(ARQ.httpRegistryRequestModifer); }
         });
-        ARQ.getContext().remove(ARQ.serviceParams);
 
         //LOG.info("-- query with global modification");
 
@@ -143,7 +147,6 @@ public class DevAuthHTTP {
                 .connectTimeout(Duration.ofSeconds(10))
                 .authenticator(authenticator)
                 .build();
-            QueryExecutionAdapter.adapt(null);
             for ( var qs : x ) {
                 try ( QueryExec qexec = QueryExecHTTP.newBuilder()
                     .httpClient(hc)
@@ -169,22 +172,6 @@ public class DevAuthHTTP {
             }
         });
 
-        //.httpHeader(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"))
-
-
-//        if ( true ) return;
-//        try ( QueryExecution qexec = new QueryExecutionHTTP("http://localhost:3030/ds/query", "SELECT * { BIND(1 AS ?X) }") ) {
-//            ResultSet rs = qexec.execSelect();
-//            ResultSetFormatter.out(rs);
-//        }
-//        try ( QueryExecution qexec = new QueryExecutionHTTP("http://localhost:3030/ds/query", "ASK  {}" ) ) {
-//            boolean b = qexec.execAsk();
-//        }
-//        try ( QueryExecution qexec = new QueryExecutionHTTP("http://localhost:3030/ds/query", "CONSTRUCT {<x:s> <x:p> 123 } WHERE {}" ) ) {
-//            Model m = qexec.execConstruct();
-//            RDFDataMgr.write(System.out,  m, Lang.RDFXML);
-//        }
-
     }
 
     static void auth(Runnable action) {
@@ -192,6 +179,7 @@ public class DevAuthHTTP {
             action.run();
         } catch (Throwable th) {
             LOG.warn("** "+th.getMessage());
+            //th.printStackTrace();
         }
     }
 

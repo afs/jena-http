@@ -16,18 +16,25 @@
  * limitations under the License.
  */
 
-package org.seaborne.unused;
+package org.apache.jena.sparql.exec.http;
 
-import org.apache.jena.sparql.exec.QueryExec;
-import org.apache.jena.sparql.exec.QueryExecutionAdapter;
+/** Enum of different ways to send a SPARQL query over HTTP */
+public enum QuerySendMode {
 
-/**
- * A query execution implementation where queries are executed against a remote
- * service over HTTP.
- */
-public class QueryExecutionHTTP extends QueryExecutionAdapter {
-    // To give a clean class name to object and not "QueryExecutionAdapter"
-    public QueryExecutionHTTP(QueryExec qExec) {
-        super(qExec);
-    }
+    // Use HTTP GET when below the lkength limit else POST an HTML Form encoding
+    asGetWithLimitForm,
+
+    // Use HTTP GET when below the length limit else POST the query as application/sparql-query
+    asGetWithLimitBody,
+
+    // Use GET regardless
+    asGetAlways,
+
+    // Use POST HTML Form regardless
+    asPostForm,
+
+    // POST and application/sparql-query
+    asPostBody;
+
+    public static QuerySendMode systemtDefault = QuerySendMode.asGetWithLimitBody;
 }

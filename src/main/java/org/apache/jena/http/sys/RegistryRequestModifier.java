@@ -16,18 +16,20 @@
  * limitations under the License.
  */
 
-package org.seaborne.unused;
+package org.apache.jena.http.sys;
 
-import org.apache.jena.sparql.exec.QueryExec;
-import org.apache.jena.sparql.exec.QueryExecutionAdapter;
+import org.apache.jena.http.sys.RegistryRequestModifier;
 
 /**
- * A query execution implementation where queries are executed against a remote
- * service over HTTP.
+ * A service registry is a set of actions to take to modify an HTTP request before
+ * sending it to a specific endpoint.
+ *
+ * The key can be a prefix which must end in "/"
  */
-public class QueryExecutionHTTP extends QueryExecutionAdapter {
-    // To give a clean class name to object and not "QueryExecutionAdapter"
-    public QueryExecutionHTTP(QueryExec qExec) {
-        super(qExec);
-    }
+public class RegistryRequestModifier extends AbstractRegistryByServiceURL<HttpRequestModifer> {
+
+    private static RegistryRequestModifier singleton = new RegistryRequestModifier();
+    public static RegistryRequestModifier get() { return singleton; }
+
+    public RegistryRequestModifier() { }
 }

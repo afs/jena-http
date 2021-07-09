@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.http.HttpEnv;
 import org.apache.jena.query.Query;
-import org.apache.jena.sparq.exec.http.Params;
-import org.apache.jena.sparq.exec.http.QuerySendMode;
+import org.apache.jena.sparql.exec.http.Params;
+import org.apache.jena.sparql.exec.http.QuerySendMode;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.sys.JenaSystem;
 

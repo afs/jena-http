@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.seaborne.unused;
+package org.apache.jena.sparql.exec.http;
 
 import static org.apache.jena.http.HttpLib.*;
 
@@ -38,42 +38,37 @@ import org.apache.jena.atlas.json.JsonObject;
 import org.apache.jena.atlas.lib.Pair;
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.atlas.web.HttpException;
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.http.HttpEnv;
 import org.apache.jena.http.HttpLib;
 import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.*;
 import org.apache.jena.riot.resultset.ResultSetLang;
 import org.apache.jena.riot.resultset.ResultSetReaderRegistry;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.ARQException;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.sparql.engine.ResultSetCheckCondition;
-import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.http.HttpParams;
-import org.apache.jena.sparql.exec.http.Params;
-import org.apache.jena.sparql.exec.http.QuerySendMode;
-import org.apache.jena.sparql.graph.GraphFactory;
+import org.apache.jena.sparql.exec.QueryExec;
+import org.apache.jena.sparql.exec.RowSet;
 import org.apache.jena.sparql.util.Context;
 
 /**
- * A query execution implementation where queries are executed against a remote
+ * A {@link QueryExec} implementation where queries are executed against a remote
  * service over HTTP.
  */
-class QueryExecutionHTTP_Standalone implements QueryExecution {
-    // Not Need but retained because of setInitialBinding and setTimeOut ?
-    // == QueryEngineHTTP
-
-    // IF USED - restore finish().
+public class QueryExecHTTP implements QueryExec {
 
     /** @deprecated Use {@link #newBuilder} */
     @Deprecated
-    public static QueryExecutionHTTPBuilder create() { return newBuilder() ; }
+    public static QueryExecHTTPBuilder create() { return newBuilder() ; }
 
-    public static QueryExecutionHTTPBuilder newBuilder() { return QueryExecutionHTTPBuilder.newBuilder(); }
+    public static QueryExecHTTPBuilder newBuilder() { return QueryExecHTTPBuilder.newBuilder(); }
 
-    public static final String QUERY_MIME_TYPE = WebContent.contentTypeSPARQLQuery;
+    //public static final String QUERY_MIME_TYPE = WebContent.contentTypeSPARQLQuery;
     private final Query query;
     private final String queryString;
     private final String service;
@@ -117,14 +112,12 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
 
     private Map<String, String> httpHeaders;
 
-    // [QExec]
-    public
-    QueryExecutionHTTP_Standalone(String serviceURL, Query query, String queryString, int urlLimit,
-                                   HttpClient httpClient, Map<String, String> httpHeaders, Params params,
-                                   List<String> defaultGraphURIs, List<String> namedGraphURIs,
-                                   QuerySendMode sendMode, String acceptHeader,
-                                   long timeout, TimeUnit timeoutUnit) {
-        this.context = ARQ.getContext().copy();
+    public QueryExecHTTP(String serviceURL, Query query, String queryString, int urlLimit,
+                         HttpClient httpClient, Map<String, String> httpHeaders, Params params, Context context,
+                         List<String> defaultGraphURIs, List<String> namedGraphURIs,
+                         QuerySendMode sendMode, String acceptHeader,
+                         long timeout, TimeUnit timeoutUnit) {
+        this.context = ( context == null ) ? ARQ.getContext().copy() : context.copy();
         this.service = serviceURL;
         this.query = query;
         this.queryString = queryString;
@@ -143,37 +136,24 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
         this.params = params;
         this.readTimeout = timeout;
         this.readTimeoutUnit = timeoutUnit;
-        this.httpClient = dft(httpClient, HttpEnv.getDftHttpClient());
-    }
-
-    @Override
-    public void setInitialBinding(QuerySolution binding) {
-        throw new UnsupportedOperationException(
-                "Initial bindings not supported for remote queries, consider using a ParameterizedSparqlString to prepare a query for remote execution");
-    }
-
-    @Override
-    public void setInitialBinding(Binding binding) {
-        throw new UnsupportedOperationException(
-                "Initial bindings not supported for remote queries, consider using a ParameterizedSparqlString to prepare a query for remote execution");
+        this.httpClient = HttpLib.dft(httpClient, HttpEnv.getDftHttpClient());
     }
 
     /** The Content-Type response header received (null before the remote operation is attempted). */
     public String getHttpResponseContentType() {
-		return httpResponseContentType;
-	}
-
-    // ---- Builder
-
-	@Override
-    public ResultSet execSelect() {
-        checkNotClosed();
-        check(QueryType.SELECT);
-        ResultSet rs = execResultSet();
-        return new ResultSetCheckCondition(rs, this);
+        return httpResponseContentType;
     }
 
-	private ResultSet execResultSet() {
+    @Override
+    public RowSet select() {
+        checkNotClosed();
+        check(QueryType.SELECT);
+        RowSet rs = execRowSet();
+        // [QExec] Check open - less of an issue in remote - ResultSetCheckCondition
+        return rs;
+    }
+
+    private RowSet execRowSet() {
         String thisAcceptHeader = dft(acceptHeader, selectAcceptheader);
 
         HttpResponse<InputStream> response = query(thisAcceptHeader);
@@ -207,12 +187,13 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
             throw new QueryException("Endpoint returned Content-Type: " + actualContentType + " which is not supported for SELECT queries");
         // This returns a streaming result set for some formats.
         // Do not close the InputStream at this point.
+        // [QExec]
         ResultSet result = ResultSetMgr.read(in, lang);
-        return result;
+        return RowSet.adapt(result);
     }
 
     @Override
-    public boolean execAsk() {
+    public boolean ask() {
         checkNotClosed();
         check(QueryType.ASK);
         String thisAcceptHeader = dft(acceptHeader, askAcceptHeader);
@@ -241,7 +222,7 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
         if ( lang == null )
             throw new QueryException("Endpoint returned Content-Type: " + actualContentType + " which is not supported for ASK queries");
         boolean result = ResultSetMgr.readBoolean(in, lang);
-        //XXXfinish(response);
+        finish(response);
         return result;
     }
 
@@ -253,84 +234,72 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
     }
 
     @Override
-    public Model execConstruct() {
-        checkNotClosed();
-        return execConstruct(GraphFactory.makeJenaDefaultModel());
-    }
-
-    @Override
-    public Model execConstruct(Model model) {
+    public Graph construct(Graph graph) {
         checkNotClosed();
         check(QueryType.CONSTRUCT);
-        return execModel(model, constructAcceptHeader);
+        return execGraph(graph, constructAcceptHeader);
     }
 
     @Override
-    public Iterator<Triple> execConstructTriples() {
+    public Iterator<Triple> constructTriples() {
         checkNotClosed();
         check(QueryType.CONSTRUCT);
         return execTriples(constructAcceptHeader);
     }
 
     @Override
-    public Iterator<Quad> execConstructQuads(){
+    public Iterator<Quad> constructQuads(){
         checkNotClosed();
-    	return execQuads();
+        return execQuads();
     }
 
     @Override
-    public Dataset execConstructDataset(){
+    public DatasetGraph constructDataset(){
         checkNotClosed();
-        return execConstructDataset(DatasetFactory.createTxnMem());
+        return constructDataset(DatasetGraphFactory.createTxnMem());
     }
 
     @Override
-    public Dataset execConstructDataset(Dataset dataset){
+    public DatasetGraph constructDataset(DatasetGraph dataset){
         checkNotClosed();
         check(QueryType.CONSTRUCT_QUADS);
         return execDataset(dataset);
     }
 
     @Override
-    public Model execDescribe() {
-        checkNotClosed();
-        return execDescribe(GraphFactory.makeJenaDefaultModel());
-    }
-
-    @Override
-    public Model execDescribe(Model model) {
+    public Graph describe(Graph graph) {
         checkNotClosed();
         check(QueryType.DESCRIBE);
-        return execModel(model, describeAcceptHeader);
+        return execGraph(graph, describeAcceptHeader);
     }
 
     @Override
-    public Iterator<Triple> execDescribeTriples() {
+    public Iterator<Triple> describeTriples() {
         checkNotClosed();
         return execTriples(describeAcceptHeader);
     }
 
-    private Model execModel(Model model, String acceptHeader) {
+    private Graph execGraph(Graph graph, String acceptHeader) {
         Pair<InputStream, Lang> p = execRdfWorker(acceptHeader, WebContent.contentTypeRDFXML);
         InputStream in = p.getLeft();
         Lang lang = p.getRight();
         try {
-            RDFDataMgr.read(model, in, lang);
+            RDFDataMgr.read(graph, in, lang);
         } catch (RiotException ex) {
-            //XXX finish(in);
+            HttpLib.finish(in);
             throw ex;
         }
-        return model;
+        return graph;
     }
 
-    private Dataset execDataset(Dataset dataset) {
+    private DatasetGraph execDataset(DatasetGraph dataset) {
         Pair<InputStream, Lang> p = execRdfWorker(datasetAcceptHeader, WebContent.contentTypeNQuads);
         InputStream in = p.getLeft();
         Lang lang = p.getRight();
         try {
             RDFDataMgr.read(dataset, in, lang);
         } catch (RiotException ex) {
-            //XXX finish(in);
+            finish(in);
             throw ex;
         }
         return dataset;
@@ -374,8 +343,8 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
         Lang lang = RDFLanguages.contentTypeToLang(actualContentType);
         if ( ! RDFLanguages.isQuads(lang) && ! RDFLanguages.isTriples(lang) )
             throw new QueryException("Endpoint returned Content Type: "
-                                     + actualContentType
-                                     + " which is not a valid RDF syntax");
+                    + actualContentType
+                    + " which is not a valid RDF syntax");
         return Pair.create(in, lang);
     }
 
@@ -403,7 +372,7 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
 
     private void checkNotClosed() {
         if ( closed )
-            throw new QueryExecException("HTTP QueryExecution has been closed");
+            throw new QueryExecException("HTTP QueryExecHTTP has been closed");
     }
 
     private void check(QueryType queryType) {
@@ -421,7 +390,7 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
     }
 
     @Override
-    public Dataset getDataset() {
+    public DatasetGraph getDataset() {
         return null;
     }
 
@@ -450,44 +419,6 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
      */
     public String getQueryString() {
         return queryString;
-    }
-
-    @Override
-    public void setTimeout(long readTimeout) {
-        this.readTimeout = readTimeout;
-        this.readTimeoutUnit = TimeUnit.MILLISECONDS;
-    }
-
-    @Override
-    public void setTimeout(long readTimeout, long connectTimeout) {
-        this.readTimeout = readTimeout;
-        this.readTimeoutUnit = TimeUnit.MILLISECONDS;
-        this.connectTimeout = connectTimeout;
-        this.connectTimeoutUnit = TimeUnit.MILLISECONDS;
-    }
-
-    @Override
-    public void setTimeout(long readTimeout, TimeUnit timeoutUnits) {
-        this.readTimeout = readTimeout;
-        this.readTimeoutUnit = timeoutUnits;
-    }
-
-    @Override
-    public void setTimeout(long timeout1, TimeUnit timeUnit1, long timeout2, TimeUnit timeUnit2) {
-        this.readTimeout = timeout1;
-        this.readTimeoutUnit = timeUnit1;
-        this.connectTimeout = timeout2;
-        this.connectTimeoutUnit = timeUnit2;
-    }
-
-    @Override
-    public long getTimeout1() {
-        return asMillis(readTimeout, readTimeoutUnit);
-    }
-
-    @Override
-    public long getTimeout2() {
-        return asMillis(connectTimeout, connectTimeoutUnit);
     }
 
     private static long asMillis(long duration, TimeUnit timeUnit) {
@@ -531,7 +462,6 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
                 // Should not happen!
                 throw new HttpException("Send mode not recognized for query request: "+sendMode);
         }
-
         HttpRequest request = builder.build();
         // Status code has not been processed on the return from execute*
         return executeQuery(request);
@@ -568,14 +498,12 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
     }
 
     private HttpRequest.Builder executeQueryGet(Params thisParams, String acceptHeader) {
-        // This may still be  POST and an HTML form
         Objects.requireNonNull(service);
-        Objects.requireNonNull(params);
+        Objects.requireNonNull(thisParams);
         Objects.requireNonNull(httpClient);
 
-        String requestURL = service;
         thisParams.add(HttpParams.pQuery, queryString);
-        String qs = params.httpString();
+        String requestURL = requestURL(service, thisParams.httpString());
 
         HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, readTimeout, readTimeoutUnit);
         acceptHeader(builder, acceptHeader);
@@ -585,32 +513,26 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
     private HttpRequest.Builder executeQueryPostForm(Params thisParams, String acceptHeader) {
         String requestURL = service;
         thisParams.add(HttpParams.pQuery, queryString);
-        String qs = params.httpString();
+        String formBody = thisParams.httpString();
 
         HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, readTimeout, readTimeoutUnit);
         acceptHeader(builder, acceptHeader);
         // Use an HTML form.
         contentTypeHeader(builder, WebContent.contentTypeHTMLForm);
         // Already UTF-8 encoded to ASCII.
-        return builder.POST(BodyPublishers.ofString(qs, StandardCharsets.US_ASCII));
+        return builder.POST(BodyPublishers.ofString(formBody, StandardCharsets.US_ASCII));
     }
 
     // Use SPARQL query body and MIME type.
     private HttpRequest.Builder executeQueryPostBody(Params thisParams, String acceptHeader) {
-        if (closed)
-            throw new ARQException("HTTP execution already closed");
-
         // Use thisParams (for default-graph-uri etc)
-        String url = service;
-        if ( thisParams.count() > 0 )
-            url = url + "&"+thisParams.httpString();
+        String requestURL = requestURL(service, thisParams.httpString());
 
-        HttpRequest.Builder builder = HttpLib.newBuilder(service, httpHeaders, readTimeout, readTimeoutUnit);
+        HttpRequest.Builder builder = HttpLib.newBuilder(requestURL, httpHeaders, readTimeout, readTimeoutUnit);
         contentTypeHeader(builder, WebContent.contentTypeSPARQLQuery);
         acceptHeader(builder, acceptHeader);
         return builder.POST(BodyPublishers.ofString(queryString));
     }
-
 
     private HttpResponse<InputStream> executeQuery(HttpRequest request) {
         logQuery(queryString, request);
@@ -659,5 +581,4 @@ class QueryExecutionHTTP_Standalone implements QueryExecution {
 
     @Override
     public boolean isClosed() { return closed; }
-
 }

@@ -16,18 +16,15 @@
  * limitations under the License.
  */
 
-package org.seaborne.unused;
+package org.apache.jena.http.sys;
 
-import org.apache.jena.sparql.exec.QueryExec;
-import org.apache.jena.sparql.exec.QueryExecutionAdapter;
+import java.util.Map;
+
+import org.apache.jena.sparql.exec.http.Params;
 
 /**
- * A query execution implementation where queries are executed against a remote
- * service over HTTP.
+ * A {@code HttpRequestModifer} allows the application to HTTP query parameters and HTTP headers
+ * that will be used to create an {@link java.net.http.HttpRequest}.
  */
-public class QueryExecutionHTTP extends QueryExecutionAdapter {
-    // To give a clean class name to object and not "QueryExecutionAdapter"
-    public QueryExecutionHTTP(QueryExec qExec) {
-        super(qExec);
-    }
-}
+@FunctionalInterface
+public interface HttpRequestModifer { void modify(Params params, Map<String, String> httpHeaders) ; }

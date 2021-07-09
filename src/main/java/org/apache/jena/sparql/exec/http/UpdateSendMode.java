@@ -16,18 +16,16 @@
  * limitations under the License.
  */
 
-package org.seaborne.unused;
+package org.apache.jena.sparql.exec.http;
 
-import org.apache.jena.sparql.exec.QueryExec;
-import org.apache.jena.sparql.exec.QueryExecutionAdapter;
+/** Enum of different ways to send a SPARQL update over HTTP */
+enum UpdateSendMode {
 
-/**
- * A query execution implementation where queries are executed against a remote
- * service over HTTP.
- */
-public class QueryExecutionHTTP extends QueryExecutionAdapter {
-    // To give a clean class name to object and not "QueryExecutionAdapter"
-    public QueryExecutionHTTP(QueryExec qExec) {
-        super(qExec);
-    }
+    // POST HTML forms (update=...)
+    asPostForm,
+
+    // POST application/sparql-update
+    asPostBody ;
+
+    public static UpdateSendMode systemtDefault = UpdateSendMode.asPostBody;
 }

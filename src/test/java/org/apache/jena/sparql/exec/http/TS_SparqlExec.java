@@ -16,18 +16,20 @@
  * limitations under the License.
  */
 
-package org.seaborne.unused;
+package org.apache.jena.sparql.exec.http;
 
-import org.apache.jena.sparql.exec.QueryExec;
-import org.apache.jena.sparql.exec.QueryExecutionAdapter;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
-/**
- * A query execution implementation where queries are executed against a remote
- * service over HTTP.
- */
-public class QueryExecutionHTTP extends QueryExecutionAdapter {
-    // To give a clean class name to object and not "QueryExecutionAdapter"
-    public QueryExecutionHTTP(QueryExec qExec) {
-        super(qExec);
-    }
-}
+@RunWith(Suite.class)
+@Suite.SuiteClasses( {
+      TestGSP.class
+    , TestQueryExecHTTP.class
+    , TestQueryExecCleanServer.class
+    , TestUpdateExecHTTP.class
+    , TestServiceFunctions.class
+    , TestService2.class
+    , TestServiceAuth.class
+})
+
+public class TS_SparqlExec { }

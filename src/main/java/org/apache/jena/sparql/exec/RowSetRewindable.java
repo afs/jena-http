@@ -16,18 +16,11 @@
  * limitations under the License.
  */
 
-package org.seaborne.unused;
+package org.apache.jena.sparql.exec;
 
-import org.apache.jena.sparql.exec.QueryExec;
-import org.apache.jena.sparql.exec.QueryExecutionAdapter;
+public interface RowSetRewindable extends RowSet {
+    public void reset() ;
 
-/**
- * A query execution implementation where queries are executed against a remote
- * service over HTTP.
- */
-public class QueryExecutionHTTP extends QueryExecutionAdapter {
-    // To give a clean class name to object and not "QueryExecutionAdapter"
-    public QueryExecutionHTTP(QueryExec qExec) {
-        super(qExec);
-    }
+    /** return the number of solutions */
+    public long size() ;
 }

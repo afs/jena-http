@@ -49,11 +49,11 @@ import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.lib.IRILib;
 import org.apache.jena.atlas.web.HttpException;
+import org.apache.jena.http.sys.HttpRequestModifer;
+import org.apache.jena.http.sys.RegistryRequestModifier;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.web.HttpNames;
-import org.apache.jena.sparq.exec.http.HttpRequestModifer;
-import org.apache.jena.sparq.exec.http.Params;
-import org.apache.jena.sparq.exec.http.RegistryRequestModifier;
+import org.apache.jena.sparql.exec.http.Params;
 import org.apache.jena.sparql.util.Context;
 import org.apache.jena.web.HttpSC;
 
