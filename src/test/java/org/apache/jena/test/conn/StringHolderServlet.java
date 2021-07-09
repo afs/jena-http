@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.jena.conn.test;
+package org.apache.jena.test.conn;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;

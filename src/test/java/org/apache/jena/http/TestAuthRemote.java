@@ -20,22 +20,22 @@ package org.apache.jena.http;
 
 import static org.junit.Assert.assertTrue;
 
-import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.fuseki.test.FusekiTest;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.http.sys.HttpRequestModifer;
+import org.apache.jena.http.sys.HttpRequestModifier;
 import org.apache.jena.http.sys.RegistryRequestModifier;
-import org.apache.jena.link.RDFLink;
-import org.apache.jena.link.RDFLinkFactory;
-import org.apache.jena.link.RDFLinkRemote;
 import org.apache.jena.query.ARQ;
+import org.apache.jena.rdflink.RDFLink;
+import org.apache.jena.rdflink.RDFLinkFactory;
+import org.apache.jena.rdflink.RDFLinkRemote;
 import org.apache.jena.riot.web.HttpNames;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.exec.QueryExec;
 import org.apache.jena.sparql.exec.http.*;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.sse.SSE;
+import org.apache.jena.test.conn.EnvTest;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -395,7 +395,7 @@ public class TestAuthRemote {
     @Test
     public void auth_service_tuning_1_RegistryRequestModifier() {
         // using RegistryRequestModifier
-        HttpRequestModifer mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
+        HttpRequestModifier mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
 
         RegistryRequestModifier svcReg = new RegistryRequestModifier();
         svcReg.add(env.datasetURL(), mods);
@@ -424,7 +424,7 @@ public class TestAuthRemote {
     @Test
     public void auth_service_tuning_2_HttpRequestModifer() {
         // As HttpRequestModifer
-        HttpRequestModifer mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
+        HttpRequestModifier mods = (params, headers) -> headers.put(HttpNames.hAuthorization, HttpLib.basicAuth(user, password));
         ARQ.getContext().put(ARQ.httpRequestModifer, mods);
         try {
             try ( RDFLink link = RDFLinkRemote.newBuilder()

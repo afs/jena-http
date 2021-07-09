@@ -16,11 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.jena.link;
+package org.apache.jena.rdflink;
 
 import java.util.Objects;
 
 import org.apache.jena.rdfconnection.Isolation;
+import org.apache.jena.rdflink.RDFLinkBuilder;
 import org.apache.jena.sparql.core.DatasetGraph;
 
 /**

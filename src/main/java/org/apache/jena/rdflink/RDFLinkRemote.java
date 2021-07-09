@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.jena.link;
+package org.apache.jena.rdflink;
 
 import java.net.http.HttpClient;
 import java.util.Objects;
@@ -28,6 +28,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.http.HttpEnv;
 import org.apache.jena.query.*;
 import org.apache.jena.rdfconnection.JenaConnectionException;
+import org.apache.jena.rdflink.RDFLinkRemote;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.ARQException;
 import org.apache.jena.sparql.core.DatasetGraph;

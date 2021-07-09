@@ -22,13 +22,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.apache.jena.atlas.iterator.Iter;
-import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.GraphUtil;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.sse.SSE;
+import org.apache.jena.test.conn.EnvTest;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;

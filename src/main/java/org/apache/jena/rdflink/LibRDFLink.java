@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.jena.link;
+package org.apache.jena.rdflink;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -26,6 +26,7 @@ import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdflink.LibRDFLink;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 

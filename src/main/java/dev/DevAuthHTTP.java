@@ -35,7 +35,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.http.HttpLib;
 import org.apache.jena.http.HttpOp2;
 import org.apache.jena.http.HttpRDF;
-import org.apache.jena.http.sys.HttpRequestModifer;
+import org.apache.jena.http.sys.HttpRequestModifier;
 import org.apache.jena.http.sys.RegistryRequestModifier;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.Lang;
@@ -111,7 +111,7 @@ public class DevAuthHTTP {
         // -- --
         LOG.info("-- Update with service tuning");
         auth(()->{
-            HttpRequestModifer mods = (params, headers) ->
+            HttpRequestModifier mods = (params, headers) ->
                 headers.put(HttpNames.hAuthorization, HttpLib.basicAuth("u", "p"));
 
             // [QExec] Wrong.

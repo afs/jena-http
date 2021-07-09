@@ -22,9 +22,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.sparql.sse.SSE;
+import org.apache.jena.test.conn.EnvTest;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;

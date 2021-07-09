@@ -49,7 +49,7 @@ import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.lib.IRILib;
 import org.apache.jena.atlas.web.HttpException;
-import org.apache.jena.http.sys.HttpRequestModifer;
+import org.apache.jena.http.sys.HttpRequestModifier;
 import org.apache.jena.http.sys.RegistryRequestModifier;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.riot.web.HttpNames;
@@ -451,7 +451,7 @@ public class HttpLib {
      * </ul>
      */
     /*package*/ public static void modifyByService(String serviceURI, Context context, Params params, Map<String, String> httpHeaders) {
-        HttpRequestModifer modifier = context.get(ARQ.httpRequestModifer);
+        HttpRequestModifier modifier = context.get(ARQ.httpRequestModifer);
         if ( modifier != null ) {
             modifier.modify(params, httpHeaders);
             return;
@@ -460,7 +460,7 @@ public class HttpLib {
         if ( modifierRegistry == null )
             modifierRegistry = RegistryRequestModifier.get();
         if ( modifierRegistry != null ) {
-            HttpRequestModifer mods = modifierRegistry.find(serviceURI);
+            HttpRequestModifier mods = modifierRegistry.find(serviceURI);
             if ( mods != null )
                 mods.modify(params, httpHeaders);
         }

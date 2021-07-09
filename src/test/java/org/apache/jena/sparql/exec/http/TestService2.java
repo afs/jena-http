@@ -28,15 +28,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.jena.atlas.iterator.Iter;
 import org.apache.jena.atlas.logging.LogCtl;
-import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.fuseki.Fuseki;
 import org.apache.jena.graph.Node ;
 import org.apache.jena.graph.NodeFactory ;
-import org.apache.jena.http.sys.HttpRequestModifer;
+import org.apache.jena.http.sys.HttpRequestModifier;
 import org.apache.jena.http.sys.RegistryRequestModifier;
-import org.apache.jena.link.RDFLink;
-import org.apache.jena.link.RDFLinkFactory;
 import org.apache.jena.query.*;
+import org.apache.jena.rdflink.RDFLink;
+import org.apache.jena.rdflink.RDFLinkFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpService ;
@@ -56,6 +55,7 @@ import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.ElementService;
 import org.apache.jena.sparql.syntax.ElementTriplesBlock;
 import org.apache.jena.sparql.util.Context;
+import org.apache.jena.test.conn.EnvTest;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -245,7 +245,7 @@ public class TestService2 {
         clientDGS.getContext().set(ARQ.serviceParams, testServiceParams);
 
         AtomicBoolean seen = new AtomicBoolean(false);
-        HttpRequestModifer inspector = (params, header) -> {
+        HttpRequestModifier inspector = (params, header) -> {
             seen.set(params.containsParam("apikey"));
         };
 
@@ -273,7 +273,7 @@ public class TestService2 {
         clientDGS.getContext().set(ARQ.serviceParams, testServiceParams);
 
         AtomicBoolean seen = new AtomicBoolean(false);
-        HttpRequestModifer inspector = (params, header) -> {
+        HttpRequestModifier inspector = (params, header) -> {
             seen.set(params.containsParam("apikey"));
         };
 
@@ -330,7 +330,7 @@ public class TestService2 {
 
         // RequestModifer that sets a flag to show it has been run.
         AtomicInteger COUNTER = new AtomicInteger(0);
-        HttpRequestModifer testModifier = (Params params, Map<String, String> httpHeaders) -> {
+        HttpRequestModifier testModifier = (Params params, Map<String, String> httpHeaders) -> {
             COUNTER.incrementAndGet();
         };
         DatasetGraph localdsg = localDataset();
@@ -357,7 +357,7 @@ public class TestService2 {
 
         // RequestModifer that sets a flag to show it has been run.
         AtomicInteger COUNTER = new AtomicInteger(0);
-        HttpRequestModifer testModifier = (Params params, Map<String, String> httpHeaders) -> {
+        HttpRequestModifier testModifier = (Params params, Map<String, String> httpHeaders) -> {
             COUNTER.incrementAndGet();
         };
 
@@ -436,7 +436,7 @@ public class TestService2 {
         }
     }
 
-    private static void runWithModifier(String key, HttpRequestModifer modifier, Runnable action) {
+    private static void runWithModifier(String key, HttpRequestModifier modifier, Runnable action) {
         RegistryRequestModifier.get().add(SERVICE, modifier);
         try {
             action.run();

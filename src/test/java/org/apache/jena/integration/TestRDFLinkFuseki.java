@@ -18,8 +18,8 @@
 
 package org.apache.jena.integration;
 
-import org.apache.jena.link.RDFLink;
-import org.apache.jena.link.RDFLinkFactory;
+import org.apache.jena.rdflink.RDFLink;
+import org.apache.jena.rdflink.RDFLinkFactory;
 
 public class TestRDFLinkFuseki extends TestRDFLinkRemote {
     @Override

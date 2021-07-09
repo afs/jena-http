@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.jena.link;
+package org.apache.jena.rdflink;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

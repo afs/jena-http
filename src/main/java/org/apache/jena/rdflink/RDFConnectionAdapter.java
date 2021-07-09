@@ -16,18 +16,19 @@
  * limitations under the License.
  */
 
-package org.apache.jena.link;
+package org.apache.jena.rdflink;
 
-import static org.apache.jena.link.LibRDFLink.asDatasetGraph;
-import static org.apache.jena.link.LibRDFLink.graph2model;
-import static org.apache.jena.link.LibRDFLink.model2graph;
-import static org.apache.jena.link.LibRDFLink.name;
+import static org.apache.jena.rdflink.LibRDFLink.asDatasetGraph;
+import static org.apache.jena.rdflink.LibRDFLink.graph2model;
+import static org.apache.jena.rdflink.LibRDFLink.model2graph;
+import static org.apache.jena.rdflink.LibRDFLink.name;
 
 import java.util.function.Consumer;
 
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdfconnection.RDFConnection;
+import org.apache.jena.rdflink.RDFConnectionAdapter;
 import org.apache.jena.sparql.exec.QueryExecutionAdapter;
 import org.apache.jena.sparql.exec.ResultSetAdapter;
 import org.apache.jena.update.UpdateRequest;

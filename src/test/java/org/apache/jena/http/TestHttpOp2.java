@@ -33,11 +33,11 @@ import java.net.http.HttpResponse;
 
 import org.apache.jena.atlas.io.IO;
 import org.apache.jena.atlas.lib.IRILib;
-import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.riot.WebContent;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.exec.http.Params;
+import org.apache.jena.test.conn.EnvTest;
 import org.apache.jena.web.HttpSC;
 import org.junit.AfterClass;
 import org.junit.Before;

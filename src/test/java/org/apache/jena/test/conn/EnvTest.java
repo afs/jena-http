@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.jena.conn.test;
+package org.apache.jena.test.conn;
 
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;

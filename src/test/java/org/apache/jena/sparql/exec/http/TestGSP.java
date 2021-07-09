@@ -28,7 +28,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.StringReader;
 
 import org.apache.jena.atlas.web.HttpException;
-import org.apache.jena.conn.test.EnvTest;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -42,6 +41,7 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.apache.jena.sparql.sse.SSE;
 import org.apache.jena.sparql.util.IsoMatcher;
+import org.apache.jena.test.conn.EnvTest;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.jena.link;
+package org.apache.jena.rdflink;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import org.apache.jena.http.HttpEnv;
+import org.apache.jena.rdflink.RDFLinkRemoteBuilder;
 import org.apache.jena.riot.*;
 import org.apache.jena.sparql.core.Transactional;
 import org.apache.jena.sparql.core.TransactionalLock;

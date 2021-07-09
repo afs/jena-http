@@ -20,7 +20,7 @@ package org.apache.jena;
 
 import org.apache.jena.http.TS_JenaHttp;
 import org.apache.jena.integration.TS_RDFLinkIntegration;
-import org.apache.jena.link.TS_RDFLink;
+import org.apache.jena.rdflink.TS_RDFLink;
 import org.apache.jena.sparql.exec.http.TS_SparqlExec;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

@@ -16,21 +16,15 @@
  * limitations under the License.
  */
 
-package org.apache.jena.link;
+package org.apache.jena.http.sys;
 
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.DatasetGraphFactory;
+import java.util.Map;
 
-public class TestRDFLinkLocalMRSW extends AbstractTestRDFLink {
+import org.apache.jena.sparql.exec.http.Params;
 
-    @Override
-    protected boolean supportsAbort() { return false; }
-
-    @Override
-    protected RDFLink link() {
-        // General purpose, mixed storage, MRSW dataset.
-        DatasetGraph ds = DatasetGraphFactory.createGeneral();
-        return RDFLinkFactory.connect(ds);
-    }
-}
-
+/**
+ * A {@code HttpRequestModifer} allows the application to HTTP query parameters and HTTP headers
+ * that will be used to create an {@link java.net.http.HttpRequest}.
+ */
+@FunctionalInterface
+public interface HttpRequestModifier { void modify(Params params, Map<String, String> httpHeaders) ; }

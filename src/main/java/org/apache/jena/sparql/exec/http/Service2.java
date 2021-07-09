@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.jena.atlas.logging.Log;
 import org.apache.jena.atlas.web.HttpException;
 import org.apache.jena.http.HttpEnv;
+import org.apache.jena.http.RegistryHttpClient;
 import org.apache.jena.query.ARQ;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecException;

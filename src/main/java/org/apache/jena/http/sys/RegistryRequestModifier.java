@@ -26,7 +26,7 @@ import org.apache.jena.http.sys.RegistryRequestModifier;
  *
  * The key can be a prefix which must end in "/"
  */
-public class RegistryRequestModifier extends AbstractRegistryByServiceURL<HttpRequestModifer> {
+public class RegistryRequestModifier extends AbstractRegistryByServiceURL<HttpRequestModifier> {
 
     private static RegistryRequestModifier singleton = new RegistryRequestModifier();
     public static RegistryRequestModifier get() { return singleton; }

@@ -16,10 +16,11 @@
  * limitations under the License.
  */
 
-package org.apache.jena.link;
+package org.apache.jena.rdflink;
 
 import java.net.http.HttpClient;
 
+import org.apache.jena.rdflink.RDFLinkFuseki;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.resultset.ResultSetLang;

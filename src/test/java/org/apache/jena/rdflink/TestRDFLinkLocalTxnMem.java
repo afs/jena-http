@@ -16,37 +16,21 @@
  * limitations under the License.
  */
 
-package org.apache.jena.link;
+package org.apache.jena.rdflink;
 
-import org.apache.jena.sparql.core.Transactional;
-import org.apache.jena.update.Update;
-import org.apache.jena.update.UpdateRequest;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
 
-/** SPARQL Update Operations on a connection.
- *
- * @see RDFLink
- */
-public interface LinkSparqlUpdate extends Transactional, AutoCloseable
-{
-    /** Execute a SPARQL Update.
-     *
-     * @param update
-     */
-    public void update(Update update);
+public class TestRDFLinkLocalTxnMem extends AbstractTestRDFLink {
 
-    /** Execute a SPARQL Update.
-     *
-     * @param update
-     */
-    public void update(UpdateRequest update);
+    @Override
+    protected boolean supportsAbort() { return true; }
 
-    /** Execute a SPARQL Update.
-     *
-     * @param updateString
-     */
-    public void update(String updateString);
-
-    /** Close this connection. */
-    @Override public void close();
+    @Override
+    protected RDFLink link() {
+        // Full transactional in-memory dataset.
+        DatasetGraph dsg = DatasetGraphFactory.createTxnMem();
+        return RDFLinkFactory.connect(dsg);
+    }
 }
 

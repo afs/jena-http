@@ -24,6 +24,64 @@ public class NotesQExec {
     // [ ] Old params, new params
     // [ ] G2
     // [ ]Tests
+    // [x] Check all TS_ accounted for (org.apache.jena.*)
+
+    // [ ] Adapters
+    // [] javadoc
+
+    //  ==== TestExecutionBuilders.java ====
+    // Need xfer
+    //  ==== TestUpdateBuilder.java ====
+    // Need xfer
+
+    // Duplicates
+    //  ==== TestLocalIsolation.java ====
+    //  /home/afs/ASF/afs-jena/jena-rdfconnection/src/test/java/org/apache/jena/rdfconnection/TestLocalIsolation.java
+    //  /home/afs/ASF/afs-jena/jena-rdfconnection/src/test/java/org/apache/jena/rdflink/TestLocalIsolation.java
+    //
+    //  ==== TestBlankNodeBinary.java ====
+    //  /home/afs/ASF/afs-jena/jena-integration-tests/src/test/java/org/apache/jena/http/TestBlankNodeBinary.java
+    //  /home/afs/ASF/afs-jena/jena-integration-tests/src/test/java/org/apache/jena/test/rdfconnection/TestBlankNodeBinary.java
+
+
+    // [ ] org/seaborne/improvements
+    // [ ] Adapters
+    // [ ] RowSet: Reader/Writer
+    // [ ] HttpOp1
+    // [ ] QueryExecutionfactory, UdpateExecutionFactory.
+    // [ ] Documentation
+
+    // Tickets:
+    // JENA-2124: Encoding:gzip
+
+    // JENA-2125: Epic
+
+    // JENA-2126: org/apache/jena/http/
+    // JENA-2127: RowSet
+    // JENA-2128: QueryExec, UpdateExec
+    // JENA-2129: QueryExecHTTP, UpdateExecHTTP
+    // JENA-2130: GSP
+    // JENA-2131: RDFLink
+
+    //Changes not staged for commit:
+    //  (use "git add <file>..." to update what will be committed)
+    //  (use "git restore <file>..." to discard changes in working directory)
+    //    modified:   jena-arq/src/main/java/org/apache/jena/query/ARQ.java
+    //    modified:   jena-arq/src/main/java/org/apache/jena/update/UpdateProcessor.java
+    //    modified:   jena-integration-tests/pom.xml
+    //    modified:   jena-integration-tests/src/test/java/org/apache/jena/test/TC_Integration.java
+    //
+    //Untracked files:
+    //  (use "git add <file>..." to include in what will be committed)
+    //    jena-arq/src/main/java/org/apache/jena/http/
+    //    jena-arq/src/main/java/org/apache/jena/sparql/exec/
+    //    jena-integration-tests/src/test/java/org/apache/jena/http/
+    //    jena-integration-tests/src/test/java/org/apache/jena/integration/
+    //    jena-integration-tests/src/test/java/org/apache/jena/link/
+    //    jena-integration-tests/src/test/java/org/apache/jena/sparql/
+    //    jena-integration-tests/src/test/java/org/apache/jena/test/conn/
+    //    jena-integration-tests/testing/RDFLink/
+    //    jena-rdfconnection/src/main/java/org/apache/jena/link/
 
     void migration() {
         // Delete DatasetAccessor
